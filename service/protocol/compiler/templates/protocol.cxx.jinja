@@ -1,0 +1,275 @@
+//  Copyright (c) Deighton Systems Limited. 2022. All Rights Reserved.
+//  Author: Edward Deighton
+//  License: Please see license.txt in the project root folder.
+
+//  Use and copying of this software and preparation of derivative works
+//  based upon this software are permitted. Any copy of this software or
+//  of any derivative work must include the above copyright notice, this
+//  paragraph and the one after it.  Any distribution of this software or
+//  derivative works must comply with all applicable laws.
+
+//  This software is made available AS IS, and COPYRIGHT OWNERS DISCLAIMS
+//  ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION THE
+//  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+//  PURPOSE, AND NOTWITHSTANDING ANY OTHER PROVISION CONTAINED HEREIN, ANY
+//  LIABILITY FOR DAMAGES RESULTING FROM THE SOFTWARE OR ITS USE IS
+//  EXPRESSLY DISCLAIMED, WHETHER ARISING IN CONTRACT, TORT (INCLUDING
+//  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
+//  OF THE POSSIBILITY OF SUCH DAMAGES.
+
+
+
+
+#include "service/protocol/model/{{ filename }}.hxx"
+
+#include "service/network/network.hpp"
+#include "service/network/logical_thread.hpp"
+#include "service/network/end_point.hpp"
+#include "log/log.hpp"
+
+#include "service/protocol/common/sender.hpp"
+
+#include "runtime/context.hpp"
+
+#include "common/assert_verify.hpp"
+
+namespace mega::network
+{
+namespace {{ filename }}
+{
+
+Request_Encoder::Request_Encoder( SenderFunctor pSender, const LogicalThreadID& logicalThreadID )
+    :   m_pSender( pSender )
+    ,   m_logicalThreadID( logicalThreadID )
+{
+}
+{% for request in requests %}
+{{ request.return_type }} Request_Encoder::{{ request.name }}
+( 
+{%for p in request.params%}
+    const {{p.type}}& 
+    {{p.name}}
+    {% if not loop.is_last %}, {%endif%}
+{%endfor%} 
+)
+{
+    Message result = m_pSender( MSG_{{ request.name }}_Request::make
+    (
+        m_logicalThreadID,
+        MSG_{{ request.name }}_Request
+        {
+{%for p in request.params%}
+            {{p.name}}{% if not loop.is_last %},{%endif%}
+{%endfor%} 
+        }
+    ) );
+{%if request.return_type != "void" %}
+    return {{ filename }}::MSG_{{ request.name }}_Response::get( result ).{{ request.return_msg_member }};
+{% endif %}
+}
+{% endfor %}
+
+Request_Sender::Request_Sender( LogicalThread&              _logicalthread_,
+                                std::shared_ptr< Sender >   _pSender,
+                                boost::asio::yield_context& _yield_ctx_ )
+    : m_logicalthread( _logicalthread_ )
+    , m_pSender( _pSender )
+    , m_yield_ctx( _yield_ctx_ )
+{
+}
+
+{% for request in requests %}
+{{ request.return_type }} Request_Sender::{{ request.name }}
+( 
+{%for p in request.params%}
+    const {{p.type}}& 
+    {{p.name}}
+    {% if not loop.is_last %}, {%endif%}
+{%endfor%} 
+)
+{
+    Message _response_;
+    {
+        // make out-going request
+        LogicalThreadBase::OutBoundRequestStack stack( m_logicalthread.shared_from_this() );
+
+        {
+            const Message _msg_ = MSG_{{ request.name }}_Request::make
+            (
+                m_logicalthread.getID(),
+                MSG_{{ request.name }}_Request
+                {
+{%for p in request.params%}
+                    {{p.name}}{% if not loop.is_last %},{%endif%}
+{%endfor%} 
+                }
+            );
+
+            // if performing inter-thread communication then post a ReceivedMessage
+            // that has the responseSender of the calling thread
+            if( LogicalThreadBase::Ptr pInterThread = 
+                std::dynamic_pointer_cast< LogicalThreadBase >( m_pSender ) )
+            {
+                ReceivedMessage _receivedMessage( m_logicalthread.shared_from_this(), _msg_ );
+                pInterThread->receiveMessage( _receivedMessage );
+            }
+            else
+            {
+                // otherwise just send to the sender
+                mega::runtime::_MPOContextStack _mpoStack;
+                if ( const boost::system::error_code ec = m_pSender->send( _msg_, m_yield_ctx ) )
+                {
+                    THROW_RTE( "Error writing: " << ec.what() );
+                }
+            }
+        }
+
+        _response_ = m_logicalthread.dispatchInBoundRequestsUntilResponse( m_yield_ctx );
+        if( _response_.getID() != {{ filename }}::MSG_{{ request.name }}_Response::ID )
+        {
+            switch( _response_.getID() )
+            {
+                case MSG_Error_Disconnect::ID:
+                {
+                    THROW_RTE( "Disconnect error received instead of MSG_{{ request.name }}_Response: " << 
+                        MSG_Error_Disconnect::get( _response_ ).what );
+                }
+                break;
+                case MSG_Error_Response::ID:
+                {
+                    THROW_RTE( "Error response received instead of MSG_{{ request.name }}_Response: " << 
+                        MSG_Error_Response::get( _response_ ).what );
+                }
+                break;
+                default:
+                {
+                    THROW_RTE( "Unexpected reponse of type: " << _response_ << 
+                        " instead of: {{ filename }}::MSG_{{ request.name }}_Response" );
+                }
+            }
+        }
+    }
+{%if request.return_type != "void" %}
+    return {{ filename }}::MSG_{{ request.name }}_Response::get( _response_ ).{{ request.return_msg_member }};
+{% endif %}
+}
+{% endfor %}
+
+
+External_Request_Sender::External_Request_Sender( LogicalThreadBase& sender, ExternalLogicalThread& receiver )
+    : m_sender( sender )
+    , m_receiver( receiver )
+{
+}
+
+{% for request in requests %}
+{{ request.return_type }} External_Request_Sender::{{ request.name }}
+( 
+{%for p in request.params%}
+    const {{p.type}}& 
+    {{p.name}}
+    {% if not loop.is_last %}, {%endif%}
+{%endfor%} 
+)
+{
+    LogicalThreadBase::OutBoundRequestStack stack( m_receiver.shared_from_this() );
+
+    {
+        const Message _msg_ = MSG_{{ request.name }}_Request::make
+        (
+            m_receiver.getID(),
+            MSG_{{ request.name }}_Request
+            {
+{%for p in request.params%}
+                {{p.name}}{% if not loop.is_last %},{%endif%}
+{%endfor%} 
+            }
+        );
+
+        const network::ReceivedMessage rMsg{ m_receiver.shared_from_this(), _msg_ };
+        m_sender.receiveMessage( rMsg );
+    }
+
+    const network::ReceivedMessage result = m_receiver.receive();
+
+    const Message _response_ = result.msg;
+    if( _response_.getID() != {{ filename }}::MSG_{{ request.name }}_Response::ID )
+    {
+        switch( _response_.getID() )
+        {
+            case MSG_Error_Disconnect::ID:
+            {
+                THROW_RTE( "Disconnect error received instead of MSG_{{ request.name }}_Response: " << 
+                    MSG_Error_Disconnect::get( _response_ ).what );
+            }
+            break;
+            case MSG_Error_Response::ID:
+            {
+                THROW_RTE( "Error response received instead of MSG_{{ request.name }}_Response: " << 
+                    MSG_Error_Response::get( _response_ ).what );
+            }
+            break;
+            default:
+            {
+                THROW_RTE( "Unexpected reponse of type: " << _response_ << 
+                    " instead of: {{ filename }}::MSG_{{ request.name }}_Response" );
+            }
+        }
+    }
+{%if request.return_type != "void" %}
+    return {{ filename }}::MSG_{{ request.name }}_Response::get( _response_ ).{{ request.return_msg_member }};
+{% endif %}
+}
+{% endfor %}
+
+
+Message Impl::dispatchInBoundRequest( const Message& _message_, boost::asio::yield_context& _yield_ctx_ )
+{
+    switch( _message_.getID() )
+    {
+       
+{% for request in requests %}
+        case {{ filename }}::MSG_{{ request.name }}_Request::ID:
+        {
+{% if length( request.params ) %}
+            auto& _msg_ = {{ filename }}::MSG_{{ request.name }}_Request::get( _message_ );
+{% endif %}
+{% if request.return_type == "void" %}
+            {{ request.name }}
+            ( 
+{%for p in request.params%}
+                _msg_.{{p.name}},
+{%endfor%}
+                _yield_ctx_ 
+            );
+            return MSG_{{ request.name }}_Response::make
+            (
+                _message_.getLogicalThreadID(),
+                MSG_{{ request.name }}_Response{}
+            );
+{% else %}
+            return MSG_{{ request.name }}_Response::make
+            (
+                _message_.getLogicalThreadID(),
+                MSG_{{ request.name }}_Response
+                {
+                    {{ request.name }}
+                    ( 
+{%for p in request.params%}
+                        _msg_.{{p.name}},
+{%endfor%}
+                        _yield_ctx_ 
+                    )
+                }
+            );
+{% endif %}
+        }
+        break;
+{% endfor %}
+        default:
+            return Message{};
+    }
+}
+
+} // namespace {{ filename }}
+} // namespace mega::network
