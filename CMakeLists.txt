@@ -49,6 +49,7 @@ include_directories(${SRC_ROOT_DIR})
 
 add_subdirectory( common )
 add_subdirectory( database )
+add_subdirectory( pipeline )
 add_subdirectory( meta )
 add_subdirectory( service )
 

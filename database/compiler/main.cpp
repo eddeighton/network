@@ -219,7 +219,7 @@ int main( int argc, const char* argv[] )
         po::store( po::command_line_parser( argc, argv ).options( commandOptions ).positional( p ).run(), vm );
         po::notify( vm );
 
-        if( bHelp )
+        if( bhelp )
         {
             std::cout << commandOptions << "\n";
         }
