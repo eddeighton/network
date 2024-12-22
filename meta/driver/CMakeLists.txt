@@ -21,4 +21,5 @@ target_link_libraries( meta pantor::inja )
 target_link_libraries( meta nlohmann_json::nlohmann_json )
 target_link_libraries( meta GTest::gtest GTest::gtest_main )
 target_link_libraries( meta Common::commonlib )
+target_link_libraries( meta pipeline )
 

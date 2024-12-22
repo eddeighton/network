@@ -116,9 +116,7 @@ class Pipeline
 protected:
     Pipeline();
 
-    virtual void initialise( const mega::utilities::ToolChain& toolChain, const Configuration& configuration,
-                             std::ostream& osLog )
-        = 0;
+    virtual void initialise( const Configuration& configuration, std::ostream& osLog ) = 0;
 
 public:
     using Ptr = boost::shared_ptr< Pipeline >;
@@ -134,17 +132,25 @@ public:
 class Registry
 {
 public:
-    static Pipeline::Ptr getPipeline( const mega::utilities::ToolChain& toolChain, const Configuration& configuration,
-                                      std::ostream& osLog );
+    static Pipeline::Ptr getPipeline( const Configuration& configuration, std::ostream& osLog );
 };
 
-PipelineResult runPipelineLocally( const boost::filesystem::path&           stashDir,
+
+PipelineResult runPipelineLocally( const boost::filesystem::path& stashDir,
                                    std::optional< boost::filesystem::path > symbolFile,
-                                   const mega::utilities::ToolChain&        toolChain,
-                                   const mega::pipeline::Configuration& pipelineConfig, const std::string& strTaskName,
-                                   const std::string&             strSourceFile,
-                                   const boost::filesystem::path& inputPipelineResultPath, bool bForceNoStash,
-                                   bool bExecuteUpTo, bool bInclusive, std::ostream& osLog );
+                                   mega::pipeline::DependencyProvider* pDependencyProvider,
+                                   const mega::pipeline::Configuration& pipelineConfig,
+                                   const std::string& strTaskName,
+                                   const std::string& strSourceFile,
+                                   const boost::filesystem::path& inputPipelineResultPath,
+                                   bool bForceNoStash,
+                                   bool bExecuteUpTo,
+                                   bool bInclusive,
+                                   std::ostream& osLog );
+
+PipelineResult runPipelineLocally( const boost::filesystem::path& stashDir,
+                                   const mega::pipeline::Configuration& pipelineConfig,
+                                   std::ostream& osLog );
 
 } // namespace mega::pipeline
 

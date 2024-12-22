@@ -232,8 +232,7 @@ Pipeline::~Pipeline() = default;
 
 DependencyProvider::~DependencyProvider() = default;
 
-Pipeline::Ptr Registry::getPipeline( const mega::utilities::ToolChain& toolChain, const Configuration& configuration,
-                                     std::ostream& osLog )
+Pipeline::Ptr Registry::getPipeline( const Configuration& configuration, std::ostream& osLog )
 {
     try
     {
@@ -257,7 +256,7 @@ Pipeline::Ptr Registry::getPipeline( const mega::utilities::ToolChain& toolChain
         Pipeline::Ptr pPipeline
             = boost::dll::import_symbol< mega::pipeline::Pipeline >( pipelineLibrary, "mega_pipeline" );
 
-        pPipeline->initialise( toolChain, configuration, osLog );
+        pPipeline->initialise( configuration, osLog );
 
         return pPipeline;
     }
@@ -266,14 +265,17 @@ Pipeline::Ptr Registry::getPipeline( const mega::utilities::ToolChain& toolChain
         THROW_RTE( "Failed to load pipeline: " << configuration.get() << " exception: " << ex.what() );
     }
 }
-
-PipelineResult runPipelineLocally( const boost::filesystem::path&           stashDir,
+PipelineResult runPipelineLocally( const boost::filesystem::path& stashDir,
                                    std::optional< boost::filesystem::path > symbolFile,
-                                   const mega::utilities::ToolChain&        toolChain,
-                                   const mega::pipeline::Configuration& pipelineConfig, const std::string& strTaskName,
-                                   const std::string&             strSourceFile,
-                                   const boost::filesystem::path& inputPipelineResultPath, bool bForceNoStash,
-                                   bool bExecuteUpTo, bool bInclusive, std::ostream& osLog )
+                                   mega::pipeline::DependencyProvider* pDependencyProvider,
+                                   const mega::pipeline::Configuration& pipelineConfig,
+                                   const std::string& strTaskName,
+                                   const std::string& strSourceFile,
+                                   const boost::filesystem::path& inputPipelineResultPath,
+                                   bool bForceNoStash,
+                                   bool bExecuteUpTo,
+                                   bool bInclusive,
+                                   std::ostream& osLog )
 {
     VERIFY_RTE_MSG( !stashDir.empty(), "Local pipeline execution requires stash directry" );
     task::Stash          stash( stashDir );
@@ -298,7 +300,7 @@ PipelineResult runPipelineLocally( const boost::filesystem::path&           stas
     }
     osLog << "Initialising pipeline" << std::endl;
 
-    mega::pipeline::Pipeline::Ptr pPipeline = mega::pipeline::Registry::getPipeline( toolChain, pipelineConfig, osLog );
+    mega::pipeline::Pipeline::Ptr pPipeline = mega::pipeline::Registry::getPipeline( pipelineConfig, osLog );
 
     mega::pipeline::PipelineResult pipelineResult( true, "", buildHashCodes.get() );
 
@@ -380,22 +382,18 @@ PipelineResult runPipelineLocally( const boost::filesystem::path&           stas
 
     struct DependenciesImpl : public mega::pipeline::DependencyProvider
     {
-        boost::shared_ptr< EG_PARSER_INTERFACE > m_pParser;
-        DependenciesImpl( const mega::utilities::ToolChain& toolChain )
+        mega::pipeline::DependencyProvider* m_pDependencyProvider;
+        DependenciesImpl( mega::pipeline::DependencyProvider* pDependencyProvider )
+        :   m_pDependencyProvider( pDependencyProvider )
         {
-            try
-            {
-                m_pParser = boost::dll::import_symbol< EG_PARSER_INTERFACE >(
-                    toolChain.parserPath, "g_parserSymbol", boost::dll::load_mode::append_decorations );
-                VERIFY_RTE_MSG( m_pParser, "Failed to load parser" );
-            }
-            catch( std::exception& ex )
-            {
-                THROW_RTE( "Failed to load parser dll with exception: " << ex.what() );
-            }
         }
-        EG_PARSER_INTERFACE* getParser() { return m_pParser.get(); }
-    } dependencies( toolChain );
+        EG_PARSER_INTERFACE* getParser()
+        {
+            VERIFY_RTE_MSG( m_pDependencyProvider,
+                    "Invalid request for EG_PARSER_INTERFACE from dependency provider" );
+            return m_pDependencyProvider->getParser();
+        }
+    } dependencies( pDependencyProvider );
 
     if( !strTaskName.empty() && !bExecuteUpTo )
     {
@@ -479,6 +477,16 @@ PipelineResult runPipelineLocally( const boost::filesystem::path&           stas
     }
 
     return pipelineResult;
+}
+
+PipelineResult runPipelineLocally( const boost::filesystem::path&           stashDir,
+                                   const mega::pipeline::Configuration& pipelineConfig,
+                                   std::ostream& osLog )
+{
+    std::string strTaskName, strSourceFile;
+    boost::filesystem::path inputPipelineResultPath;
+    return runPipelineLocally( stashDir, {}, nullptr, pipelineConfig, strTaskName, strSourceFile,
+        inputPipelineResultPath, false, false, true, osLog );
 }
 
 } // namespace mega::pipeline
