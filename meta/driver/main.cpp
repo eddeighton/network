@@ -26,15 +26,18 @@
 #include <iostream>
 
 
+auto test = boost::filesystem::temp_directory_path();
+
+
 int main( int argc, const char* argv[] )
 {
+    std::cout << test.string()  << std::endl;
+
     namespace po = boost::program_options;
     try
     {
         bool bHelp        = false;
         bool bGeneralWait = false;
-
-        auto test = boost::filesystem::temp_directory_path();
 
         std::string             projectName;
         boost::filesystem::path srcDir, buildDir, installDir, templatesDir, stashDir, metaPipelinePath;
