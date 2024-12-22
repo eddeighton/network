@@ -8,6 +8,7 @@ add_executable( meta
                 main.cpp 
 )
 
+
 add_dependencies( meta database_compiler_driver )
 
 # allow access to source folder for tests - NOTE order sensitive here

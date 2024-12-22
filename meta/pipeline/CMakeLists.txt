@@ -7,7 +7,7 @@ add_library( meta_pipeline SHARED
     ${DATABASE_GENERATED_STAGE_FILES} 
 
     meta.cpp
-
+    task_test.cpp
 )
 
 #set_property(TARGET meta_pipeline PROPERTY CMAKE_POSITION_INDEPENDENT_CODE ON)

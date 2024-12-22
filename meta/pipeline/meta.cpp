@@ -29,6 +29,10 @@
 namespace mega::meta
 {
 
+
+extern void task_test();
+
+
 namespace
 {
 // meta pipeline concrete Task
@@ -88,7 +92,7 @@ class MetaPipeline : public pipeline::Pipeline
 
         pipeline::Dependencies dependencies;
 
-        const TskDesc generateComponents = encode( Task{ "Testing" } );
+        const TskDesc generateComponents = encode( Task{ "test" } );
         dependencies.add( generateComponents, {} );
 
         return { dependencies };
@@ -104,6 +108,15 @@ class MetaPipeline : public pipeline::Pipeline
         const Task task = decode( pipelineTask );
 
         mega::io::MetaEnvironment environment( config.directories );
+
+        if( task.strTaskName == "test" )
+        {
+            mega::meta::task_test();
+        }
+        else
+        {
+            THROW_RTE( "Unknown task name: " << task.strTaskName );
+        }
 
     }
 
