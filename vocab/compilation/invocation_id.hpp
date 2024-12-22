@@ -20,9 +20,9 @@
 #ifndef INVOCATION_ID_12_AUG_2022
 #define INVOCATION_ID_12_AUG_2022
 
-#include "mega/values/compilation/interface/symbol_id.hpp"
-#include "mega/values/compilation/interface/type_id.hpp"
-#include "mega/values/compilation/interface/symbol_id.hpp"
+#include "vocab/compilation/interface/symbol_id.hpp"
+#include "vocab/compilation/interface/type_id.hpp"
+#include "vocab/compilation/interface/symbol_id.hpp"
 
 #include "common/assert_verify.hpp"
 #include "common/serialisation.hpp"

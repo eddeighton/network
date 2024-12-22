@@ -21,7 +21,7 @@
 #ifndef GUARD_2023_September_02_logical_value
 #define GUARD_2023_September_02_logical_value
 
-#include "mega/values/native_types.hpp"
+#include "vocab/native_types.hpp"
 
 namespace mega::runtime
 {

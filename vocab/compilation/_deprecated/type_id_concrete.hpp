@@ -21,9 +21,9 @@
 #ifndef GUARD_03_NOV_2023_CONCRETE_TYPE_ID
 #define GUARD_03_NOV_2023_CONCRETE_TYPE_ID
 
-#include "mega/values/compilation/type_id.h"
+#include "vocab/compilation/type_id.h"
 
-#include "mega/values/native_types.hpp"
+#include "vocab/native_types.hpp"
 
 #include "common/serialisation.hpp"
 

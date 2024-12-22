@@ -20,7 +20,7 @@
 #ifndef MEGA_NATIVE_TYPES_18_SEPT_2022
 #define MEGA_NATIVE_TYPES_18_SEPT_2022
 
-#include "mega/values/native_types.h"
+#include "vocab/native_types.h"
 
 namespace mega
 {

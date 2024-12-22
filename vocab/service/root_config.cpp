@@ -17,7 +17,7 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
-#include "mega/values/service/root_config.hpp"
+#include "vocab/service/root_config.hpp"
 
 namespace mega::service
 {

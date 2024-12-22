@@ -17,7 +17,7 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
-#include "mega/values/compilation/modes.hpp"
+#include "vocab/compilation/modes.hpp"
 
 #include "common/assert_verify.hpp"
 

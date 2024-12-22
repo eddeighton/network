@@ -17,7 +17,7 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
-#include "mega/values/compilation/megastructure_installation.hpp"
+#include "vocab/compilation/megastructure_installation.hpp"
 
 #include "common/assert_verify.hpp"
 #include "common/file.hpp"

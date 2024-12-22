@@ -18,7 +18,7 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
-#include "mega/values/compilation/anon_symbols.hpp"
+#include "vocab/compilation/anon_symbols.hpp"
 
 namespace mega
 {

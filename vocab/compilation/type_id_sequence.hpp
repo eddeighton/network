@@ -21,9 +21,9 @@
 #ifndef GUARD_2023_October_20_type_id_sequence_123
 #define GUARD_2023_October_20_type_id_sequence_123
 
-#include "mega/values/compilation/interface/symbol_id.hpp"
-#include "mega/values/compilation/interface/type_id.hpp"
-#include "mega/values/compilation/concrete/type_id.hpp"
+#include "vocab/compilation/interface/symbol_id.hpp"
+#include "vocab/compilation/interface/type_id.hpp"
+#include "vocab/compilation/concrete/type_id.hpp"
 
 #include "common/string.hpp"
 

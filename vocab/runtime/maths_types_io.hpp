@@ -21,7 +21,7 @@
 #ifndef GUARD_2023_April_14_maths_types_io
 #define GUARD_2023_April_14_maths_types_io
 
-#include "mega/values/runtime/maths_types.hpp"
+#include "vocab/runtime/maths_types.hpp"
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>

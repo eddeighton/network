@@ -21,15 +21,15 @@
 #ifndef GUARD_2023_January_07_mpo
 #define GUARD_2023_January_07_mpo
 
-#include "mega/values/runtime/inline.h"
+#include "vocab/runtime/inline.h"
 
-#include "mega/values/runtime/mp.hpp"
+#include "vocab/runtime/mp.hpp"
 
-#include "mega/values/native_types.hpp"
-#include "mega/values/runtime/machine_id.hpp"
-#include "mega/values/runtime/process_id.hpp"
-#include "mega/values/runtime/owner_id.hpp"
-#include "mega/values/runtime/mp.hpp"
+#include "vocab/native_types.hpp"
+#include "vocab/runtime/machine_id.hpp"
+#include "vocab/runtime/process_id.hpp"
+#include "vocab/runtime/owner_id.hpp"
+#include "vocab/runtime/mp.hpp"
 
 #include "common/serialisation.hpp"
 

@@ -21,19 +21,19 @@
 #ifndef GUARD_2023_December_03_symbol_table
 #define GUARD_2023_December_03_symbol_table
 
-#include "mega/values/native_types.hpp"
+#include "vocab/native_types.hpp"
 
-#include "mega/values/compilation/interface/symbol_id.hpp"
-#include "mega/values/compilation/interface/type_id.hpp"
+#include "vocab/compilation/interface/symbol_id.hpp"
+#include "vocab/compilation/interface/type_id.hpp"
 
-#include "mega/values/compilation/concrete/type_id.hpp"
-#include "mega/values/compilation/concrete/type_id_instance.hpp"
+#include "vocab/compilation/concrete/type_id.hpp"
+#include "vocab/compilation/concrete/type_id_instance.hpp"
 
-#include "mega/values/compilation/type_id_sequence.hpp"
-#include "mega/values/compilation/reserved_symbols.hpp"
+#include "vocab/compilation/type_id_sequence.hpp"
+#include "vocab/compilation/reserved_symbols.hpp"
 
-#include "mega/eg_common_strings.hpp"
-#include "mega/common_strings.hpp"
+#include "vocab/eg_common_strings.hpp"
+#include "vocab/common_strings.hpp"
 
 #include "common/serialisation.hpp"
 #include "common/hash.hpp"
@@ -236,5 +236,7 @@ private:
 };
 
 } // namespace mega
+
+#include "symbol_table.ipp"
 
 #endif // GUARD_2023_December_03_symbol_table

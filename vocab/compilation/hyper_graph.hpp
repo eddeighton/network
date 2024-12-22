@@ -21,7 +21,7 @@
 #ifndef GUARD_2023_September_21_hyper_graph
 #define GUARD_2023_September_21_hyper_graph
 
-#include "mega/values/compilation/cardinality.hpp"
+#include "vocab/compilation/cardinality.hpp"
 
 #include <ostream>
 

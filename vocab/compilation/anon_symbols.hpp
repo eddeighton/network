@@ -21,7 +21,7 @@
 #ifndef GUARD_2023_December_21_anon_symbols
 #define GUARD_2023_December_21_anon_symbols
 
-#include "mega/values/compilation/interface/symbol_id.hpp"
+#include "vocab/compilation/interface/symbol_id.hpp"
 
 #include <array>
 #include <string>

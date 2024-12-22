@@ -18,7 +18,7 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
-#include "mega/values/compilation/sub_type_instance.hpp"
+#include "vocab/compilation/sub_type_instance.hpp"
 
 #include <istream>
 #include <ostream>

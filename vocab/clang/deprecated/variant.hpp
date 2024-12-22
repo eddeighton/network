@@ -22,8 +22,8 @@
 #ifndef EG_VARIANT
 #define EG_VARIANT
 
-#include "mega/values/compilation/operation_id.hpp"
-#include "mega/values/runtime/pointer.hpp"
+#include "vocab/compilation/operation_id.hpp"
+#include "vocab/runtime/pointer.hpp"
 //#include "result_type.hpp"
 
 namespace mega

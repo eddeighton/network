@@ -18,8 +18,8 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
-#include "mega/values/native_types_io.hpp"
-#include "mega/values/native_types.hpp"
+#include "vocab/native_types_io.hpp"
+#include "vocab/native_types.hpp"
 
 #include "common/string.hpp"
 
@@ -37,6 +37,6 @@ namespace std
         os << ')';                                                                 \
         return os;                                                                 \
     }
-#include "mega/values/native_types.hxx"
+#include "vocab/native_types.hxx"
 #undef NATIVE_TYPE
 }

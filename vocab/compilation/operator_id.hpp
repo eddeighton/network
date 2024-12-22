@@ -21,7 +21,7 @@
 #ifndef GUARD_2023_October_03_operator_id
 #define GUARD_2023_October_03_operator_id
 
-#include "mega/values/compilation/interface/type_id.hpp"
+#include "vocab/compilation/interface/type_id.hpp"
 
 #include "common/serialisation.hpp"
 

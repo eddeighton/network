@@ -21,9 +21,9 @@
 #ifndef GUARD_2023_December_12_concrete_sub_object_id
 #define GUARD_2023_December_12_concrete_sub_object_id
 
-#include "mega/values/compilation/concrete/inline.h"
+#include "vocab/compilation/concrete/inline.h"
 
-#include "mega/values/native_types.hpp"
+#include "vocab/native_types.hpp"
 
 #include "common/serialisation.hpp"
 

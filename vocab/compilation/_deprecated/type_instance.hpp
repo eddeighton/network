@@ -21,13 +21,13 @@
 #ifndef GUARD_2023_January_07_type_instance
 #define GUARD_2023_January_07_type_instance
 
-#include "mega/values/native_types.hpp"
+#include "vocab/native_types.hpp"
 
-#include "mega/values/compilation/type_instance.h"
+#include "vocab/compilation/type_instance.h"
 
-#include "mega/values/compilation/instance.hpp"
-#include "mega/values/compilation/type_id_concrete.hpp"
-#include "mega/values/compilation/sub_type_instance.hpp"
+#include "vocab/compilation/instance.hpp"
+#include "vocab/compilation/type_id_concrete.hpp"
+#include "vocab/compilation/sub_type_instance.hpp"
 
 #include <limits>
 #include <ostream>

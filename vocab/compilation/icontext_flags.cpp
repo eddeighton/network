@@ -18,7 +18,7 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
-#include "mega/values/compilation/icontext_flags.hpp"
+#include "vocab/compilation/icontext_flags.hpp"
 
 #include "common/assert_verify.hpp"
 

@@ -18,7 +18,7 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
-#include "mega/values/compilation/hyper_graph.hpp"
+#include "vocab/compilation/hyper_graph.hpp"
 
 #include "common/assert_verify.hpp"
 

@@ -21,7 +21,7 @@
 #ifndef GUARD_2024_January_10_reserved_symbol
 #define GUARD_2024_January_10_reserved_symbol
 
-#include "mega/values/compilation/interface/symbol_id.hpp"
+#include "vocab/compilation/interface/symbol_id.hpp"
 
 #include <array>
 #include <string>
@@ -60,5 +60,7 @@ const std::string&             getReservedSymbol( SymbolID symbolID );
 const ReservedSymbolNameArray& getReservedSymbols();
 
 } // namespace mega::interface
+
+#include "reserved_symbols.ipp"
 
 #endif // GUARD_2024_January_10_reserved_symbol

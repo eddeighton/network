@@ -21,9 +21,9 @@
 #ifndef GUARD_2023_December_11_timestamp
 #define GUARD_2023_December_11_timestamp
 
-#include "mega/values/runtime/inline.h"
+#include "vocab/runtime/inline.h"
 
-#include "mega/values/native_types.hpp"
+#include "vocab/native_types.hpp"
 
 #include "common/serialisation.hpp"
 

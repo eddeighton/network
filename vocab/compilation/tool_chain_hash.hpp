@@ -20,7 +20,7 @@
 #ifndef TOOLCHAIN_HASH_03_JUNE_20221
 #define TOOLCHAIN_HASH_03_JUNE_20221
 
-#include "mega/values/native_types.hpp"
+#include "vocab/native_types.hpp"
 
 #include "common/serialisation.hpp"
 

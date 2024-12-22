@@ -17,17 +17,16 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
-#ifndef EG_OPERATION_TYPES
-#define EG_OPERATION_TYPES
+#ifndef GUARD_2023_December_30_common_strings
+#define GUARD_2023_December_30_common_strings
 
-#include "vocab/clang/attribute_id.hpp"
+#include "vocab/eg_common_strings.hpp"
 
-struct [[clang::eg_type( mega::id_OPERATION_IMP_NOPARAMS )]] __eg_ImpNoParams
+namespace mega
 {
-};
+inline static const char* const EG_ROOT = "Root";
+inline static const char* const EG_OWNER = "Owner";
+inline static const char* const EG_STATE = "State";
+} // namespace mega
 
-struct [[clang::eg_type( mega::id_OPERATION_IMP_PARAMS )]] __eg_ImpParams
-{
-};
-
-#endif // EG_OPERATION_TYPES
+#endif // GUARD_2023_December_30_common_strings

@@ -20,16 +20,16 @@
 #ifndef MEGA_REFERENCE_18_SEPT_2022
 #define MEGA_REFERENCE_18_SEPT_2022
 
-#include "mega/values/runtime/inline.h"
+#include "vocab/runtime/inline.h"
 
-#include "mega/values/native_types.hpp"
+#include "vocab/native_types.hpp"
 
-#include "mega/values/compilation/concrete/type_id_instance.hpp"
+#include "vocab/compilation/concrete/type_id_instance.hpp"
 
-#include "mega/values/runtime/allocation_id.hpp"
-#include "mega/values/runtime/machine_id.hpp"
-#include "mega/values/runtime/mp.hpp"
-#include "mega/values/runtime/mpo.hpp"
+#include "vocab/runtime/allocation_id.hpp"
+#include "vocab/runtime/machine_id.hpp"
+#include "vocab/runtime/mp.hpp"
+#include "vocab/runtime/mpo.hpp"
 
 #include "common/serialisation.hpp"
 #include "common/assert_verify.hpp"

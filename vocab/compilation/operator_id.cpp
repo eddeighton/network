@@ -21,7 +21,7 @@
 #ifndef GUARD_2023_October_03_operator_io
 #define GUARD_2023_October_03_operator_io
 
-#include "mega/values/compilation/operator_id.hpp"
+#include "vocab/compilation/operator_id.hpp"
 
 #include <ostream>
 #include <array>

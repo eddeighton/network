@@ -21,7 +21,7 @@
 #ifndef GUARD_2023_July_28_source_location
 #define GUARD_2023_July_28_source_location
 
-#include "mega/values/native_types.hpp"
+#include "vocab/native_types.hpp"
 
 namespace mega
 {

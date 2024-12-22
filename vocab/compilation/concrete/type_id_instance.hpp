@@ -21,12 +21,12 @@
 #ifndef GUARD_2023_December_12_concrete_type_id_instance
 #define GUARD_2023_December_12_concrete_type_id_instance
 
-#include "mega/values/compilation/concrete/inline.h"
+#include "vocab/compilation/concrete/inline.h"
 
-#include "mega/values/compilation/concrete/type_id.hpp"
-#include "mega/values/compilation/concrete/instance.hpp"
+#include "vocab/compilation/concrete/type_id.hpp"
+#include "vocab/compilation/concrete/instance.hpp"
 
-#include "mega/values/native_types.hpp"
+#include "vocab/native_types.hpp"
 
 #include "common/serialisation.hpp"
 

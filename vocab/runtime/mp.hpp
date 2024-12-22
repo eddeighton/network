@@ -21,11 +21,11 @@
 #ifndef GUARD_2024_January_11_mp
 #define GUARD_2024_January_11_mp
 
-#include "mega/values/runtime/inline.h"
+#include "vocab/runtime/inline.h"
 
-#include "mega/values/native_types.hpp"
-#include "mega/values/runtime/machine_id.hpp"
-#include "mega/values/runtime/process_id.hpp"
+#include "vocab/native_types.hpp"
+#include "vocab/runtime/machine_id.hpp"
+#include "vocab/runtime/process_id.hpp"
 
 #include "common/serialisation.hpp"
 

@@ -20,7 +20,7 @@
 #ifndef ROOT_CONFIG_20_JUNE_2022
 #define ROOT_CONFIG_20_JUNE_2022
 
-#include "mega/values/service/project.hpp"
+#include "vocab/service/project.hpp"
 
 #include <boost/serialization/nvp.hpp>
 

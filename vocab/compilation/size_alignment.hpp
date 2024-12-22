@@ -21,7 +21,7 @@
 #ifndef GUARD_2023_sizealign_21_oct
 #define GUARD_2023_sizealign_21_oct
 
-#include "mega/values/native_types.hpp"
+#include "vocab/native_types.hpp"
 
 #ifndef MEGAJIT
 #include <ostream>

@@ -18,9 +18,9 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
-#include "mega/values/compilation/symbol_table.hpp"
+#include "vocab/compilation/symbol_table.hpp"
 
-#include "mega/values/compilation/reserved_symbols.hpp"
+#include "vocab/compilation/reserved_symbols.hpp"
 
 namespace mega
 {
@@ -28,7 +28,7 @@ namespace mega
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-interface::TypeID SymbolTable::InterfaceObject::find( const interface::SymbolIDSequence& symbolVector ) const
+inline interface::TypeID SymbolTable::InterfaceObject::find( const interface::SymbolIDSequence& symbolVector ) const
 {
     auto iFind = m_subTypes.find( symbolVector );
     if( iFind != m_subTypes.end() )
@@ -43,7 +43,7 @@ interface::TypeID SymbolTable::InterfaceObject::find( const interface::SymbolIDS
     }
 }
 
-interface::SubObjectID SymbolTable::InterfaceObject::add( const interface::SymbolIDSequence& symbolVector )
+inline interface::SubObjectID SymbolTable::InterfaceObject::add( const interface::SymbolIDSequence& symbolVector )
 {
     auto iFind = m_subTypes.find( symbolVector );
     if( iFind != m_subTypes.end() )
@@ -60,7 +60,7 @@ interface::SubObjectID SymbolTable::InterfaceObject::add( const interface::Symbo
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-concrete::TypeID SymbolTable::ConcreteObject::find( const interface::TypeIDSequence& typeIDSequence ) const
+inline concrete::TypeID SymbolTable::ConcreteObject::find( const interface::TypeIDSequence& typeIDSequence ) const
 {
     auto iFind = m_subTypes.find( typeIDSequence );
     if( iFind != m_subTypes.end() )
@@ -73,7 +73,7 @@ concrete::TypeID SymbolTable::ConcreteObject::find( const interface::TypeIDSeque
     }
 }
 
-concrete::SubObjectID SymbolTable::ConcreteObject::add( const interface::TypeIDSequence& typeIDSequence )
+inline concrete::SubObjectID SymbolTable::ConcreteObject::add( const interface::TypeIDSequence& typeIDSequence )
 {
     auto iFind = m_subTypes.find( typeIDSequence );
     if( iFind != m_subTypes.end() )
@@ -90,7 +90,7 @@ concrete::SubObjectID SymbolTable::ConcreteObject::add( const interface::TypeIDS
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-SymbolTable::SymbolTable()
+inline SymbolTable::SymbolTable()
 {
     // add reserved symbols
     {
@@ -134,14 +134,14 @@ SymbolTable::SymbolTable()
     m_concreteMap.insert( { { interface::ROOT_TYPE_ID }, concrete::ROOT_OBJECT_ID } );
 }
 
-const std::string& SymbolTable::getSymbol( const interface::SymbolID& symbolID ) const
+inline const std::string& SymbolTable::getSymbol( const interface::SymbolID& symbolID ) const
 {
     const std::size_t symbolIndex = symbolID.getValue();
     VERIFY_RTE_MSG( symbolIndex < m_symbolVector.size(), "Invalid symbol index" );
     return m_symbolVector[ symbolIndex ];
 }
 
-std::optional< interface::SymbolID > SymbolTable::findSymbol( const SymbolTraits::Symbol& symbol ) const
+inline std::optional< interface::SymbolID > SymbolTable::findSymbol( const SymbolTraits::Symbol& symbol ) const
 {
     auto iFind = m_symbolMap.find( symbol );
     if( iFind != m_symbolMap.end() )
@@ -154,7 +154,7 @@ std::optional< interface::SymbolID > SymbolTable::findSymbol( const SymbolTraits
     }
 }
 
-const SymbolTable::InterfaceObject* SymbolTable::findInterfaceObject( const interface::SymbolIDSequence& symbolVector ) const
+inline const SymbolTable::InterfaceObject* SymbolTable::findInterfaceObject( const interface::SymbolIDSequence& symbolVector ) const
 {
     auto iFind = m_interfaceMap.find( symbolVector );
     if( iFind != m_interfaceMap.end() )
@@ -167,7 +167,7 @@ const SymbolTable::InterfaceObject* SymbolTable::findInterfaceObject( const inte
     }
 }
 
-const SymbolTable::ConcreteObject* SymbolTable::findConcreteObject( const interface::TypeIDSequence& typeIDSequence ) const
+inline const SymbolTable::ConcreteObject* SymbolTable::findConcreteObject( const interface::TypeIDSequence& typeIDSequence ) const
 {
     auto iFind = m_concreteMap.find( typeIDSequence );
     if( iFind != m_concreteMap.end() )
@@ -180,7 +180,7 @@ const SymbolTable::ConcreteObject* SymbolTable::findConcreteObject( const interf
     }
 }
 
-void SymbolTable::add( const SymbolRequest& request )
+inline void SymbolTable::add( const SymbolRequest& request )
 {
     for( const auto& str : request.newSymbols )
     {

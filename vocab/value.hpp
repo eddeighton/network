@@ -31,36 +31,36 @@
 // #include "database/manifest_data.hpp"
 // #include "database/component_info.hpp"
 
-#include "mega/values/compilation/interface/object_id.hpp"
-#include "mega/values/compilation/interface/relation_id.hpp"
-#include "mega/values/compilation/interface/sub_object_id.hpp"
-#include "mega/values/compilation/interface/symbol_id.hpp"
-#include "mega/values/compilation/interface/type_id.hpp"
+#include "vocab/compilation/interface/object_id.hpp"
+#include "vocab/compilation/interface/relation_id.hpp"
+#include "vocab/compilation/interface/sub_object_id.hpp"
+#include "vocab/compilation/interface/symbol_id.hpp"
+#include "vocab/compilation/interface/type_id.hpp"
 
-#include "mega/values/compilation/concrete/instance.hpp"
-#include "mega/values/compilation/concrete/object_id.hpp"
-#include "mega/values/compilation/concrete/sub_object_id_instance.hpp"
-#include "mega/values/compilation/concrete/sub_object_id.hpp"
-#include "mega/values/compilation/concrete/type_id_instance.hpp"
-#include "mega/values/compilation/concrete/type_id.hpp"
+#include "vocab/compilation/concrete/instance.hpp"
+#include "vocab/compilation/concrete/object_id.hpp"
+#include "vocab/compilation/concrete/sub_object_id_instance.hpp"
+#include "vocab/compilation/concrete/sub_object_id.hpp"
+#include "vocab/compilation/concrete/type_id_instance.hpp"
+#include "vocab/compilation/concrete/type_id.hpp"
 
-#include "mega/values/compilation/compilation_configuration.hpp"
-#include "mega/values/compilation/icontext_flags.hpp"
-#include "mega/values/compilation/invocation_id.hpp"
-#include "mega/values/compilation/megastructure_installation.hpp"
-#include "mega/values/compilation/size_alignment.hpp"
-#include "mega/values/compilation/type_id_sequence.hpp"
+#include "vocab/compilation/compilation_configuration.hpp"
+#include "vocab/compilation/icontext_flags.hpp"
+#include "vocab/compilation/invocation_id.hpp"
+#include "vocab/compilation/megastructure_installation.hpp"
+#include "vocab/compilation/size_alignment.hpp"
+#include "vocab/compilation/type_id_sequence.hpp"
 
-#include "mega/values/runtime/mp.hpp"
-#include "mega/values/runtime/mpo.hpp"
-#include "mega/values/runtime/pointer.hpp"
-#include "mega/values/runtime/timestamp.hpp"
+#include "vocab/runtime/mp.hpp"
+#include "vocab/runtime/mpo.hpp"
+#include "vocab/runtime/pointer.hpp"
+#include "vocab/runtime/timestamp.hpp"
 
-#include "mega/values/service/logical_thread_id.hpp"
-#include "mega/values/service/node.hpp"
-#include "mega/values/service/program.hpp"
-#include "mega/values/service/project.hpp"
-#include "mega/values/service/root_config.hpp"
+#include "vocab/service/logical_thread_id.hpp"
+#include "vocab/service/node.hpp"
+#include "vocab/service/program.hpp"
+#include "vocab/service/project.hpp"
+#include "vocab/service/root_config.hpp"
 
 #include <boost/filesystem/path.hpp>
 
@@ -73,7 +73,7 @@ namespace mega
 using Value = std::variant<
 
 #define MEGA_VALUE_TYPE( TypeName ) TypeName,
-#include "mega/values/value.hxx"
+#include "vocab/value.hxx"
 #undef MEGA_VALUE_TYPE
 
     std::string, boost::filesystem::path >;

@@ -21,12 +21,12 @@
 #ifndef GUARD_2023_December_26_typed_pointer
 #define GUARD_2023_December_26_typed_pointer
 
-#include "mega/values/compilation/interface/type_id.hpp"
+#include "vocab/compilation/interface/type_id.hpp"
 
-#include "mega/values/runtime/pointer.hpp"
+#include "vocab/runtime/pointer.hpp"
 
-#include "mega/values/clang/result_type.hpp"
-#include "mega/values/clang/attribute_id.hpp"
+#include "vocab/clang/result_type.hpp"
+#include "vocab/clang/attribute_id.hpp"
 
 template< typename Context, typename TypePath, typename Operation, typename... Args >
 static void invoke_impl_void( Context& context, Args... args );

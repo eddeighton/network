@@ -21,9 +21,9 @@
 #ifndef GUARD_2024_January_11_process_id
 #define GUARD_2024_January_11_process_id
 
-#include "mega/values/runtime/inline.h"
+#include "vocab/runtime/inline.h"
 
-#include "mega/values/native_types.hpp"
+#include "vocab/native_types.hpp"
 
 #include "common/serialisation.hpp"
 

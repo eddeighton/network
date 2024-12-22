@@ -21,7 +21,7 @@
 #ifndef GUARD_2023_September_02_any_io
 #define GUARD_2023_September_02_any_io
 
-#include "mega/values/runtime/any.hpp"
+#include "vocab/runtime/any.hpp"
 
 #include <ostream>
 

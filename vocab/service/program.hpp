@@ -21,8 +21,8 @@
 #ifndef GUARD_2023_November_28_program
 #define GUARD_2023_November_28_program
 
-#include "mega/values/native_types.hpp"
-#include "mega/values/service/project.hpp"
+#include "vocab/native_types.hpp"
+#include "vocab/service/project.hpp"
 
 #include "common/serialisation.hpp"
 #include "common/assert_verify.hpp"

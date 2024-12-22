@@ -22,7 +22,7 @@
 
 #include "common/hash.hpp"
 
-#include "mega/values/native_types.hpp"
+#include "vocab/native_types.hpp"
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/uuid/uuid_generators.hpp>

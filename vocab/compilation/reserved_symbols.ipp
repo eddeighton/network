@@ -18,9 +18,9 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
-#include "mega/values/compilation/reserved_symbols.hpp"
+#include "vocab/compilation/reserved_symbols.hpp"
 
-#include "mega/common_strings.hpp"
+#include "vocab/common_strings.hpp"
 
 #include "common/assert_verify.hpp"
 
@@ -31,7 +31,7 @@ namespace
 {
 using namespace std::string_literals;
 
-static const ReservedSymbolNameArray g_strReservedSymbols = {
+inline static const ReservedSymbolNameArray g_strReservedSymbols = {
 
     ""s,
     std::string( EG_ROOT ),
@@ -53,7 +53,7 @@ static_assert( TOTAL_RESERVED_SYMBOLS == g_strReservedSymbols.size(), "Incorrect
 
 } // namespace
 
-bool isOperationType( SymbolID symbolID )
+inline bool isOperationType( SymbolID symbolID )
 {
     switch( symbolID.getValue() )
     {
@@ -82,7 +82,7 @@ SymbolID getReservedSymbolID( const std::string& strName )
     return SymbolID{ static_cast< SymbolID::ValueType >( std::distance( g_strReservedSymbols.begin(), iFind ) ) };
 }
 */
-bool getReservedSymbolIDMaybe( const std::string& strName, SymbolID& symbolID )
+inline bool getReservedSymbolIDMaybe( const std::string& strName, SymbolID& symbolID )
 {
     auto iFind = std::find( g_strReservedSymbols.begin(), g_strReservedSymbols.end(), strName );
     if( iFind != g_strReservedSymbols.end() )
@@ -96,13 +96,13 @@ bool getReservedSymbolIDMaybe( const std::string& strName, SymbolID& symbolID )
         return false;
     }
 }
-const std::string& getReservedSymbol( SymbolID symbolID )
+inline const std::string& getReservedSymbol( SymbolID symbolID )
 {
     ASSERT( symbolID.getValue() < TOTAL_RESERVED_SYMBOLS );
     return g_strReservedSymbols[ symbolID.getValue() ];
 }
 
-const ReservedSymbolNameArray& getReservedSymbols()
+inline const ReservedSymbolNameArray& getReservedSymbols()
 {
     return g_strReservedSymbols;
 }

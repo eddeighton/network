@@ -21,8 +21,8 @@
 #ifndef GUARD_2023_December_12_inline
 #define GUARD_2023_December_12_inline
 
-#include "mega/values/runtime.h"
-#include "mega/values/native_types.h"
+#include "vocab/runtime.h"
+#include "vocab/native_types.h"
 
 C_RUNTIME_START
 

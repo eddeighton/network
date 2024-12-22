@@ -24,6 +24,7 @@ add_library( pipeline
 
 target_link_libraries( pipeline Boost::filesystem )
 target_link_libraries( pipeline Boost::serialization )
+target_link_libraries( pipeline commonlib)
 
 add_subdirectory( test )
 

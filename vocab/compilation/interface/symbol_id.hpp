@@ -21,9 +21,9 @@
 #ifndef GUARD_2023_December_08_symbol_id
 #define GUARD_2023_December_08_symbol_id
 
-#include "mega/values/compilation/interface/inline.h"
+#include "vocab/compilation/interface/inline.h"
 
-#include "mega/values/native_types.hpp"
+#include "vocab/native_types.hpp"
 
 #include "common/serialisation.hpp"
 

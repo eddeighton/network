@@ -17,7 +17,7 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
-#include "mega/values/compilation/explicit_operation_id.hpp"
+#include "vocab/compilation/explicit_operation_id.hpp"
 
 #include "common/assert_verify.hpp"
 

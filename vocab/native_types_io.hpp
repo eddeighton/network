@@ -21,7 +21,7 @@
 #ifndef GUARD_2023_September_02_native_types_io
 #define GUARD_2023_September_02_native_types_io
 
-#include "mega/values/native_types.hpp"
+#include "vocab/native_types.hpp"
 
 #include "common/string.hpp"
 
@@ -33,7 +33,7 @@ namespace std
 {
 #define NATIVE_TYPE( Type ) \
     std::ostream& operator<<( std::ostream& os, const std::vector< ::mega::Type >& value );
-#include "mega/values/native_types.hxx"
+#include "vocab/native_types.hxx"
 #undef NATIVE_TYPE
 }
 

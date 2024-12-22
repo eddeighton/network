@@ -21,7 +21,7 @@
 #ifndef GUARD_2023_April_14_maths_types
 #define GUARD_2023_April_14_maths_types
 
-// #include "mega/values/runtime/inline.h"
+// #include "vocab/runtime/inline.h"
 
 #include <boost/qvm/all.hpp>
 

@@ -20,9 +20,9 @@
 #ifndef REFERENCE_IO_24_SEPT_2022
 #define REFERENCE_IO_24_SEPT_2022
 
-#include "mega/values/compilation/concrete/type_id.hpp"
+#include "vocab/compilation/concrete/type_id.hpp"
 
-#include "mega/values/runtime/pointer.hpp"
+#include "vocab/runtime/pointer.hpp"
 
 #include "common/string.hpp"
 

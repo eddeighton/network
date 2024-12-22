@@ -21,7 +21,7 @@
 #ifndef GUARD_2023_February_08_operation_id
 #define GUARD_2023_February_08_operation_id
 
-#include "mega/values/compilation/interface/symbol_id.hpp"
+#include "vocab/compilation/interface/symbol_id.hpp"
 
 #include <array>
 #include <string>

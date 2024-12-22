@@ -21,13 +21,13 @@
 #ifndef GUARD_2023_January_19_relation_id
 #define GUARD_2023_January_19_relation_id
 
-#include "mega/values/compilation/interface/inline.h"
+#include "vocab/compilation/interface/inline.h"
 
-#include "mega/values/compilation/interface/object_id.hpp"
-#include "mega/values/compilation/interface/sub_object_id.hpp"
-#include "mega/values/compilation/interface/type_id.hpp"
+#include "vocab/compilation/interface/object_id.hpp"
+#include "vocab/compilation/interface/sub_object_id.hpp"
+#include "vocab/compilation/interface/type_id.hpp"
 
-#include "mega/values/native_types.hpp"
+#include "vocab/native_types.hpp"
 
 #include "common/serialisation.hpp"
 

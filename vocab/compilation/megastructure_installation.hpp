@@ -20,7 +20,7 @@
 #ifndef MEGASTRUCTURE_INSTALLATION_16_AUG_2022
 #define MEGASTRUCTURE_INSTALLATION_16_AUG_2022
 
-#include "mega/values/compilation/tool_chain_hash.hpp"
+#include "vocab/compilation/tool_chain_hash.hpp"
 
 #include "common/serialisation.hpp"
 
