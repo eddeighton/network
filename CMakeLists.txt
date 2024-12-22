@@ -41,6 +41,7 @@ find_package( Boost 1.86
         filesystem
         timer
         serialization
+        system
     REQUIRED )
 find_package( nlohmann_json )
 find_package( inja )
