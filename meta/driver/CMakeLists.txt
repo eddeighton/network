@@ -1,11 +1,11 @@
 
 add_executable( meta 
 
-                ${DATABASE_COPIED_FILES} 
-                ${DATABASE_GENERATED_FILES} 
-                ${DATABASE_GENERATED_STAGE_FILES} 
+    ${DATABASE_COPIED_FILES} 
+    ${DATABASE_GENERATED_FILES} 
+    ${DATABASE_GENERATED_STAGE_FILES} 
 
-                main.cpp 
+    main.cpp 
 )
 
 

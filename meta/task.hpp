@@ -17,31 +17,25 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
+#pragma once
 
-///////////////////////////////////////////
-// Stages
-stage AnalysisStage
+#include "meta/configuration.hpp"
+#include "meta/environment.hpp"
+
+#include "pipeline/stash.hpp"
+#include "pipeline/pipeline.hpp"
+
+namespace mega::meta
 {
-    source .manifest;
-    file FirstFile;
-}
 
-///////////////////////////////////////////
-// Objects
-namespace TestNamespace
+struct TaskDependencies
 {
-    object TestObject -> AnalysisStage::FirstFile
-    {
-        value< std::string > string;
-        array< value< std::string > > array_of_string;
-        opt< value< std::string > > optional_string;
+    meta::Configuration&       m_configuration;
+    mega::io::Manifest&        m_manifest;
+    mega::io::MetaEnvironment& m_environment;
+    pipeline::Progress&        m_progress;
+    pipeline::Stash&           m_stash;
+};
 
-        // ref< TestObject > reference;
-        array< ref< TestObject > > array_of_references;
-        opt< ref< TestObject > > optional_reference;
-
-        // late< ref< TestObject > > late_reference;
-        // late< array< ref< TestObject > > > late_array_of_references;
-    }
 }
 

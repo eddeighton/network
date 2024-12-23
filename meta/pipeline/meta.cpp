@@ -20,6 +20,7 @@
 
 #include "meta/configuration.hpp"
 #include "meta/environment.hpp"
+#include "meta/task.hpp"
 
 #include "pipeline/pipeline.hpp"
 #include "pipeline/task.hpp"
@@ -30,8 +31,8 @@ namespace mega::meta
 {
 
 
-extern void task_test();
-
+extern void task_interface_analysis(
+        TaskDependencies& dependencies );
 
 namespace
 {
@@ -109,15 +110,23 @@ class MetaPipeline : public pipeline::Pipeline
 
         mega::io::MetaEnvironment environment( config.directories );
 
+        mega::meta::TaskDependencies task_dependencies
+        {
+            config,
+            m_pConfig->m_manifest,
+            environment,
+            progress,
+            stash
+        };
+
         if( task.strTaskName == "test" )
         {
-            mega::meta::task_test();
+           mega::meta::task_interface_analysis( task_dependencies );
         }
         else
         {
             THROW_RTE( "Unknown task name: " << task.strTaskName );
         }
-
     }
 
     virtual void initialise( const pipeline::Configuration& pipelineConfig, std::ostream& osLog ) override

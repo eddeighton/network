@@ -18,6 +18,10 @@
 #include "common/clang_warnings_end.hpp"
 ////////////////////////////////////////////
 
+#include "meta/db/database/AnalysisStage.hxx"
+#include "meta/environment.hpp"
+#include "meta/task.hpp"
+
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/path.hpp>
 
@@ -51,10 +55,10 @@ struct ToolDB : public clang::tooling::CompilationDatabase
         /// The command line that was executed.
         cmd.CommandLine = std::vector< std::string >{
 
-            "/build/linux_gcc_static_release/llvm/install/bin/clang-15"s,
+            "/usr/local/clangeg/bin/clang-15"s,
 
             "-resource-dir"s,
-            "/build/linux_gcc_static_release/llvm/install/lib/clang/15.0.0"s,
+            "/usr/local/clangeg/lib/clang/15.0.0"s,
 
             "-I"s,
             "/workspace/root/src/common/src/api/"s,
@@ -101,9 +105,28 @@ struct ToolDB : public clang::tooling::CompilationDatabase
 
 }
 
-
-void task_test()
+void task_interface_analysis(TaskDependencies& dependencies)
 {
+    using namespace AnalysisStage;
+    using namespace AnalysisStage::TestNamespace;
+
+    Database database( dependencies.m_environment,
+        dependencies.m_environment.project_manifest() );
+    
+    using namespace std::string_literals;
+
+    TestObject::Args args;
+
+    args.string = "Test String"s;
+    args.array_of_string = std::vector< std::string >{};
+    args.optional_string = std::optional< std::string >{};
+    args.array_of_references = std::vector< TestObject* >{}; 
+    args.optional_reference = std::optional< std::optional< TestObject* > >{ std::optional< TestObject* >{} };
+
+    database.construct< TestObject >(args);
+
+    auto fileHash = database.save_FirstFile_to_temp();
+
 
 }
 
