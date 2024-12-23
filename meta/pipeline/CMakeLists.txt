@@ -25,3 +25,5 @@ target_link_libraries( meta_pipeline pantor::inja )
 target_link_libraries( meta_pipeline nlohmann_json::nlohmann_json )
 target_link_libraries( meta_pipeline Common::commonlib )
 
+link_clang_tooling( meta_pipeline )
+

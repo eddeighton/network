@@ -19,7 +19,7 @@
 
 cmake_minimum_required( VERSION 3.1 )
 
-project( Megastructure VERSION 1.0 LANGUAGES CXX )
+project( Megastructure VERSION 1.0 LANGUAGES C CXX )
 
 set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib )
 set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib )
@@ -45,6 +45,8 @@ find_package( Boost 1.86
     REQUIRED )
 find_package( nlohmann_json )
 find_package( inja )
+
+include( clangeg.cmake )
 
 set(SRC_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
