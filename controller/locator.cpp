@@ -122,8 +122,8 @@ BOOST_FUSION_ADAPT_STRUCT( Controller::Path,
    ( std::optional< Controller::Name >, m_relative)
    ( std::vector< Controller::Name >, m_names)
    ( std::vector< Controller::Extension >, m_extensions)
-   ( std::optional< int >, m_column)
    ( std::optional< int >, m_line)
+   ( std::optional< int >, m_column)
    ( std::optional< int >, m_byte)
 )
 

@@ -128,10 +128,10 @@ struct Path
         {
             os << Path::DIGIT_SEPARATOR << m_line.value();
         }
-        //if( m_column )
-        //{
-        //    os << Path::DIGIT_SEPARATOR << m_column.value();
-        //}
+        if( m_column )
+        {
+            os << Path::DIGIT_SEPARATOR << m_column.value();
+        }
         if( m_byte )
         {
             os << Path::DIGIT_SEPARATOR << m_byte.value();
