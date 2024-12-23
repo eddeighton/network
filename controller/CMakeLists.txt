@@ -17,43 +17,23 @@
 ##  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 ##  OF THE POSSIBILITY OF SUCH DAMAGES.
 
-cmake_minimum_required( VERSION 3.1 )
 
-project( Megastructure VERSION 1.0 LANGUAGES CXX )
+add_library( libcontroller
+    locator.hpp
+    locator.cpp
+)
 
-set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib )
-set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib )
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin )
+target_link_libraries( libcontroller Common::commonlib )
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-set(Boost_USE_STATIC_LIBS ON)
+add_executable( controller
+    main.cpp
+)
 
-enable_testing()
+target_link_libraries( controller libcontroller )
 
-find_package( GTest REQUIRED )
-find_package( Threads )
-find_package( Boost 1.86 
-    COMPONENTS
-        program_options
-        fiber
-        iostreams
-        filesystem
-        timer
-        serialization
-        system
-    REQUIRED )
-find_package( nlohmann_json )
-find_package( inja )
+target_link_libraries( controller Boost::filesystem )
+target_link_libraries( controller Boost::program_options )
 
-set(SRC_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-
-include_directories(${SRC_ROOT_DIR})
-
-add_subdirectory( common )
-add_subdirectory( database )
-add_subdirectory( pipeline )
-add_subdirectory( meta )
-add_subdirectory( service )
-add_subdirectory( controller )
+add_subdirectory( test )
 
