@@ -8,12 +8,12 @@ namespace mega
 {
     namespace test
     {
-        struct Test : public service::Interface
+        struct Test : public virtual service::Interface
         {
             virtual std::string test() = 0;
         };
         
-        struct TestFactory : public service::Factory
+        struct TestFactory : public virtual mega::service::Factory
         {
             virtual std::shared_ptr<Test> create_test() = 0;
         };

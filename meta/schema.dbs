@@ -23,25 +23,49 @@
 stage AnalysisStage
 {
     source .manifest;
-    file FirstFile;
+    file AnalysisFile;
 }
 
 ///////////////////////////////////////////
 // Objects
-namespace TestNamespace
+namespace Service
 {
-    object TestObject -> AnalysisStage::FirstFile
+    object Type -> AnalysisStage::AnalysisFile
     {
-        value< std::string > string;
-        array< value< std::string > > array_of_string;
-        opt< value< std::string > > optional_string;
+        // name is fully qualified i.e. absolute namespace
+        value< std::string > name;
+    }
 
-        // ref< TestObject > reference;
-        array< ref< TestObject > > array_of_references;
-        opt< ref< TestObject > > optional_reference;
+    object QualifiedType : Type -> AnalysisStage::AnalysisFile
+    {
+        value< bool > is_const;
+        value< bool > is_pointer;
+        value< bool > is_reference;
+        value< bool > is_rvalue;
+    }
 
-        // late< ref< TestObject > > late_reference;
-        // late< array< ref< TestObject > > > late_array_of_references;
+    object Parameter -> AnalysisStage::AnalysisFile
+    {
+        ref< QualifiedType > qualified_type;
+        value< std::string > name;
+    }
+
+    object Function -> AnalysisStage::AnalysisFile
+    {
+        value< std::string > name;
+        array< ref< QualifiedType > > parameters;
+        ref< QualifiedType > return_type;
+    }
+
+    object Interface -> AnalysisStage::AnalysisFile
+    {
+        value< std::string > type_name;
+        array< ref< Function > > functions;
+    }
+
+    object Factory : Interface -> AnalysisStage::AnalysisFile
+    {
+        
     }
 }
 

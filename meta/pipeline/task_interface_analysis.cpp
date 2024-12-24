@@ -40,6 +40,8 @@ using namespace clang::tooling;
 using namespace clang::ast_matchers;
 using namespace std::string_literals;
 
+// /usr/local/clangeg/bin/clang++ -std=c++20  -I /src -fsyntax-only -Xclang -ast-dump  /src/test/test.interface.hpp
+
 struct ToolDB : public clang::tooling::CompilationDatabase
 {
     std::vector< clang::tooling::CompileCommand > m_commands;
@@ -126,11 +128,32 @@ using namespace AnalysisStage;
 
 void task_interface_analysis(TaskDependencies& dependencies)
 {
+    using namespace std::string_literals;
+    using namespace AnalysisStage::Service;
+
+    const mega::io::CompilationFilePath compilationFilePath =
+        dependencies.m_environment.AnalysisStage_AnalysisFile(
+            dependencies.m_environment.project_manifest() );
+
+    // start( taskProgress, "Task_InterfaceAnalysis" );
+    // TODO: implement determinant and stashing
+
+    // task::DeterminantHash determinant( 123 );
+
+    //        { m_toolChain.toolChainHash, m_environment.getBuildHashCode( ... ) } );
+
+    // if( m_environment.restore( compilationFilePath, determinant ) )
+    // {
+    //     m_environment.setBuildHashCode( compilationFilePath );
+    //     cached( taskProgress );
+    //     return;
+    // }
+
     class InterfaceCallback : public MatchFinder::MatchCallback
     {
         Database& database;
 
-        public:
+    public:
         InterfaceCallback( Database& _database )
             : database( _database )
         {
@@ -149,27 +172,53 @@ void task_interface_analysis(TaskDependencies& dependencies)
                         return;
                     }
 
-                    auto type = pRecordDecl->getASTContext().getTypeDeclType( pRecordDecl );
-                    std::cout << "Found RecordDecl: " << type.getAsString()  << std::endl;
-                    
-                    
-                        
-                    
-                    
-           //         try
-           //         {
-           //             Type recordType{ Mutable{ fromName( type.getAsString() ) } };
-           //             auto iFind = std::find( model.inlineTypes.begin(), model.inlineTypes.end(), recordType );
-           //             if( iFind == model.inlineTypes.end() )
-           //             {
-           //                 model.inlineTypes.push_back( recordType );
-           //             }
-           //         }
-           //         catch( std::exception& ex )
-           //         {
-           //             THROW_RTE( "Fail to analyse function type for: " << pRecordDecl->getNameAsString() << " with type: "
-           //                     << type.getAsString() << " error: " << ex.what() );
-           //         }
+                    // determine if interface or factory via inheritance
+                    bool bIsInterface = false;
+                    bool bIsFactory = false;
+                    if( const auto* pCXXRecordDecl = dyn_cast< CXXRecordDecl >( pRecordDecl ) )
+                    {
+                        if( pCXXRecordDecl->hasDefinition() )
+                        {
+                            for( const auto pBase : pCXXRecordDecl->bases() )
+                            {
+                                const std::string strType = pBase.getType().getCanonicalType().getAsString();
+                                if( strType == "struct mega::service::Interface" )
+                                {
+                                    bIsInterface = true;
+                                }
+                                else if( strType == "struct mega::service::Factory" )
+                                {
+                                    bIsInterface = true;
+                                    bIsFactory = true;
+                                }
+                                else
+                                {
+                                    std::cout << "Unknown base type: " << strType << std::endl;
+                                }
+                            }
+                        }
+                    }
+
+                    if( bIsInterface )
+                    {
+                        auto type = pRecordDecl->getASTContext().getTypeDeclType( pRecordDecl );
+                        std::cout << "Found RecordDecl: " << type.getAsString()  << std::endl;
+
+                        Interface* pInterface = database.construct< Interface >(
+                                Interface::Args
+                                {
+                                    type.getAsString(),
+                                    {}
+                                });
+
+                        if( bIsFactory )
+                        {
+                            database.construct< Factory >(Factory::Args{ pInterface });
+                        }
+
+
+
+                    }
                 }
            }
         }
@@ -192,28 +241,19 @@ void task_interface_analysis(TaskDependencies& dependencies)
         finder.addMatcher( interfaceMatcher, &interfaceCallback );
 
         tool.run( newFrontendActionFactory( &finder ).get() );
-
     }
 
     auto pFile = boost::filesystem::createNewFileStream("/src/test/service/test.cxx");
     *pFile << "// Hello World from meta pipeline\n\n";
 
-    using namespace AnalysisStage::TestNamespace;
+    using namespace AnalysisStage::Service;
 
-    
-    using namespace std::string_literals;
+    auto compilationFileHash = database.save_AnalysisFile_to_temp();
 
-    // TestObject::Args args;
-
-    // args.string = "Test String"s;
-    // args.array_of_string = std::vector< std::string >{};
-    // args.optional_string = std::optional< std::string >{};
-    // args.array_of_references = std::vector< TestObject* >{}; 
-    // args.optional_reference = std::optional< std::optional< TestObject* > >{ std::optional< TestObject* >{} };
-
-    // database.construct< TestObject >(args);
-
-    // auto fileHash = database.save_FirstFile_to_temp();
+    dependencies.m_environment.temp_to_real(compilationFilePath);
+    // dependencies.m_environment.setBuildHashCode( compilationFilePath, compilationFileHash );
+    // dependencies.m_environment.stash( compilationFilePath, determinant );
+    // succeeded( taskProgress );
 
 }
 
