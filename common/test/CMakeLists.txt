@@ -1,18 +1,17 @@
 
 set( COMMON_UNIT_TESTS
-     ${CMAKE_CURRENT_SOURCE_DIR}/astar_tests.cpp
-     ${CMAKE_CURRENT_SOURCE_DIR}/angle_tests.cpp
-     ${CMAKE_CURRENT_SOURCE_DIR}/file_tests.cpp
-     ${CMAKE_CURRENT_SOURCE_DIR}/grammar_tests.cpp
-     ${CMAKE_CURRENT_SOURCE_DIR}/inplace_allocator_tests.cpp
-     ${CMAKE_CURRENT_SOURCE_DIR}/math_tests.cpp
-     # ${CMAKE_CURRENT_SOURCE_DIR}/preprocessor_tests.cpp
-     ${CMAKE_CURRENT_SOURCE_DIR}/rounding_tests.cpp
-     ${CMAKE_CURRENT_SOURCE_DIR}/tuple_tests.cpp
-     ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_tests.cpp
-     ${CMAKE_CURRENT_SOURCE_DIR}/escape_tests.cpp
-     ${CMAKE_CURRENT_SOURCE_DIR}/stash_tests.cpp
-     ${CMAKE_CURRENT_SOURCE_DIR}/process_tests.cpp )
+     astar_tests.cpp
+     angle_tests.cpp
+     file_tests.cpp
+     grammar_tests.cpp
+     inplace_allocator_tests.cpp
+     math_tests.cpp
+     rounding_tests.cpp
+     tuple_tests.cpp
+     scheduler_tests.cpp
+     escape_tests.cpp
+     stash_tests.cpp
+     process_tests.cpp )
 
 add_executable( common_tests ${COMMON_UNIT_TESTS} )
 target_link_libraries(common_tests commonlib)

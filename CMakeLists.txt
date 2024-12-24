@@ -23,6 +23,7 @@ find_package( Boost 1.86
         timer
         serialization
         system
+        url
     REQUIRED )
 find_package( nlohmann_json )
 find_package( inja )
@@ -37,6 +38,7 @@ add_subdirectory( common )
 add_subdirectory( database )
 add_subdirectory( pipeline )
 add_subdirectory( meta )
+add_subdirectory( report )
 
 ################################################################################
 ################################################################################

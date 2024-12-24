@@ -1,0 +1,21 @@
+set terminal svg size 600,400 dynamic enhanced font 'arial,10' mousing name "plot" dashlength 1.0 
+
+set output "plot.svg"
+
+set key fixed left top vertical Right noreverse enhanced autotitle box lt black linewidth 1.000 dashtype solid
+
+set xlabel "Execution Date" 
+set ylabel "Benchmark Time ( ns )" 
+
+set title "{% for heading in headings %}{{ heading }} {% endfor %}" 
+set title font ",20" textcolor lt -1 norotate
+
+set boxwidth 0.75 relative
+
+set style fill transparent solid 0.5
+
+set bars linecolor 'blue' linewidth 1.0 dashtype '.'
+
+plot 'plot.dat' with boxes fc 'blue', \
+    '' with labels hypertext
+
