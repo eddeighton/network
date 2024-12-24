@@ -56,6 +56,35 @@ add_subdirectory( common )
 add_subdirectory( database )
 add_subdirectory( pipeline )
 add_subdirectory( meta )
+
+# run system wide meta pipeline
+
+set(SERVICE_INTERFACES ${CMAKE_CURRENT_SOURCE_DIR}/test.interface.hpp)
+
+set(GENERATED_INTERFACE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/test.cxx)
+
+add_custom_command(
+    OUTPUT ${GENERATED_INTERFACE_FILES}
+
+    COMMAND meta
+        --src_dir ${CMAKE_SOURCE_DIR}
+        --build_dir ${CMAKE_BINARY_DIR}
+        --stash_dir ${CMAKE_CURRENT_BINARY_DIR}/stash
+        --templates ${CMAKE_CURRENT_SOURCE_DIR}/templates
+        --pipeline "$<TARGET_FILE:meta_pipeline>"
+        --interfaces \"${SERVICE_INTERFACES}\"
+ 
+    BYPRODUCTS # ${GENERATED_INTERFACE_FILES}
+    DEPENDS ${SERVICE_INTERFACES}
+    COMMENT "Running meta pipeline"
+)
+
+add_library( meta_service_interface
+    ${GENERATED_INTERFACE_FILES}
+)
+
+
+
 add_subdirectory( service )
 add_subdirectory( controller )
 

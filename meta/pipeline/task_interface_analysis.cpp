@@ -128,7 +128,7 @@ void task_interface_analysis(TaskDependencies& dependencies)
 
     auto fileHash = database.save_FirstFile_to_temp();
 
-    auto pFile = boost::filesystem::createNewFileStream("/src/meta/test.cxx");
+    auto pFile = boost::filesystem::createNewFileStream("/src/test.cxx");
     *pFile << "// Hello World from meta pipeline\n\n";
 
 }
