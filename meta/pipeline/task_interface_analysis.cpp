@@ -302,7 +302,7 @@ void task_interface_analysis(TaskDependencies& dependencies)
                                 }
                                 else
                                 {
-                                    std::cout << "Unknown base type: " << strType << std::endl;
+                                    //std::cout << "Unknown base type: " << strType << std::endl;
                                 }
                             }
                         }
@@ -311,7 +311,7 @@ void task_interface_analysis(TaskDependencies& dependencies)
                     if( bIsInterface )
                     {
                         auto type = pRecordDecl->getASTContext().getTypeDeclType( pRecordDecl );
-                        std::cout << "Found RecordDecl: " << type.getAsString()  << std::endl;
+                        //std::cout << "Found RecordDecl: " << type.getAsString()  << std::endl;
 
                         Interface* pInterface = database.construct< Interface >(
                                 Interface::Args
@@ -332,8 +332,8 @@ void task_interface_analysis(TaskDependencies& dependencies)
                             {
                                 if( pFunctionDecl->isUserProvided() )
                                 {
-                                    std::cout << "Found interface function: " << pFunctionDecl->getNameAsString()
-                                        << " with arguments: " << pFunctionDecl->getNumParams() << std::endl;
+                                    // std::cout << "Found interface function: " << pFunctionDecl->getNameAsString()
+                                    //     << " with arguments: " << pFunctionDecl->getNumParams() << std::endl;
 
                                     std::vector< Parameter* > parameters;
                                     for( auto i = 0U; i != pFunctionDecl->getNumParams(); ++i )
@@ -375,7 +375,7 @@ void task_interface_analysis(TaskDependencies& dependencies)
     for( const auto& interfacePath : dependencies.m_configuration.interfacePaths)
     {
         VERIFY_RTE( boost::filesystem::exists(interfacePath) );
-        std::cout << "Got interface path: " << interfacePath.string() << std::endl;
+        //std::cout << "Got interface path: " << interfacePath.string() << std::endl;
 
         ToolDB      db( interfacePath );
         ClangTool   tool( db, { interfacePath.string() } );
