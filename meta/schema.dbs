@@ -53,7 +53,7 @@ namespace Service
     object Function -> AnalysisStage::AnalysisFile
     {
         value< std::string > name;
-        array< ref< QualifiedType > > parameters;
+        array< ref< Parameter > > parameters;
         ref< QualifiedType > return_type;
     }
 

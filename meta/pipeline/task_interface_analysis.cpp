@@ -121,8 +121,23 @@ Namespaces detectNamespace( const clang::DeclContext* pDeclContext )
     std::reverse( namespaces.begin(), namespaces.end() );
     return namespaces;
 }
+
+std::string fromName(const std::string& strName )
+{
+    std::string tmp = strName;
+    boost::replace_all( tmp, "_Bool", "bool" );
+    boost::replace_all( tmp, "struct ", "" );
+    boost::replace_all( tmp, "class ", "" );
+
+    VERIFY_RTE_MSG( tmp.find( '*' ) == std::string::npos, "Type contains nested pointers: " << strName );
+    VERIFY_RTE_MSG( tmp.find( '&' ) == std::string::npos, "Type contains nested Pointer: " << strName );
+    static const std::string strConst = "const"s;
+    VERIFY_RTE_MSG( std::search( tmp.begin(), tmp.end(), strConst.begin(), strConst.end() ) == tmp.end(),
+                    "Type contains nested const: " << strName );
+    return tmp;
 }
 
+}
 
 using namespace AnalysisStage;
 
@@ -160,6 +175,100 @@ void task_interface_analysis(TaskDependencies& dependencies)
         }
         virtual void run( const MatchFinder::MatchResult& Result )
         {
+            auto toQualifiedType = [this]( const clang::QualType& type ) -> QualifiedType*
+            {
+                if( type->isPointerType() )
+                {
+                    auto tmp = type->getPointeeType();
+                    if( tmp.isLocalConstQualified() )
+                    {
+                        tmp.removeLocalConst();
+                        VERIFY_RTE_MSG( !tmp.isLocalConstQualified(), "Failed to remove const" );
+                        return database.construct< QualifiedType >(
+                            QualifiedType::Args
+                            {
+                                Service::Type::Args{fromName(tmp.getAsString())},
+                                true,  // is_const
+                                true,  // is_pointer
+                                false, // is_reference
+                                false  // is_rvalue
+                            });
+                    }
+                    else
+                    {
+                        return database.construct< QualifiedType >(
+                            QualifiedType::Args
+                            {
+                                Service::Type::Args{fromName( tmp.getAsString() )},
+                                false, // is_const
+                                true,  // is_pointer
+                                false, // is_reference
+                                false  // is_rvalue
+                            });
+                    }
+                }
+                else if( type->isReferenceType() )
+                {
+                    auto tmp = type.getNonReferenceType();
+                    if( tmp.isConstQualified() )
+                    {
+                        tmp.removeLocalConst();
+                        VERIFY_RTE_MSG( !tmp.isLocalConstQualified(), "Failed to remove const" );
+                        return database.construct< QualifiedType >(
+                            QualifiedType::Args
+                            {
+                                Service::Type::Args{fromName( tmp.getAsString() )},
+                                true,  // is_const
+                                false, // is_pointer
+                                true,  // is_reference
+                                false  // is_rvalue
+                            });
+                    }
+                    else
+                    {
+                        return database.construct< QualifiedType >(
+                            QualifiedType::Args
+                            {
+                                Service::Type::Args{fromName( tmp.getAsString() )},
+                                false, // is_const
+                                false, // is_pointer
+                                true,  // is_reference
+                                false  // is_rvalue
+                            });
+                    }
+                }
+                else
+                {
+                    if( type.isLocalConstQualified() )
+                    {
+                        auto tmp = type;
+                        tmp.removeLocalConst();
+                        VERIFY_RTE_MSG( !tmp.isLocalConstQualified(), "Failed to remove const" );
+                        return database.construct< QualifiedType >(
+                            QualifiedType::Args
+                            {
+                                Service::Type::Args{fromName( tmp.getAsString() )},
+                                true,  // is_const
+                                false, // is_pointer
+                                false, // is_reference
+                                false  // is_rvalue
+                            });
+                    }
+                    else
+                    {
+                        return database.construct< QualifiedType >(
+                            QualifiedType::Args
+                            {
+                                Service::Type::Args{fromName( type.getAsString() )},
+                                false, // is_const
+                                false, // is_pointer
+                                false, // is_reference
+                                false  // is_rvalue
+                            });
+                    }
+                }
+            };
+
            if( auto pRecordDecl = Result.Nodes.getNodeAs< clang::RecordDecl >( "interfaces" ) )
            {
                auto namespaces = detectNamespace( pRecordDecl->getDeclContext() );
@@ -216,8 +325,44 @@ void task_interface_analysis(TaskDependencies& dependencies)
                             database.construct< Factory >(Factory::Args{ pInterface });
                         }
 
+                        // determine functions
+                        for( const auto* pNamingChild : pRecordDecl->decls() )
+                        {
+                            if( const auto* pFunctionDecl = llvm::dyn_cast< FunctionDecl >( pNamingChild ) )
+                            {
+                                if( pFunctionDecl->isUserProvided() )
+                                {
+                                    std::cout << "Found interface function: " << pFunctionDecl->getNameAsString()
+                                        << " with arguments: " << pFunctionDecl->getNumParams() << std::endl;
 
+                                    std::vector< Parameter* > parameters;
+                                    for( auto i = 0U; i != pFunctionDecl->getNumParams(); ++i )
+                                    {
+                                        auto pParam = pFunctionDecl->getParamDecl( i );
+                                        auto pQualifiedType = toQualifiedType(pParam->getType().getCanonicalType());
+                                        parameters.push_back(
+                                            database.construct< Parameter >(
+                                            {
+                                                Parameter::Args
+                                                {
+                                                    pQualifiedType,
+                                                    pParam->getNameAsString()
+                                                }
+                                            }));
+                                    }
 
+                                    auto pReturnType = toQualifiedType(
+                                        pFunctionDecl->getReturnType().getCanonicalType()); 
+                                    database.construct< Function >( Function::Args
+                                        {
+                                            pFunctionDecl->getNameAsString(),
+                                            parameters,
+                                            pReturnType
+                                        }
+                                    );
+                                }
+                            }
+                        }
                     }
                 }
            }
