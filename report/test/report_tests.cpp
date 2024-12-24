@@ -27,9 +27,9 @@
 #include <sstream>
 
 //extern 
-boost::filesystem::path g_resultDir = "/src/report/test";
+static boost::filesystem::path g_resultDir = "/src/report/test";
 //extern 
-boost::filesystem::path g_templateDir = "/src/report/templates";
+static boost::filesystem::path g_templateDir = "/src/report/templates";
 
 enum Foobar
 {

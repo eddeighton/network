@@ -8,6 +8,7 @@ add_library( meta_pipeline SHARED
 
     meta.cpp
     task_interface_analysis.cpp
+    task_interface_analysis_report.cpp
 )
 
 #set_property(TARGET meta_pipeline PROPERTY CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -21,9 +22,11 @@ target_link_libraries( meta_pipeline Boost::filesystem )
 target_link_libraries( meta_pipeline Boost::iostreams )
 target_link_libraries( meta_pipeline Boost::program_options )
 target_link_libraries( meta_pipeline Boost::serialization )
+target_link_libraries( meta_pipeline Boost::url )
 target_link_libraries( meta_pipeline pantor::inja )
 target_link_libraries( meta_pipeline nlohmann_json::nlohmann_json )
 target_link_libraries( meta_pipeline Common::commonlib )
+target_link_libraries( meta_pipeline reportlib)
 
 link_clang_tooling( meta_pipeline )
 

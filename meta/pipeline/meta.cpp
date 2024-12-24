@@ -30,8 +30,9 @@
 namespace mega::meta
 {
 
-
 extern void task_interface_analysis(
+        TaskDependencies& dependencies );
+extern void task_interface_analysis_report(
         TaskDependencies& dependencies );
 
 namespace
@@ -42,25 +43,13 @@ struct Task
     std::string strTaskName;
 };
 
-
 pipeline::TaskDescriptor encode( const Task& task )
-{
-    //std::ostringstream os;
-    //{
-    //    boost::archive::binary_oarchive oa( os );
-    //    oa&                             task;
-    // }
-    return { task.strTaskName, "meta", "" };
+{    return { task.strTaskName, "meta", "" };
 }
 
 Task decode( const pipeline::TaskDescriptor& taskDescriptor )
 {
     Task task{ taskDescriptor.getName() };
-    //{
-    //    std::istringstream              is( taskDescriptor.getBuffer() );
-    //    boost::archive::binary_iarchive ia( is );
-    //    ia&                             task;
-    // }
     return task;
 }
 
@@ -93,8 +82,11 @@ class MetaPipeline : public pipeline::Pipeline
 
         pipeline::Dependencies dependencies;
 
-        const TskDesc generateComponents = encode( Task{ "test" } );
-        dependencies.add( generateComponents, {} );
+        const TskDesc task_interface_analysis = encode( Task{ "task_interface_analysis" } );
+        dependencies.add( task_interface_analysis, {} );
+
+        const TskDesc task_interface_analysis_report = encode( Task{ "task_interface_analysis_report" } );
+        dependencies.add( task_interface_analysis_report, {task_interface_analysis} );
 
         return { dependencies };
     }
@@ -119,9 +111,13 @@ class MetaPipeline : public pipeline::Pipeline
             stash
         };
 
-        if( task.strTaskName == "test" )
+        if( task.strTaskName == "task_interface_analysis" )
         {
            mega::meta::task_interface_analysis( task_dependencies );
+        }
+        else if( task.strTaskName == "task_interface_analysis_report" )
+        {
+           mega::meta::task_interface_analysis_report( task_dependencies );
         }
         else
         {

@@ -353,13 +353,14 @@ void task_interface_analysis(TaskDependencies& dependencies)
 
                                     auto pReturnType = toQualifiedType(
                                         pFunctionDecl->getReturnType().getCanonicalType()); 
-                                    database.construct< Function >( Function::Args
+                                    auto pFunction = database.construct< Function >( Function::Args
                                         {
                                             pFunctionDecl->getNameAsString(),
                                             parameters,
                                             pReturnType
                                         }
                                     );
+                                    pInterface->push_back_functions(pFunction);
                                 }
                             }
                         }

@@ -24,6 +24,8 @@ stage AnalysisStage
 {
     source .manifest;
     file AnalysisFile;
+
+    global accessor array< ref< Service::Interface > >;
 }
 
 ///////////////////////////////////////////
@@ -67,5 +69,6 @@ namespace Service
     {
         
     }
+
 }
 
