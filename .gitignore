@@ -1,3 +1,5 @@
 meta/db/*
 project.manifest
+*.cxx
+*.hxx
 

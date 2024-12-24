@@ -20,6 +20,7 @@
 #include "common/hash.hpp"
 #include "common/stash.hpp"
 #include "common/assert_verify.hpp"
+#include "common/cmake.hpp"
 
 #include <boost/program_options.hpp>
 
@@ -39,8 +40,8 @@ int main( int argc, const char* argv[] )
         bool bHelp        = false;
         bool bGeneralWait = false;
 
-        std::string             projectName;
-        boost::filesystem::path srcDir, buildDir, installDir, templatesDir, stashDir, metaPipelinePath;
+        boost::filesystem::path srcDir, buildDir, templatesDir, stashDir, metaPipelinePath;
+        std::string interfaceFilePathsCMakeString;
 
         po::options_description commandOptions( " Commands" );
         {
@@ -49,13 +50,12 @@ int main( int argc, const char* argv[] )
             ( "help",   po::bool_switch( &bHelp ),                      "Print command line help info." )
             ( "wait",   po::bool_switch( &bGeneralWait ),               "Wait at startup for attaching a debugger" )
 
-            ( "mega_project",      po::value< std::string >( &projectName ),                    "Mega Project Name" )
             ( "src_dir",           po::value< boost::filesystem::path >( &srcDir ),             "Root source directory" )
             ( "build_dir",         po::value< boost::filesystem::path >( &buildDir ),           "Root build directory" )
-            ( "install_dir",       po::value< boost::filesystem::path >( &installDir ),         "Installation directory" )
             ( "stash_dir",         po::value< boost::filesystem::path >( &stashDir ),           "Stash directory" )
             ( "templates",         po::value< boost::filesystem::path >( &templatesDir ),       "Inja Templates directory" )
             ( "pipeline",          po::value< boost::filesystem::path >( &metaPipelinePath ),   "Meta pipeline path" )
+            ( "interfaces",        po::value< std::string >( &interfaceFilePathsCMakeString ),  "Interface file paths" )
             ;
             // clang-format on
         }
@@ -73,10 +73,16 @@ int main( int argc, const char* argv[] )
         }
         else
         {
+            // process cmake lists
+            const std::vector< boost::filesystem::path > interfaceFilePaths
+                = mega::utilities::pathListToFiles(
+                        mega::utilities::parseCMakeStringList( interfaceFilePathsCMakeString, " " ) );
+
+
             //
             mega::Version version;
             
-            const mega::io::Directories directories{ srcDir, buildDir, installDir, templatesDir };
+            const mega::io::Directories directories{ srcDir, buildDir, buildDir, templatesDir };
 
             std::vector< mega::io::ComponentInfo > componentInfos;
 
@@ -98,7 +104,7 @@ int main( int argc, const char* argv[] )
                 metaPipelinePath.string(),
                 version,
 
-                projectName,
+                "meta",
                 componentInfos,
 
                 directories,

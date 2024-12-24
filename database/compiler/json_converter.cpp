@@ -43,7 +43,7 @@ void writeJSON( const boost::filesystem::path& filePath, const nlohmann::json& d
 
     if( boost::filesystem::updateFileIfChanged( filePath, os.str() ) )
     {
-        std::cout << "Regenerated: " << filePath.string() << std::endl;
+        // std::cout << "Regenerated: " << filePath.string() << std::endl;
     }
 }
 

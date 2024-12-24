@@ -299,7 +299,7 @@ int main( int argc, const char* argv[] )
                             const Path target = outputAPIFolderPath / filePath.filename();
                             if( copyFileIfChanged( filePath, target ) )
                             {
-                                std::cout << "Copied:     " << filePath.string() << " -> " << target.string() << std::endl;
+                                // std::cout << "Copied:     " << filePath.string() << " -> " << target.string() << std::endl;
                             }
                         }
                     }
@@ -313,7 +313,7 @@ int main( int argc, const char* argv[] )
                             const Path target = outputSrcFolderPath / filePath.filename();
                             if( copyFileIfChanged( filePath, target ) )
                             {
-                                std::cout << "Copied:     " << filePath.string() << " -> " << target.string() << std::endl;
+                                // std::cout << "Copied:     " << filePath.string() << " -> " << target.string() << std::endl;
                             }
                         }
                     }

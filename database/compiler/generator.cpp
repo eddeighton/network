@@ -65,7 +65,7 @@ void renderFile( const boost::filesystem::path& basePath, const std::string& fil
     }*/
     if ( boost::filesystem::updateFileIfChanged( outputFilePath, strOutput ) )
     {
-        std::cout << "Regenerated: " << outputFilePath.string() << std::endl;
+        // std::cout << "Regenerated: " << outputFilePath.string() << std::endl;
     }
 }
 
