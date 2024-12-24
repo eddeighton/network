@@ -1,6 +1,4 @@
 
-#pragma once
-
 #include "service/base_interfaces.hpp"
 
 #include <string>

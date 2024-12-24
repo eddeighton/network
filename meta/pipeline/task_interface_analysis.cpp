@@ -26,6 +26,9 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/path.hpp>
 
+#include <string>
+#include <vector>
+
 namespace mega::meta
 {
 
@@ -62,11 +65,7 @@ struct ToolDB : public clang::tooling::CompilationDatabase
             "/usr/local/clangeg/lib/clang/15.0.0"s,
 
             "-I"s,
-            "/workspace/root/src/common/src/api/"s,
-            "-I"s,
-            "/workspace/root/src/mega/src/include/"s,
-            "-I"s,
-            "/build/linux_gcc_shared_debug/boost/install/include/"s,
+            "/src"s,
 
             "-std=c++20"s,
             "-fcoroutines-ts"s,
@@ -104,41 +103,117 @@ struct ToolDB : public clang::tooling::CompilationDatabase
     virtual std::vector< CompileCommand > getAllCompileCommands() const { return m_commands; }
 };
 
+
+using Namespaces = std::vector< std::string >;
+
+Namespaces detectNamespace( const clang::DeclContext* pDeclContext )
+{
+    Namespaces namespaces;
+    for( auto p = pDeclContext; p; p = p->getParent() )
+    {
+        if( auto pNamespace = llvm::dyn_cast< const clang::NamespaceDecl >( p ) )
+        {
+            namespaces.push_back( pNamespace->getNameAsString() );
+        }
+    }
+    std::reverse( namespaces.begin(), namespaces.end() );
+    return namespaces;
 }
+}
+
+
+using namespace AnalysisStage;
 
 void task_interface_analysis(TaskDependencies& dependencies)
 {
-    for( const auto& interfacePath : dependencies.m_configuration.interfacePaths)
+    class InterfaceCallback : public MatchFinder::MatchCallback
     {
-        VERIFY_RTE(boost::filesystem::exists(interfacePath));
-        std::cout << "Got interface path: " << interfacePath.string() << std::endl;
+        Database& database;
 
-        
+        public:
+        InterfaceCallback( Database& _database )
+            : database( _database )
+        {
+        }
+        virtual void run( const MatchFinder::MatchResult& Result )
+        {
+           if( auto pRecordDecl = Result.Nodes.getNodeAs< clang::RecordDecl >( "interfaces" ) )
+           {
+               auto namespaces = detectNamespace( pRecordDecl->getDeclContext() );
 
-        auto pFile = boost::filesystem::createNewFileStream("/src/test/service/test.cxx");
-        *pFile << "// Hello World from meta pipeline\n\n";
-    }
+                if( !namespaces.empty() && namespaces.front() == "mega" )
+                {
+                    // ignore service base interfaces
+                    if( ( namespaces.size() == 2 ) && ( namespaces.back() == "service" ) )
+                    {
+                        return;
+                    }
 
-
-    using namespace AnalysisStage;
-    using namespace AnalysisStage::TestNamespace;
+                    auto type = pRecordDecl->getASTContext().getTypeDeclType( pRecordDecl );
+                    std::cout << "Found RecordDecl: " << type.getAsString()  << std::endl;
+                    
+                    
+                        
+                    
+                    
+           //         try
+           //         {
+           //             Type recordType{ Mutable{ fromName( type.getAsString() ) } };
+           //             auto iFind = std::find( model.inlineTypes.begin(), model.inlineTypes.end(), recordType );
+           //             if( iFind == model.inlineTypes.end() )
+           //             {
+           //                 model.inlineTypes.push_back( recordType );
+           //             }
+           //         }
+           //         catch( std::exception& ex )
+           //         {
+           //             THROW_RTE( "Fail to analyse function type for: " << pRecordDecl->getNameAsString() << " with type: "
+           //                     << type.getAsString() << " error: " << ex.what() );
+           //         }
+                }
+           }
+        }
+    };
 
     Database database( dependencies.m_environment,
         dependencies.m_environment.project_manifest() );
+
+    for( const auto& interfacePath : dependencies.m_configuration.interfacePaths)
+    {
+        VERIFY_RTE( boost::filesystem::exists(interfacePath) );
+        std::cout << "Got interface path: " << interfacePath.string() << std::endl;
+
+        ToolDB      db( interfacePath );
+        ClangTool   tool( db, { interfacePath.string() } );
+        MatchFinder finder;
+
+        InterfaceCallback interfaceCallback( database );
+        DeclarationMatcher interfaceMatcher = recordDecl().bind( "interfaces" );
+        finder.addMatcher( interfaceMatcher, &interfaceCallback );
+
+        tool.run( newFrontendActionFactory( &finder ).get() );
+
+    }
+
+    auto pFile = boost::filesystem::createNewFileStream("/src/test/service/test.cxx");
+    *pFile << "// Hello World from meta pipeline\n\n";
+
+    using namespace AnalysisStage::TestNamespace;
+
     
     using namespace std::string_literals;
 
-    TestObject::Args args;
+    // TestObject::Args args;
 
-    args.string = "Test String"s;
-    args.array_of_string = std::vector< std::string >{};
-    args.optional_string = std::optional< std::string >{};
-    args.array_of_references = std::vector< TestObject* >{}; 
-    args.optional_reference = std::optional< std::optional< TestObject* > >{ std::optional< TestObject* >{} };
+    // args.string = "Test String"s;
+    // args.array_of_string = std::vector< std::string >{};
+    // args.optional_string = std::optional< std::string >{};
+    // args.array_of_references = std::vector< TestObject* >{}; 
+    // args.optional_reference = std::optional< std::optional< TestObject* > >{ std::optional< TestObject* >{} };
 
-    database.construct< TestObject >(args);
+    // database.construct< TestObject >(args);
 
-    auto fileHash = database.save_FirstFile_to_temp();
+    // auto fileHash = database.save_FirstFile_to_temp();
 
 }
 
