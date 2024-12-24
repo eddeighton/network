@@ -108,6 +108,18 @@ struct ToolDB : public clang::tooling::CompilationDatabase
 
 void task_interface_analysis(TaskDependencies& dependencies)
 {
+    for( const auto& interfacePath : dependencies.m_configuration.interfacePaths)
+    {
+        VERIFY_RTE(boost::filesystem::exists(interfacePath));
+        std::cout << "Got interface path: " << interfacePath.string() << std::endl;
+
+        
+
+        auto pFile = boost::filesystem::createNewFileStream("/src/test/service/test.cxx");
+        *pFile << "// Hello World from meta pipeline\n\n";
+    }
+
+
     using namespace AnalysisStage;
     using namespace AnalysisStage::TestNamespace;
 
@@ -127,9 +139,6 @@ void task_interface_analysis(TaskDependencies& dependencies)
     database.construct< TestObject >(args);
 
     auto fileHash = database.save_FirstFile_to_temp();
-
-    auto pFile = boost::filesystem::createNewFileStream("/src/test.cxx");
-    *pFile << "// Hello World from meta pipeline\n\n";
 
 }
 

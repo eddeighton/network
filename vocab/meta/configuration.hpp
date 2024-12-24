@@ -35,11 +35,12 @@ namespace mega::meta
 
 struct Configuration
 {
-    pipeline::ConfigurationHeader    header;
-    std::string                      projectName;
-    std::vector< io::ComponentInfo > componentInfos;
-    io::Directories                  directories;
-    io::ManifestData                 manifestData;
+    pipeline::ConfigurationHeader          header;
+    std::string                            projectName;
+    std::vector< io::ComponentInfo >       componentInfos;
+    io::Directories                        directories;
+    io::ManifestData                       manifestData;
+    std::vector< boost::filesystem::path > interfacePaths;
 
     template < class Archive >
     inline void serialize( Archive& archive, const unsigned int )
@@ -50,6 +51,7 @@ struct Configuration
         archive& boost::serialization::make_nvp( "componentInfos", componentInfos );
         archive& boost::serialization::make_nvp( "directories", directories );
         archive& boost::serialization::make_nvp( "manifestData", manifestData );
+        archive& boost::serialization::make_nvp( "interfacePaths", interfacePaths );
     }
 };
 

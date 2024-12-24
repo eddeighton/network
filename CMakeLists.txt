@@ -1,22 +1,3 @@
-##  Copyright (c) Deighton Systems Limited. 2025. All Rights Reserved.
-##  Author: Edward Deighton
-##  License: Please see license.txt in the project root folder.
-
-##  Use and copying of this software and preparation of derivative works
-##  based upon this software are permitted. Any copy of this software or
-##  of any derivative work must include the above copyright notice, this
-##  paragraph and the one after it.  Any distribution of this software or
-##  derivative works must comply with all applicable laws.
-
-##  This software is made available AS IS, and COPYRIGHT OWNERS DISCLAIMS
-##  ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION THE
-##  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-##  PURPOSE, AND NOTWITHSTANDING ANY OTHER PROVISION CONTAINED HEREIN, ANY
-##  LIABILITY FOR DAMAGES RESULTING FROM THE SOFTWARE OR ITS USE IS
-##  EXPRESSLY DISCLAIMED, WHETHER ARISING IN CONTRACT, TORT (INCLUDING
-##  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
-##  OF THE POSSIBILITY OF SUCH DAMAGES.
-
 cmake_minimum_required( VERSION 3.1 )
 
 project( Megastructure VERSION 1.0 LANGUAGES C CXX )
@@ -57,11 +38,13 @@ add_subdirectory( database )
 add_subdirectory( pipeline )
 add_subdirectory( meta )
 
+################################################################################
+################################################################################
 # run system wide meta pipeline
+set(SERVICE_INTERFACES ${CMAKE_SOURCE_DIR}/test/test.interface.hpp)
+set(GENERATED_INTERFACE_FILES ${CMAKE_SOURCE_DIR}/test/service/test.cxx)
 
-set(SERVICE_INTERFACES ${CMAKE_CURRENT_SOURCE_DIR}/test.interface.hpp)
-
-set(GENERATED_INTERFACE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/test.cxx)
+message( STATUS "Generated interface files: ${GENERATED_INTERFACE_FILES}" )
 
 add_custom_command(
     OUTPUT ${GENERATED_INTERFACE_FILES}
@@ -74,17 +57,23 @@ add_custom_command(
         --pipeline "$<TARGET_FILE:meta_pipeline>"
         --interfaces \"${SERVICE_INTERFACES}\"
  
-    BYPRODUCTS # ${GENERATED_INTERFACE_FILES}
-    DEPENDS ${SERVICE_INTERFACES}
+    DEPENDS ${SERVICE_INTERFACES} meta_pipeline
     COMMENT "Running meta pipeline"
 )
+set(SERVICE_CODE_GEN ${CMAKE_SOURCE_DIR}/test.cxx)
 
-add_library( meta_service_interface
-    ${GENERATED_INTERFACE_FILES}
+add_custom_target( run_meta_pipeline
+    DEPENDS ${GENERATED_INTERFACE_FILES}
 )
 
-
-
+################################################################################
+################################################################################
+# The service
 add_subdirectory( service )
+
+################################################################################
+################################################################################
+# Service Components
 add_subdirectory( controller )
+add_subdirectory( test )
 

@@ -78,10 +78,8 @@ int main( int argc, const char* argv[] )
                 = mega::utilities::pathListToFiles(
                         mega::utilities::parseCMakeStringList( interfaceFilePathsCMakeString, " " ) );
 
-
-            //
             mega::Version version;
-            
+     
             const mega::io::Directories directories{ srcDir, buildDir, buildDir, templatesDir };
 
             std::vector< mega::io::ComponentInfo > componentInfos;
@@ -97,7 +95,6 @@ int main( int argc, const char* argv[] )
                 environment.temp_to_real( projectManifestPath );
             }
 
-
             // clang-format off
             const mega::meta::Configuration config =
             {
@@ -108,10 +105,12 @@ int main( int argc, const char* argv[] )
                 componentInfos,
 
                 directories,
-                manifest
-            };
+                manifest,
 
+                interfaceFilePaths
+            };
             // clang-format on
+
             mega::pipeline::Configuration pipelineConfiguration =
                 mega::meta::makePipelineConfiguration( config );
 
@@ -120,8 +119,6 @@ int main( int argc, const char* argv[] )
                     stashDir,
                     pipelineConfiguration,
                     std::cout );
-
-
         }
     }
     catch( boost::program_options::error& e )
