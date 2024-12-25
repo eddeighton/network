@@ -137,6 +137,24 @@ std::string fromName(const std::string& strName )
     return tmp;
 }
 
+std::string typeNameFromFullName(const std::string& strFullTypeName, const Namespaces& namespaces)
+{
+    auto i = strFullTypeName.cbegin();
+    auto iEnd = strFullTypeName.cend();
+    for( const auto& strNamespace : namespaces)
+    {
+        VERIFY_RTE_MSG( 
+            strNamespace.size() + std::distance( strFullTypeName.cbegin(), i ) + 2 < strFullTypeName.size(),
+                "Invalid namespace sequence for full type name: " << strFullTypeName );
+        VERIFY_RTE_MSG( std::equal(i, i+strNamespace.size(),
+                    strNamespace.begin(), strNamespace.end()),
+                    "Mismatch between full type name and namespaces: " << strFullTypeName );
+        i += strNamespace.size();
+        i += 2;
+    }
+    return std::string(i, strFullTypeName.end());
+}
+
 }
 
 using namespace AnalysisStage;
@@ -271,7 +289,7 @@ void task_interface_analysis(TaskDependencies& dependencies)
 
            if( auto pRecordDecl = Result.Nodes.getNodeAs< clang::RecordDecl >( "interfaces" ) )
            {
-               auto namespaces = detectNamespace( pRecordDecl->getDeclContext() );
+                auto namespaces = detectNamespace( pRecordDecl->getDeclContext() );
 
                 if( !namespaces.empty() && namespaces.front() == "mega" )
                 {
@@ -312,11 +330,15 @@ void task_interface_analysis(TaskDependencies& dependencies)
                     {
                         auto type = pRecordDecl->getASTContext().getTypeDeclType( pRecordDecl );
                         //std::cout << "Found RecordDecl: " << type.getAsString()  << std::endl;
-
+                        const std::string strFullTypeName = fromName(type.getAsString());
+                        const std::string strTypeName = typeNameFromFullName(strFullTypeName, namespaces);
+                            
                         Interface* pInterface = database.construct< Interface >(
                                 Interface::Args
                                 {
-                                    type.getAsString(),
+                                    strTypeName, 
+                                    strFullTypeName,
+                                    namespaces,
                                     {}
                                 });
 

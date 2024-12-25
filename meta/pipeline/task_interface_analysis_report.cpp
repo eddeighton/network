@@ -123,7 +123,7 @@ void task_interface_analysis_report(TaskDependencies& dependencies)
 
         auto r = B
         {
-            { pInterface->get_type_name() },
+            { pInterface->get_full_type_name() },
             { 
                 T
                 {
@@ -135,12 +135,12 @@ void task_interface_analysis_report(TaskDependencies& dependencies)
 
         if( auto pFactory = db_cast< Factory >( pInterface ) )
         {
-            std::cout << "Report found factory: " << pInterface->get_type_name() << std::endl;
+            std::cout << "Report found factory: " << pInterface->get_full_type_name() << std::endl;
             factories.m_elements.push_back(r);
         }
         else
         {
-            std::cout << "Report found interface: " << pInterface->get_type_name() << std::endl;
+            std::cout << "Report found interface: " << pInterface->get_full_type_name() << std::endl;
             interfaces.m_elements.push_back(r);
         }
     }
