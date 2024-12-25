@@ -7,7 +7,7 @@
 
 #include <boost/fiber/all.hpp>
 
-namespace service
+namespace mega::service
 {
     using IOContextPtr  = std::shared_ptr< boost::asio::io_context >;
     using SocketPtr     = std::shared_ptr< boost::asio::ip::tcp::socket >;

@@ -81,7 +81,6 @@ int main( int argc, const char* argv[] )
         po::store( parsedOptions, vm );
         po::notify( vm );
 
-
         try
         {
             if( bGeneralWait )
@@ -105,31 +104,38 @@ int main( int argc, const char* argv[] )
             }
             else
             {
-                service::IOContextPtr pIOContext =
-                    std::make_shared< boost::asio::io_context >();
+                std::thread networkThread(
+                    []
+                    {
+                        mega::service::IOContextPtr pIOContext =
+                            std::make_shared< boost::asio::io_context >();
 
-                service::init_fiber_scheduler(pIOContext);
+                        mega::service::init_fiber_scheduler(pIOContext);
 
-                service::Client client(*pIOContext);
+                        mega::service::Client client(*pIOContext);
 
-                using namespace service;
-                using namespace std::string_literals;
+                        using namespace mega::service;
+                        using namespace std::string_literals;
 
-                boost::fibers::fiber([&]
-                {
-                    auto pConnection = client.connect(IPAddress{"localhost"}, PortNumber{1234});
-                    pConnection->getSender().send("ONE "s);
-                    pConnection->getSender().send("TWO "s);
-                    pConnection->getSender().send("THRE"s);
-                    pConnection->getSender().send("FOUR"s);
-                    pConnection->stop();
-                    pIOContext->run_one();
-                    pIOContext->stop();
-                }).detach();
+                        boost::fibers::fiber([&]
+                            {
+                                auto pConnection = client.connect(IPAddress{"localhost"}, PortNumber{1234});
+                                pConnection->getSender().send("ONE "s);
+                                pConnection->getSender().send("TWO "s);
+                                pConnection->getSender().send("THRE"s);
+                                pConnection->getSender().send("FOUR"s);
+                                pConnection->stop();
+                                pIOContext->run_one();
+                                pIOContext->stop();
+                            }).detach();
 
-                pIOContext->run();
+                        pIOContext->run();
 
-                std::cout << "Complete" << std::endl;
+                        std::cout << "Complete" << std::endl;
+                    }
+                );
+
+                networkThread.join();
             }
         }
         catch(std::exception& ex)
@@ -137,7 +143,6 @@ int main( int argc, const char* argv[] )
             std::cout << "Exception: " << ex.what() << std::endl;
             return 1;
         }
-
     }
 
     return 0;

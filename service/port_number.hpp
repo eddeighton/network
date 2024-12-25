@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <string>
 
-namespace service
+namespace mega::service
 {
     struct PortNumber
     {

@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace service
+namespace mega::service
 {
     using Message = std::string;
 }

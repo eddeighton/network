@@ -8,7 +8,7 @@
 #include <array>
 #include <iostream>
 
-namespace service
+namespace mega::service
 {
     template<typename Socket, typename DisconnectCallback >
     class Receiver

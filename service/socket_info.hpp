@@ -5,7 +5,7 @@
 #include <string>
 #include <iostream>
 
-namespace service
+namespace mega::service
 {
     struct TCPSocketInfo
     {

@@ -2,9 +2,8 @@
 
 #include <string>
 
-namespace service
+namespace mega::service
 {
-
     struct IPAddress
     {
         std::string value;

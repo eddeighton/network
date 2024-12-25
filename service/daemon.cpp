@@ -40,7 +40,7 @@ int main( int argc, const char* argv[] )
             // clang-format on
         }
 
-        service::PortNumber port{1234};
+        mega::service::PortNumber port{1234};
 
         namespace po = boost::program_options;
         po::options_description commandOptions( " Execute inja template" );
@@ -72,15 +72,21 @@ int main( int argc, const char* argv[] )
                 char c;
                 std::cin >> c;
             }
+            
+            std::thread networkThread(
+                [port]
+                {
+                    mega::service::IOContextPtr pIOContext =
+                        std::make_shared< boost::asio::io_context >();
 
-            service::IOContextPtr pIOContext =
-                std::make_shared< boost::asio::io_context >();
+                    mega::service::init_fiber_scheduler(pIOContext);
 
-            service::init_fiber_scheduler(pIOContext);
+                    mega::service::Server server(*pIOContext, port);
 
-            service::Server server(*pIOContext, port);
-
-            pIOContext->run();
+                    pIOContext->run();
+                }
+            );
+            networkThread.join();
 
             return 0;
         }

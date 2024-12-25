@@ -11,7 +11,7 @@
 #include <set>
 #include <iostream>
 
-namespace service
+namespace mega::service
 {
     class Client
     {

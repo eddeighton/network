@@ -9,7 +9,7 @@
 
 #include <memory>
 
-namespace service
+namespace mega::service
 {
 
 class Sender
