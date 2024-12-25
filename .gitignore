@@ -2,4 +2,5 @@ meta/db/*
 project.manifest
 *.cxx
 *.hxx
+meta/interface_report.html
 
