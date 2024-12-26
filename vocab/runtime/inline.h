@@ -24,6 +24,7 @@
 #include "vocab/runtime.h"
 #include "vocab/native_types.h"
 #include "vocab/compilation/concrete/inline.h"
+#include "vocab/service/inline.h"
 
 C_RUNTIME_START
 

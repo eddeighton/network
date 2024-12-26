@@ -21,13 +21,14 @@ MEGA_VALUE_TYPE(mega::interface::TypeIDSequence)
 MEGA_VALUE_TYPE(mega::concrete::TypeIDSequence)
 
 MEGA_VALUE_TYPE(mega::runtime::MachineID)
-MEGA_VALUE_TYPE(mega::runtime::MP)
-MEGA_VALUE_TYPE(mega::runtime::MPO)
 MEGA_VALUE_TYPE(mega::runtime::PointerNet)
 MEGA_VALUE_TYPE(mega::runtime::PointerHeap)
 MEGA_VALUE_TYPE(mega::runtime::Pointer)
 MEGA_VALUE_TYPE(mega::runtime::TimeStamp)
 
+MEGA_VALUE_TYPE(mega::runtime::MP)
+MEGA_VALUE_TYPE(mega::runtime::MPO)
+MEGA_VALUE_TYPE(mega::runtime::MPTF)
 MEGA_VALUE_TYPE(mega::network::LogicalThreadID)
 MEGA_VALUE_TYPE(mega::network::Node)
 

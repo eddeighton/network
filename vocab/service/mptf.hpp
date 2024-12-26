@@ -24,13 +24,13 @@
 
 #include "vocab/runtime/inline.h"
 
-#include "vocab/runtime/mp.hpp"
-
 #include "vocab/native_types.hpp"
+
+#include "vocab/service/mp.hpp"
 #include "vocab/service/machine_id.hpp"
 #include "vocab/service/process_id.hpp"
 #include "vocab/service/thread_id.hpp"
-#include "vocab/service/mp.hpp"
+#include "vocab/service/fiber_id.hpp"
 
 #include "common/serialisation.hpp"
 
@@ -127,7 +127,7 @@ inline std::istream& operator>>( std::istream& is, MPTF& typeID )
     MachineID machineID;
     ProcessID processID;
     ThreadID  threadID;
-    ThreadID  fiberID;
+    FiberID   fiberID;
     char      c;
     is >> machineID >> c >> processID >> c >> threadID >> c >> fiberID;
     typeID = MPTF{ machineID, processID, threadID, fiberID };

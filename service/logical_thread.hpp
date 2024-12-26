@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "vocab/service/mptf.hpp"
+
 #include <boost/fiber/all.hpp>
 
 #include <iostream>

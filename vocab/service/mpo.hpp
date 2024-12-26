@@ -23,9 +23,9 @@
 
 #include "vocab/runtime/inline.h"
 
-#include "vocab/runtime/mp.hpp"
-
 #include "vocab/native_types.hpp"
+
+#include "vocab/service/mp.hpp"
 #include "vocab/service/machine_id.hpp"
 #include "vocab/service/process_id.hpp"
 #include "vocab/service/owner_id.hpp"

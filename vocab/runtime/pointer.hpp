@@ -28,8 +28,8 @@
 
 #include "vocab/runtime/allocation_id.hpp"
 #include "vocab/runtime/machine_id.hpp"
-#include "vocab/runtime/mp.hpp"
-#include "vocab/runtime/mpo.hpp"
+#include "vocab/service/mp.hpp"
+#include "vocab/service/mpo.hpp"
 
 #include "common/serialisation.hpp"
 #include "common/assert_verify.hpp"
