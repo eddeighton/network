@@ -26,10 +26,10 @@
 #include "vocab/runtime/mp.hpp"
 
 #include "vocab/native_types.hpp"
-#include "vocab/runtime/machine_id.hpp"
-#include "vocab/runtime/process_id.hpp"
-#include "vocab/runtime/owner_id.hpp"
-#include "vocab/runtime/mp.hpp"
+#include "vocab/service/machine_id.hpp"
+#include "vocab/service/process_id.hpp"
+#include "vocab/service/owner_id.hpp"
+#include "vocab/service/mp.hpp"
 
 #include "common/serialisation.hpp"
 
@@ -37,7 +37,7 @@
 #include <ostream>
 #include <iomanip>
 
-namespace mega::runtime
+namespace mega::service
 {
 
 class MPO : public c_machine_process_owner_id
@@ -129,6 +129,6 @@ inline std::istream& operator>>( std::istream& is, MPO& typeID )
     return is;
 }
 
-} // namespace mega::runtime
+} // namespace mega::service
 
 #endif // GUARD_2023_January_07_mpo

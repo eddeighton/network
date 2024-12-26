@@ -24,8 +24,8 @@
 #include "vocab/runtime/inline.h"
 
 #include "vocab/native_types.hpp"
-#include "vocab/runtime/machine_id.hpp"
-#include "vocab/runtime/process_id.hpp"
+#include "vocab/service/machine_id.hpp"
+#include "vocab/service/process_id.hpp"
 
 #include "common/serialisation.hpp"
 
@@ -33,7 +33,7 @@
 #include <ostream>
 #include <iomanip>
 
-namespace mega::runtime
+namespace mega::service
 {
 
 class MP : public c_machine_process_id
@@ -111,6 +111,6 @@ inline std::istream& operator>>( std::istream& is, MP& typeID )
     return is;
 }
 
-} // namespace mega::runtime
+} // namespace mega::service
 
 #endif // GUARD_2024_January_11_mp

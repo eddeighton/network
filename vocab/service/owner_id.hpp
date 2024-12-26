@@ -30,7 +30,7 @@
 #include <ostream>
 #include <istream>
 
-namespace mega::runtime
+namespace mega::service
 {
 
 class OwnerID : public c_owner_id
@@ -108,6 +108,6 @@ inline std::istream& operator>>( std::istream& is, OwnerID& instance )
     return is;
 }
 
-} // namespace mega::runtime
+} // namespace mega::service
 
 #endif // GUARD_2024_January_11_owner_id
