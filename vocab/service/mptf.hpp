@@ -19,8 +19,8 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
-#ifndef GUARD_2023_January_07_mpo
-#define GUARD_2023_January_07_mpo
+#ifndef GUARD_2024_January_07_mptf
+#define GUARD_2024_January_07_mptf
 
 #include "vocab/runtime/inline.h"
 
@@ -136,4 +136,4 @@ inline std::istream& operator>>( std::istream& is, MPTF& typeID )
 
 } // namespace mega::service
 
-#endif // GUARD_2023_January_07_mpo
+#endif // GUARD_2024_January_07_mptf
