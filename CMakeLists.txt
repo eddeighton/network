@@ -10,6 +10,13 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(Boost_USE_STATIC_LIBS ON)
 
+# always enable some gcc diagnostic options
+add_compile_options(-fdiagnostics-color)
+add_compile_options(-fdiagnostics-urls=always)
+
+# strict warnings cos why not!
+# add_compile_options(-Wall -Wextra -Wpedantic )
+
 enable_testing()
 
 find_package( GTest REQUIRED )

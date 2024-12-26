@@ -18,5 +18,19 @@ namespace mega::service
         InterfaceTypeNameVector m_interfaces;
     };
 
+    template< typename T >
+    RTTI getRTTI( const T* pPtr )
+    {
+        RTTI rtti;
+
+        // attempt all dynamic casts
+        // if( dynamic_cast< foobar >( pPtr ) )
+        // {
+        //     rtti.addInterface( "foobar" );
+        // }
+
+        return rtti;
+    }
+
 }
 

@@ -1,5 +1,8 @@
 
+#pragma once
+
 #include "service/base_interfaces.hpp"
+#include "service/ptr.hpp"
 
 #include <string>
 #include <memory>
@@ -25,7 +28,7 @@ namespace mega
         
         struct TestFactory : public virtual mega::service::Factory
         {
-            virtual std::shared_ptr<Test> create_test() = 0;
+            virtual service::Ptr<Test> create_test() = 0;
         };
     }
 }

@@ -1,9 +1,12 @@
 
+#pragma once
+
 #include "test/test.interface.hpp"
-#include "test/service/test.proxy.hxx"
-#include "test/service/testfactory.proxy.hxx"
+#include "test/service/test.ptr.hxx"
 
 #include "service/network.hpp"
+
+#include "common/assert_verify.hpp"
 
 #include <string>
 #include <memory>
@@ -35,29 +38,6 @@ public:
         return "Hello World"s;
     }
 };
-
-class OTestFactory : public TestFactory
-{
-public:
-
-    static TestFactoryPtr* create( service::Network& network )
-    {
-        std::unique_ptr< TestFactoryPtr > p;
-
-        
-
-        return p.get();
-    }
-
-    std::shared_ptr<Test> create_test() override
-    {
-          
-        
-        
-        return std::make_shared<OTest>();
-    }
-};
-
 }
 
 

@@ -7,9 +7,12 @@ namespace mega::service
     {
         virtual ~Factory() = 0;
     };
+     inline Factory::~Factory() = default;
+
     struct Interface
     {
         virtual ~Interface() = 0;
     };
+     inline Interface::~Interface() = default;
 }
 

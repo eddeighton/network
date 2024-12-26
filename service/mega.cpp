@@ -28,6 +28,11 @@
 #include <iostream>
 #include <chrono>
 
+namespace mega::test
+{
+    extern void runTestComponent();
+}
+
 int main( int argc, const char* argv[] )
 {
     std::optional< std::chrono::steady_clock::time_point > startTimeOpt;
@@ -104,38 +109,40 @@ int main( int argc, const char* argv[] )
             }
             else
             {
-                std::thread networkThread(
-                    []
-                    {
-                        mega::service::IOContextPtr pIOContext =
-                            std::make_shared< boost::asio::io_context >();
+                mega::test::runTestComponent();
 
-                        mega::service::init_fiber_scheduler(pIOContext);
+                // std::thread networkThread(
+                //     []
+                //     {
+                //         mega::service::IOContextPtr pIOContext =
+                //             std::make_shared< boost::asio::io_context >();
 
-                        mega::service::Client client(*pIOContext);
+                //         mega::service::init_fiber_scheduler(pIOContext);
 
-                        using namespace mega::service;
-                        using namespace std::string_literals;
+                //         mega::service::Client client(*pIOContext);
 
-                        boost::fibers::fiber([&]
-                            {
-                                auto pConnection = client.connect(IPAddress{"localhost"}, PortNumber{1234});
-                                pConnection->getSender().send("ONE "s);
-                                pConnection->getSender().send("TWO "s);
-                                pConnection->getSender().send("THRE"s);
-                                pConnection->getSender().send("FOUR"s);
-                                pConnection->stop();
-                                pIOContext->run_one();
-                                pIOContext->stop();
-                            }).detach();
+                //         using namespace mega::service;
+                //         using namespace std::string_literals;
 
-                        pIOContext->run();
+                //         boost::fibers::fiber([&]
+                //             {
+                //                 auto pConnection = client.connect(IPAddress{"localhost"}, PortNumber{1234});
+                //                 pConnection->getSender().send("ONE "s);
+                //                 pConnection->getSender().send("TWO "s);
+                //                 pConnection->getSender().send("THRE"s);
+                //                 pConnection->getSender().send("FOUR"s);
+                //                 pConnection->stop();
+                //                 pIOContext->run_one();
+                //                 pIOContext->stop();
+                //             }).detach();
 
-                        std::cout << "Complete" << std::endl;
-                    }
-                );
+                //         pIOContext->run();
 
-                networkThread.join();
+                //         std::cout << "Complete" << std::endl;
+                //     }
+                // );
+
+                // networkThread.join();
             }
         }
         catch(std::exception& ex)

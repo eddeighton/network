@@ -3,7 +3,7 @@ set_source_files_properties( ${GENERATED_INTERFACE_FILES} PROPERTIES GENERATED T
 
 add_library( test_component SHARED
     ${GENERATED_INTERFACE_FILES}
-    test_object.cpp
+    component.cpp
 )
 target_link_libraries( test_component Boost::program_options )
 target_link_libraries( test_component Boost::fiber )
