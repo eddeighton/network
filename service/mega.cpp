@@ -21,6 +21,7 @@
 #include "service/client.hpp"
 
 #include <boost/program_options.hpp>
+#include <boost/fiber/operations.hpp>
 
 #include <filesystem>
 #include <vector>
@@ -109,7 +110,30 @@ int main( int argc, const char* argv[] )
             }
             else
             {
+                mega::service::IOContextPtr pIOContext =
+                    std::make_shared< boost::asio::io_context >();
+                mega::service::init_fiber_scheduler(pIOContext);
+
+                boost::fibers::buffered_channel< int > channel(2);
+
+                std::thread runIOService( [&]
+                    {
+                        // boost::this_fiber::yield();
+                        pIOContext->run();
+                    });
+
                 mega::test::runTestComponent();
+
+                 pIOContext->run();
+                // int itest=0;
+                // auto r = channel.pop(itest);
+                // if( itest == 1 )
+                // {
+                //     throw 123;
+                // }
+                
+
+                // runIOService.join();
 
                 // std::thread networkThread(
                 //     []

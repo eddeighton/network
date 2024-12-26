@@ -5,26 +5,31 @@
 #include "test/service/testfactory.ptr.hxx"
 
 #include "service/rtti.hpp"
+#include "service/logical_thread.hpp"
 
 namespace mega::test
 {
 
 class OTestFactory : public TestFactory
 {
+    static inline std::unique_ptr< OTestFactory > g_pObject;
+    service::Network& m_network;
+    service::LogicalThread m_logicalThread;
 public:
+    OTestFactory( service::Network& network )
+    :   m_network( network )
+    {
+    }
 
     static service::Ptr< TestFactory > create( service::Network& network )
     {
-        auto reg = network.writeRegistration();
+        g_pObject = std::make_unique< OTestFactory >( network );
 
-        std::unique_ptr< OTestFactory > pObject =
-            std::make_unique< OTestFactory >();
+        const auto rtti = getRTTI( g_pObject.get() );
 
-        const auto rtti = getRTTI( pObject.get() );
+        service::Ptr< TestFactory > ptr( g_pObject.get(), rtti, g_pObject->m_logicalThread );
 
-        service::Ptr< TestFactory > ptr( pObject.get(), rtti );
-
-        reg.get().register_ptr( ptr );
+        network.writeRegistration().get().register_ptr( ptr );
 
         return ptr;
     }

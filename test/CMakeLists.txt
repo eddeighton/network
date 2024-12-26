@@ -1,7 +1,7 @@
 
 set_source_files_properties( ${GENERATED_INTERFACE_FILES} PROPERTIES GENERATED TRUE )
 
-add_library( test_component SHARED
+add_library( test_component 
     ${GENERATED_INTERFACE_FILES}
     component.cpp
 )
