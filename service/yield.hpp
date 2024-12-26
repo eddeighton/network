@@ -35,7 +35,7 @@ public:
      * @c error_code it might produce into @c myec rather than throwing @c
      * boost::system::system_error.
      */
-    yield_t operator[]( boost::system::error_code & ec) const {
+    inline yield_t operator[]( boost::system::error_code & ec) const {
         yield_t tmp;
         tmp.ec_ = & ec;
         return tmp;
@@ -49,7 +49,7 @@ public:
 
 //[fibers_asio_yield
 // canonical instance
-thread_local yield_t yield{};
+static inline thread_local yield_t yield{};
 //]
 
 }}}

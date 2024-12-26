@@ -2,6 +2,7 @@
 #pragma once
 
 #include "service/registration.hpp"
+#include "service/asio.hpp"
 
 #include <mutex>
 #include <shared_mutex>
@@ -12,11 +13,17 @@ namespace mega::service
     {
         std::shared_mutex m_mutex;
         Registration m_registration;
-
+        mega::service::IOContextPtr m_pIOContext;
+        std::thread m_thread;
     public:
         Network()
+        :   m_pIOContext(std::make_shared< boost::asio::io_context >())
+        ,   m_thread( [this]()
+            {
+                mega::service::init_fiber_scheduler(m_pIOContext);
+                m_pIOContext->run();
+            })
         {
-
         }
 
         struct RegistrationReadAccess

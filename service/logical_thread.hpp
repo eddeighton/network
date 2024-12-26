@@ -3,6 +3,8 @@
 
 #include <boost/fiber/all.hpp>
 
+#include <iostream>
+
 namespace mega::service
 {
 
@@ -20,6 +22,7 @@ namespace mega::service
             {
                 while(true)
                 {
+                    std::cout << "fiber ran" << std::endl;
                     int  iMsg = 0;
                     auto status = m_receiveChannel.pop(iMsg);
                     if( status == boost::fibers::channel_op_status::success )

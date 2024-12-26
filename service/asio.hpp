@@ -2,22 +2,12 @@
 
 #pragma once
 
-#include "round_robin.hpp"
-#include "yield.hpp"
-
-#include <boost/fiber/all.hpp>
+#include <boost/asio.hpp>
 
 namespace mega::service
 {
-    using IOContextPtr  = std::shared_ptr< boost::asio::io_context >;
-    using SocketPtr     = std::shared_ptr< boost::asio::ip::tcp::socket >;
+    using IOContextPtr = std::shared_ptr< boost::asio::io_context >;
 
-   
-    inline void init_fiber_scheduler(IOContextPtr pIOContext)
-    {
-        boost::fibers::use_scheduling_algorithm< boost::fibers::asio::round_robin >(pIOContext);
-    }
-
-
+    void init_fiber_scheduler(IOContextPtr pIOContext);
 }
 

@@ -17,8 +17,8 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
-#include "service/asio.hpp"
 #include "service/client.hpp"
+#include "service/network.hpp"
 
 #include <boost/program_options.hpp>
 #include <boost/fiber/operations.hpp>
@@ -31,7 +31,7 @@
 
 namespace mega::test
 {
-    extern void runTestComponent();
+    extern void runTestComponent(service::Network& network);
 }
 
 int main( int argc, const char* argv[] )
@@ -110,27 +110,34 @@ int main( int argc, const char* argv[] )
             }
             else
             {
-                mega::service::IOContextPtr pIOContext =
-                    std::make_shared< boost::asio::io_context >();
-                mega::service::init_fiber_scheduler(pIOContext);
+
+                mega::service::Network network;
 
                 boost::fibers::buffered_channel< int > channel(2);
+                boost::fibers::buffered_channel< int > channel2(2);
 
-                std::thread runIOService( [&]
+                mega::test::runTestComponent(network);
+
+                std::thread runAnotherThread( [&]
                     {
-                        // boost::this_fiber::yield();
-                        pIOContext->run();
+                        //boost::this_fiber::yield();
+                        //pIOContext->run();
+                        int itest=0;
+                        auto r = channel2.pop(itest);
+                        if( itest == 1 )
+                        {
+                            throw 123;
+                        }
                     });
+                // boost::this_fiber::yield();
 
-                mega::test::runTestComponent();
-
-                 pIOContext->run();
-                // int itest=0;
-                // auto r = channel.pop(itest);
-                // if( itest == 1 )
-                // {
-                //     throw 123;
-                // }
+                // pIOContext->run();
+                int itest=0;
+                auto r = channel.pop(itest);
+                if( itest == 1 )
+                {
+                    throw 123;
+                }
                 
 
                 // runIOService.join();
@@ -141,7 +148,6 @@ int main( int argc, const char* argv[] )
                 //         mega::service::IOContextPtr pIOContext =
                 //             std::make_shared< boost::asio::io_context >();
 
-                //         mega::service::init_fiber_scheduler(pIOContext);
 
                 //         mega::service::Client client(*pIOContext);
 

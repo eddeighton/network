@@ -2,9 +2,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
-
-#ifndef BOOST_FIBERS_ASIO_ROUND_ROBIN_H
-#define BOOST_FIBERS_ASIO_ROUND_ROBIN_H
+#pragma once
 
 #include <chrono>
 #include <cstddef>
@@ -51,24 +49,24 @@ public:
 
         std::unique_ptr< boost::asio::io_context::work >    work_;
 
-        service( boost::asio::io_context & io_ctx) :
+        inline service( boost::asio::io_context & io_ctx) :
             boost::asio::io_context::service( io_ctx),
             work_{ new boost::asio::io_context::work( io_ctx) } {
         }
 
-        virtual ~service() {}
+        inline virtual ~service() {}
 
-        service( service const&) = delete;
-        service & operator=( service const&) = delete;
+        inline service( service const&) = delete;
+        inline service & operator=( service const&) = delete;
 
-        void shutdown_service() override final {
+        inline void shutdown_service() override final {
             work_.reset();
         }
     };
 //]
 
 //[asio_rr_ctor
-    round_robin( std::shared_ptr< boost::asio::io_context > const& io_ctx) :
+    inline round_robin( std::shared_ptr< boost::asio::io_context > const& io_ctx) :
         io_ctx_( io_ctx),
         suspend_timer_( * io_ctx_) {
         // We use add_service() very deliberately. This will throw
@@ -98,7 +96,7 @@ public:
             });
     }
 
-    void awakened( context * ctx) noexcept {
+    inline void awakened( context * ctx) noexcept {
         BOOST_ASSERT( nullptr != ctx);
         BOOST_ASSERT( ! ctx->ready_is_linked() );
         ctx->ready_link( rqueue_); /*< fiber, enqueue on ready queue >*/
@@ -107,7 +105,7 @@ public:
         }
     }
 
-    context * pick_next() noexcept {
+    inline context * pick_next() noexcept {
         context * ctx( nullptr);
         if ( ! rqueue_.empty() ) { /*<
             pop an item from the ready queue
@@ -123,12 +121,12 @@ public:
         return ctx;
     }
 
-    bool has_ready_fibers() const noexcept {
+    inline bool has_ready_fibers() const noexcept {
         return 0 < counter_;
     }
 
 //[asio_rr_suspend_until
-    void suspend_until( std::chrono::steady_clock::time_point const& abs_time) noexcept {
+    inline void suspend_until( std::chrono::steady_clock::time_point const& abs_time) noexcept {
         // Set a timer so at least one handler will eventually fire, causing
         // run_one() to eventually return.
         if ( (std::chrono::steady_clock::time_point::max)() != abs_time) {
@@ -159,7 +157,7 @@ public:
 //]
 
 //[asio_rr_notify
-    void notify() noexcept {
+    inline void notify() noexcept {
         // Something has happened that should wake one or more fibers BEFORE
         // suspend_timer_ expires. Reset the timer to cause it to fire
         // immediately, causing the run_one() call to return. In theory we
@@ -191,4 +189,3 @@ boost::asio::io_context::id round_robin::service::id;
 #  include BOOST_ABI_SUFFIX
 #endif
 
-#endif // BOOST_FIBERS_ASIO_ROUND_ROBIN_H
