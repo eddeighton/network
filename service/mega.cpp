@@ -110,7 +110,6 @@ int main( int argc, const char* argv[] )
             }
             else
             {
-
                 mega::service::Network network;
 
                 boost::fibers::buffered_channel< int > channel(2);
