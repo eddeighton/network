@@ -41,45 +41,45 @@
 namespace mega::service
 {
 
-class MPFT : public c_machine_process_thread_fiber_id
+class MPTF : public c_machine_process_thread_fiber_id
 {
 public:
     using ValueType = U64;
 
     struct Hash
     {
-        inline U64 operator()( const MPFT& ref ) const noexcept { return ref.getValue(); }
+        inline U64 operator()( const MPTF& ref ) const noexcept { return ref.getValue(); }
     };
 
-    constexpr inline MPFT()
+    constexpr inline MPTF()
         : c_machine_process_thread_fiber_id{ 0, 0, 0, 0 }
     {
     }
 
-    constexpr inline explicit MPFT( c_machine_id machineID, c_process_id processID, c_thread_id threadID, c_fiber_id fiberID )
+    constexpr inline explicit MPTF( c_machine_id machineID, c_process_id processID, c_thread_id threadID, c_fiber_id fiberID )
         : c_machine_process_thread_fiber_id(
             c_machine_process_thread_fiber_id_make( machineID.value, processID.value, threadID.value, fiberID.value ) )
     {
     }
 
-    constexpr inline explicit MPFT( MachineID machineID, ProcessID processID, ThreadID threadID, FiberID fiberID )
+    constexpr inline explicit MPTF( MachineID machineID, ProcessID processID, ThreadID threadID, FiberID fiberID )
         : c_machine_process_thread_fiber_id(
             c_machine_process_thread_fiber_id_make( machineID.getValue(), processID.getValue(), threadID.getValue(), fiberID.getValue() ) )
     {
     }
 
-    constexpr inline explicit MPFT( MP mp, ThreadID threadID, FiberID fiberID)
+    constexpr inline explicit MPTF( MP mp, ThreadID threadID, FiberID fiberID)
         : c_machine_process_thread_fiber_id( c_machine_process_thread_fiber_id_make(
             mp.getMachineID().getValue(), mp.getProcessID().getValue(), threadID.getValue(), fiberID.getValue() ) )
     {
     }
 
-    constexpr inline explicit MPFT( ValueType _value )
+    constexpr inline explicit MPTF( ValueType _value )
         : c_machine_process_thread_fiber_id( c_machine_process_thread_fiber_id_from_int( _value ) )
     {
     }
 
-    constexpr inline MPFT( const MPFT& cpy ) = default;
+    constexpr inline MPTF( const MPTF& cpy ) = default;
 
     constexpr inline ValueType getValue() const { return c_machine_process_thread_fiber_id_as_int( *this ); }
     constexpr inline MachineID getMachineID() const { return MachineID{ m_machine_id }; }
@@ -91,9 +91,9 @@ public:
 
     constexpr inline bool valid() const { return getValue() != 0; }
 
-    constexpr inline bool operator==( const MPFT& cmp ) const { return getValue() == cmp.getValue(); }
-    constexpr inline bool operator!=( const MPFT& cmp ) const { return !this->operator==( cmp ); }
-    constexpr inline bool operator<( const MPFT& cmp ) const { return getValue() < cmp.getValue(); }
+    constexpr inline bool operator==( const MPTF& cmp ) const { return getValue() == cmp.getValue(); }
+    constexpr inline bool operator!=( const MPTF& cmp ) const { return !this->operator==( cmp ); }
+    constexpr inline bool operator<( const MPTF& cmp ) const { return getValue() < cmp.getValue(); }
 
     template < class Archive >
     inline void serialize( Archive& archive, const unsigned int )
@@ -115,14 +115,14 @@ public:
     }
 };
 
-static_assert( sizeof( MPFT ) == sizeof( MPFT::ValueType ), "Invalid MPFT Size" );
+static_assert( sizeof( MPTF ) == sizeof( MPTF::ValueType ), "Invalid MPTF Size" );
 
-inline std::ostream& operator<<( std::ostream& os, const MPFT& value )
+inline std::ostream& operator<<( std::ostream& os, const MPTF& value )
 {
     return os << value.getMachineID() << '.' << value.getProcessID() << '.' << value.getThreadID() << '.' << value.getFiberID();
 }
 
-inline std::istream& operator>>( std::istream& is, MPFT& typeID )
+inline std::istream& operator>>( std::istream& is, MPTF& typeID )
 {
     MachineID machineID;
     ProcessID processID;
@@ -130,7 +130,7 @@ inline std::istream& operator>>( std::istream& is, MPFT& typeID )
     ThreadID  fiberID;
     char      c;
     is >> machineID >> c >> processID >> c >> threadID >> c >> fiberID;
-    typeID = MPFT{ machineID, processID, threadID, fiberID };
+    typeID = MPTF{ machineID, processID, threadID, fiberID };
     return is;
 }
 
