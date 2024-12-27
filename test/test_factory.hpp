@@ -38,6 +38,7 @@ public:
 
     service::Ptr<Test> create_test() override
     {
+        std::cout << "create_test called in OTestFactory" << std::endl;
         return {};
     }
 };
@@ -45,23 +46,21 @@ public:
 void threadRoutine(service::Network& network)
 {
     using namespace mega::service;
-    {
-        network.writeRegistry().get().registerFiber();
-    }
+    LogicalThread::registerFiber(network.getMP());
     OTestFactory testFactory(network);
 
     Ptr< TestFactory > pFactory = testFactory.getPtr();
     std::cout << "Created TestFactory: " << testFactory.getMPO() << std::endl;
+    Ptr< Test > pTest2 = pFactory->create_test();
 
     boost::fibers::fiber test( [&]()
     {
-        {
-            network.writeRegistry().get().registerFiber();
-        }
+        LogicalThread::registerFiber(network.getMP());
         Ptr< Test > pTest = pFactory->create_test();
-        std::cout << "Created test object" << std::endl;
+        // std::cout << "Created test object" << std::endl;
     });
 
+    LogicalThread::get().receive();
     // std::cout << pTest->test1() << std::endl;
 
     test.join();

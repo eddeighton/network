@@ -44,7 +44,6 @@ namespace mega::service
     class Registry : public Common::DisableCopy, Common::DisableMove
     {
         const MP m_mp;
-        FiberID::ValueType m_fiberIDCounter{};
 
         using ObjectVector = std::vector< Interface* >;
         ObjectVector m_objects;
@@ -72,21 +71,9 @@ namespace mega::service
         {
         }
 
-        inline void registerFiber()
-        {
+        MP getMP() const { return m_mp; }
 
-            if( nullptr == fiber_local_storage.get() )
-            {
-                VERIFY_RTE_MSG( m_fiberIDCounter < std::numeric_limits<FiberID::ValueType>::max(),
-                    "No remaining fiber IDs available" );
-                const FiberID fiberID{ ++m_fiberIDCounter };
-                const MPTF mptf( m_mp, ThreadID{}, fiberID );
-                fiber_local_storage.reset( new LogicalThread );
-                fiber_local_storage->m_mptf = mptf;
-            }
-        }
-
-        inline MPO createInProcessProxy( Interface& object )
+        inline MPO createInProcessProxy(Interface& object)
         {
             VERIFY_RTE_MSG(
                  m_objects.size() < std::numeric_limits< ObjectID::ValueType >::max(),
@@ -98,9 +85,7 @@ namespace mega::service
 
             RTTI rtti;
 
-            VERIFY_RTE_MSG( fiber_local_storage.get() != nullptr,
-                "Fiber does not have logical thread fiber local storage set" );
-            LogicalThread& logicalThread = *fiber_local_storage.get();
+            auto& logicalThread = LogicalThread::get();
 
             if( auto p1 = dynamic_cast< mega::test::TestFactory* >( &object ) )
             {
@@ -122,9 +107,6 @@ namespace mega::service
             }
 
             m_objects.push_back(&object);
-
-
-
             return mpo;
         }
 

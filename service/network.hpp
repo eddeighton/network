@@ -44,6 +44,8 @@ namespace mega::service
             m_networkThread.join();
         }
 
+        MP getMP() const { return m_registry.getMP(); }
+
         struct RegistryReadAccess
         {
             std::shared_mutex& m_mutex;
