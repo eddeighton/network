@@ -3,6 +3,8 @@
 
 #include "service/proxy.hpp"
 
+#include "common/assert_verify.hpp"
+
 namespace mega::service
 {
     template< typename T >
@@ -16,7 +18,7 @@ namespace mega::service
 
         explicit operator bool() const { return p; }
         ProxyType* operator->() const { return p; }
-        ProxyType& operator*() const { return *p; }
+        ProxyType& operator*() const { ASSERT(p); return *p; }
     };
 }
 

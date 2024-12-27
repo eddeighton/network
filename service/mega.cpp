@@ -17,6 +17,9 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
+#include "test/test_object.hpp"
+#include "test/test_factory.hpp"
+
 #include "service/client.hpp"
 #include "service/network.hpp"
 
@@ -29,10 +32,6 @@
 #include <iostream>
 #include <chrono>
 
-namespace mega::test
-{
-    extern void runTestComponent(service::Network& network);
-}
 
 int main( int argc, const char* argv[] )
 {
@@ -113,9 +112,7 @@ int main( int argc, const char* argv[] )
 
                 mega::service::Network network( mp );
 
-                mega::test::runTestComponent(network);
-
-                network.run();
+                mega::test::threadRoutine(network);
             }
         }
         catch(std::exception& ex)

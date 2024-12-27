@@ -8,6 +8,7 @@
 
 #include <mutex>
 #include <shared_mutex>
+#include <thread>
 
 namespace mega::service
 {
@@ -16,10 +17,21 @@ namespace mega::service
         std::shared_mutex m_mutex;
         Registry m_registry;
         mega::service::IOContextPtr m_pIOContext;
+        std::thread m_networkThread;
+
+        void run()
+        {
+            mega::service::init_fiber_scheduler(m_pIOContext);
+            m_pIOContext->run();
+        }
     public:
         Network(MP machineProcess)
         :   m_registry(machineProcess)
         ,   m_pIOContext(std::make_shared< boost::asio::io_context >())
+        ,   m_networkThread( [this]
+            {
+                run();    
+            })
         {
         }
 
@@ -29,12 +41,7 @@ namespace mega::service
         ~Network()
         {
             m_pIOContext->stop();
-        }
-
-        void run()
-        {
-            mega::service::init_fiber_scheduler(m_pIOContext);
-            m_pIOContext->run();
+            m_networkThread.join();
         }
 
         struct RegistryReadAccess

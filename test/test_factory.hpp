@@ -18,16 +18,15 @@ namespace mega::test
 class OTestFactory : public TestFactory
 {
     service::Network& m_network;
-    service::LogicalThread m_logicalThread;
     service::MPO m_mpo;
     service::Ptr< TestFactory > m_pProxy;
 public:
-    OTestFactory( service::Network& network )
+    OTestFactory(service::Network& network, service::LogicalThread& logicalThread)
     :   m_network( network )
     {
         auto& reg = network.writeRegistry().get();
 
-        m_mpo = reg.createInProcessProxy(*this, m_logicalThread);
+        m_mpo = reg.createInProcessProxy(*this, logicalThread);
 
         auto factories = reg.get< TestFactory >( m_mpo );
         VERIFY_RTE(factories.size()==1);
@@ -39,10 +38,29 @@ public:
 
     service::Ptr<Test> create_test() override
     {
-        THROW_TODO;
+        return {};
     }
 };
 
+void threadRoutine(service::Network& network)
+{
+    using namespace mega::service;
+    LogicalThread logicalThread;
+    OTestFactory testFactory(network, logicalThread);
+
+    Ptr< TestFactory > pFactory = testFactory.getPtr();
+    std::cout << "Created TestFactory: " << testFactory.getMPO() << std::endl;
+
+    boost::fibers::fiber test( [pFactory]()
+    {
+        Ptr< Test > pTest = pFactory->create_test();
+        std::cout << "Created test object" << std::endl;
+    });
+
+    // std::cout << pTest->test1() << std::endl;
+
+    test.join();
+}
 
 }
 
