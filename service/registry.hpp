@@ -12,6 +12,8 @@
 #include "vocab/service/mpo.hpp"
 #include "vocab/service/mptf.hpp"
 
+#include "common/disable_special_members.hpp"
+
 #include <unordered_map>
 #include <vector>
 #include <memory>
@@ -19,7 +21,7 @@
 
 namespace mega::service
 {
-    class Registry
+    class Registry : public Common::DisableCopy, Common::DisableMove
     {
         MP m_mp;
 
@@ -45,12 +47,6 @@ namespace mega::service
         {
 
         }
-
-        Registry(Registry&) = delete;
-        Registry& operator=(Registry&) = delete;
-
-        Registry(Registry&&) = delete;
-        Registry& operator=(Registry&&) = delete;
 
         // using RegistrationMap = std::unordered_map< MPO, RTTI >; 
         inline MPO createInProcessProxy( Interface& object, LogicalThread& logicalThread )
