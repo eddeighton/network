@@ -21,12 +21,12 @@ class OTestFactory : public TestFactory
     service::MPO m_mpo;
     service::Ptr< TestFactory > m_pProxy;
 public:
-    OTestFactory(service::Network& network, service::LogicalThread& logicalThread)
+    OTestFactory(service::Network& network)
     :   m_network( network )
     {
         auto& reg = network.writeRegistry().get();
 
-        m_mpo = reg.createInProcessProxy(*this, logicalThread);
+        m_mpo = reg.createInProcessProxy(*this);
 
         auto factories = reg.get< TestFactory >( m_mpo );
         VERIFY_RTE(factories.size()==1);
@@ -45,14 +45,19 @@ public:
 void threadRoutine(service::Network& network)
 {
     using namespace mega::service;
-    LogicalThread logicalThread;
-    OTestFactory testFactory(network, logicalThread);
+    {
+        network.writeRegistry().get().registerFiber();
+    }
+    OTestFactory testFactory(network);
 
     Ptr< TestFactory > pFactory = testFactory.getPtr();
     std::cout << "Created TestFactory: " << testFactory.getMPO() << std::endl;
 
-    boost::fibers::fiber test( [pFactory]()
+    boost::fibers::fiber test( [&]()
     {
+        {
+            network.writeRegistry().get().registerFiber();
+        }
         Ptr< Test > pTest = pFactory->create_test();
         std::cout << "Created test object" << std::endl;
     });

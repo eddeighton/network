@@ -14,23 +14,23 @@ namespace mega::service
 
     class LogicalThread
     {
+        friend class Registry;
     public:
     
     private:
         using Channel = boost::fibers::buffered_channel< int >;
 
         Channel m_receiveChannel;
+        MPTF m_mptf;
     public:
 
         LogicalThread()
             : m_receiveChannel( 128 )
         {
-            // boost::fibers::fiber( [this]
-            // {
-            //     while(true)
-            //     {
-            //         std::cout << "fiber ran" << std::endl;
-            //         int  iMsg = 0;
+        }
+
+        void receive()
+        {
             //         auto status = m_receiveChannel.pop(iMsg);
             //         if( status == boost::fibers::channel_op_status::success )
             //         {
@@ -40,10 +40,7 @@ namespace mega::service
             //         {
             //             break;
             //         }
-            //     }
-            // }).detach();
         }
-
 
         void dispatchMsg(int iMsg)
         {
