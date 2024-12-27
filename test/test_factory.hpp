@@ -8,6 +8,7 @@
 #include "service/logical_thread.hpp"
 #include "service/network.hpp"
 #include "service/registry.hpp"
+#include "service/ptr.hpp"
 
 #include "common/assert_verify.hpp"
 
@@ -18,27 +19,23 @@ class OTestFactory : public TestFactory
 {
     service::Network& m_network;
     service::LogicalThread m_logicalThread;
+    service::MPO m_mpo;
+    service::Ptr< TestFactory > m_pProxy;
 public:
     OTestFactory( service::Network& network )
     :   m_network( network )
     {
-    }
-
-    static service::Ptr< TestFactory > create( service::Network& network )
-    {
-        static thread_local auto pObject = std::make_unique< OTestFactory >( network );
-        auto& lt = pObject->m_logicalThread;
-
         auto& reg = network.writeRegistry().get();
 
-        const service::MPO mpo = 
-            reg.createInProcessProxy(*pObject, lt);
+        m_mpo = reg.createInProcessProxy(*this, m_logicalThread);
 
-        // THROW_TODO; 
-
-       // return Ptr{ &proxy };
-        return {};
+        auto factories = reg.get< TestFactory >( m_mpo );
+        VERIFY_RTE(factories.size()==1);
+        m_pProxy = factories.front();
     }
+
+    const service::MPO getMPO() const { return m_mpo; }
+    service::Ptr< TestFactory > getPtr() const { return m_pProxy; }
 
     service::Ptr<Test> create_test() override
     {

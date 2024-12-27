@@ -68,10 +68,8 @@ namespace mega::service
         {
         }
 
-        // using RegistrationMap = std::unordered_map< MPO, RTTI >; 
         inline MPO createInProcessProxy( Interface& object, LogicalThread& logicalThread )
         {
-            // assign MPO and MPTF
             VERIFY_RTE_MSG(
                  m_objects.size() < std::numeric_limits< ObjectID::ValueType >::max(),
                  "No remaining ObjectIDs available" );
@@ -125,7 +123,7 @@ namespace mega::service
             std::vector< Ptr< T > > result;
             for( auto i = iLower; i != iUpper; ++i )
             {
-                auto p = dynamic_cast< T* >( i->second );
+                auto p = dynamic_cast< Proxy<T>* >( i->second );
                 VERIFY_RTE(p);
                 result.push_back( Ptr< T >( p ) );
             }

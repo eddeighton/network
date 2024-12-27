@@ -5,6 +5,7 @@
 #include "test/test_factory.hpp"
 
 #include "service/network.hpp"
+#include "service/ptr.hpp"
 
 namespace mega::test
 {
@@ -12,12 +13,15 @@ namespace mega::test
     {
         using namespace service;
 
-        // Ptr< TestFactory > pFactory = 
-            OTestFactory::create( network );
+        OTestFactory factory( network );
 
-        // Ptr< Test > pTest = pFactory->create_test();
+        std::cout << "Created TestFactory: " << factory.getMPO() << std::endl;
 
-        // std::cout << pTest->test1() << std::endl;
+        Ptr< TestFactory > pFactory = factory.getPtr();
+
+        Ptr< Test > pTest = pFactory->create_test();
+
+        std::cout << pTest->test1() << std::endl;
     }
 }
 

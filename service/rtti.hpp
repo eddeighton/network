@@ -6,7 +6,7 @@
 
 namespace mega::service
 {
-    class RTTI
+    class RTTI 
     {
     public:
         using InterfaceTypeName = std::string;
