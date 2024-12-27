@@ -1,8 +1,10 @@
 
 #pragma once
 
-#include "service/registration.hpp"
+#include "service/registry.hpp"
 #include "service/asio.hpp"
+
+#include "vocab/service/mp.hpp"
 
 #include <mutex>
 #include <shared_mutex>
@@ -12,70 +14,79 @@ namespace mega::service
     class Network
     {
         std::shared_mutex m_mutex;
-        Registration m_registration;
+        Registry m_registry;
         mega::service::IOContextPtr m_pIOContext;
-        std::thread m_thread;
     public:
-        Network()
-        :   m_pIOContext(std::make_shared< boost::asio::io_context >())
-        ,   m_thread( [this]()
-            {
-                mega::service::init_fiber_scheduler(m_pIOContext);
-                m_pIOContext->run();
-            })
+        Network(MP machineProcess)
+        :   m_registry(machineProcess)
+        ,   m_pIOContext(std::make_shared< boost::asio::io_context >())
         {
         }
 
-        struct RegistrationReadAccess
+        Network(const Network&) = delete;
+        Network& operator=(const Network&) = delete;
+
+        ~Network()
+        {
+            m_pIOContext->stop();
+        }
+
+        void run()
+        {
+            mega::service::init_fiber_scheduler(m_pIOContext);
+            m_pIOContext->run();
+        }
+
+        struct RegistryReadAccess
         {
             std::shared_mutex& m_mutex;
             std::shared_lock< std::shared_mutex > m_shared_lock;
-            Registration& m_registration;
+            Registry& m_registry;
 
-            RegistrationReadAccess(
+            RegistryReadAccess(
                 std::shared_mutex& mut,
-                Registration& registration )
+                Registry& reg )
                 : m_mutex( mut )
                 , m_shared_lock( m_mutex, std::defer_lock )
-                , m_registration( registration )
+                , m_registry( reg )
             {
             }
 
-            Registration& get()
+            Registry& get()
             {
                 // lock the reader on access
                 m_mutex.lock();
-                return m_registration;
+                return m_registry;
             }
         };
-        struct RegistrationWriteAccess
+        struct RegistryWriteAccess
         {
             std::shared_mutex& m_mutex;
             std::lock_guard< std::shared_mutex > m_lock_guard;
-            Registration& m_registration;
+            Registry& m_registry;
 
-            RegistrationWriteAccess(
+            RegistryWriteAccess(
                 std::shared_mutex& mut,
-                Registration& registration )
+                Registry& reg )
                 : m_mutex( mut )
                 , m_lock_guard( m_mutex )
-                , m_registration( registration )
+                , m_registry( reg )
             {
             }
 
-            Registration& get()
+            Registry& get()
             {
-                return m_registration;
+                return m_registry;
             }
         };
 
-        RegistrationReadAccess readRegistration()
+        RegistryReadAccess readRegistry()
         {
-            return {m_mutex, m_registration};
+            return {m_mutex, m_registry};
         }
-        RegistrationWriteAccess writeRegistration()
+        RegistryWriteAccess writeRegistry()
         {
-            return {m_mutex, m_registration};
+            return {m_mutex, m_registry};
         }
 
     };

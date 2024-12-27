@@ -4,8 +4,6 @@
 #include "test/test.interface.hpp"
 #include "test/service/test.proxy.hxx"
 
-#include "service/network.hpp"
-
 #include "common/assert_verify.hpp"
 
 #include <string>

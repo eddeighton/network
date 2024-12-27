@@ -101,7 +101,6 @@ int main( int argc, const char* argv[] )
                 startTimeOpt = std::chrono::steady_clock::now();
             }
 
-
             const bool bShowHelp = vm.count( "help" );
 
             if( bShowHelp )
@@ -110,68 +109,13 @@ int main( int argc, const char* argv[] )
             }
             else
             {
-                mega::service::Network network;
+                mega::service::MP mp{};
 
-                boost::fibers::buffered_channel< int > channel(2);
-                boost::fibers::buffered_channel< int > channel2(2);
+                mega::service::Network network( mp );
 
                 mega::test::runTestComponent(network);
 
-                std::thread runAnotherThread( [&]
-                    {
-                        //boost::this_fiber::yield();
-                        //pIOContext->run();
-                        int itest=0;
-                        auto r = channel2.pop(itest);
-                        if( itest == 1 )
-                        {
-                            throw 123;
-                        }
-                    });
-                // boost::this_fiber::yield();
-
-                // pIOContext->run();
-                int itest=0;
-                auto r = channel.pop(itest);
-                if( itest == 1 )
-                {
-                    throw 123;
-                }
-                
-
-                // runIOService.join();
-
-                // std::thread networkThread(
-                //     []
-                //     {
-                //         mega::service::IOContextPtr pIOContext =
-                //             std::make_shared< boost::asio::io_context >();
-
-
-                //         mega::service::Client client(*pIOContext);
-
-                //         using namespace mega::service;
-                //         using namespace std::string_literals;
-
-                //         boost::fibers::fiber([&]
-                //             {
-                //                 auto pConnection = client.connect(IPAddress{"localhost"}, PortNumber{1234});
-                //                 pConnection->getSender().send("ONE "s);
-                //                 pConnection->getSender().send("TWO "s);
-                //                 pConnection->getSender().send("THRE"s);
-                //                 pConnection->getSender().send("FOUR"s);
-                //                 pConnection->stop();
-                //                 pIOContext->run_one();
-                //                 pIOContext->stop();
-                //             }).detach();
-
-                //         pIOContext->run();
-
-                //         std::cout << "Complete" << std::endl;
-                //     }
-                // );
-
-                // networkThread.join();
+                network.run();
             }
         }
         catch(std::exception& ex)

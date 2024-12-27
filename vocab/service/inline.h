@@ -44,10 +44,10 @@ typedef struct _c_process_id
 
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
-typedef struct _c_owner_id
+typedef struct _c_object_id
 {
     c_u8 value;
-} c_owner_id;
+} c_object_id;
 
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
@@ -111,31 +111,31 @@ constexpr
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
-// c_machine_process_owner_id
+// c_machine_process_object_id
 #pragma pack( 1 )
-typedef struct _c_machine_process_owner_id
+typedef struct _c_machine_process_object_id
 {
     c_machine_id m_machine_id;
     c_process_id m_process_id;
-    c_owner_id   m_owner_id;
+    c_object_id   m_object_id;
     c_u8         m_padding;
-} c_machine_process_owner_id;
+} c_machine_process_object_id;
 #pragma pack()
 
 #ifndef MEGAJIT
-static_assert( sizeof( c_machine_process_owner_id ) == 8U, "Invalid c_machine_process_owner_id Size" );
+static_assert( sizeof( c_machine_process_object_id ) == 8U, "Invalid c_machine_process_object_id Size" );
 #endif
 
 #ifdef __cplusplus
 constexpr
 #endif
-    inline c_machine_process_owner_id
-    c_machine_process_owner_id_make( c_u32 machine_id, c_u16 process_id, c_u8 owner_id )
+    inline c_machine_process_object_id
+    c_machine_process_object_id_make( c_u32 machine_id, c_u16 process_id, c_u8 object_id )
 {
-    c_machine_process_owner_id result;
+    c_machine_process_object_id result;
     result.m_machine_id.value = machine_id;
     result.m_process_id.value = process_id;
-    result.m_owner_id.value   = owner_id;
+    result.m_object_id.value   = object_id;
     result.m_padding          = 0;
     return result;
 }
@@ -144,19 +144,19 @@ constexpr
 constexpr
 #endif
     inline c_u64
-    c_machine_process_owner_id_as_int( c_machine_process_owner_id id )
+    c_machine_process_object_id_as_int( c_machine_process_object_id id )
 {
     return ( ( c_u64 )id.m_machine_id.value ) + ( ( ( c_u64 )id.m_process_id.value ) << 32 )
-           + ( ( ( c_u64 )id.m_owner_id.value ) << 48 );
+           + ( ( ( c_u64 )id.m_object_id.value ) << 48 );
 }
 
 #ifdef __cplusplus
 constexpr
 #endif
-    inline c_machine_process_owner_id
-    c_machine_process_owner_id_from_int( c_u64 i )
+    inline c_machine_process_object_id
+    c_machine_process_object_id_from_int( c_u64 i )
 {
-    return c_machine_process_owner_id{ ( c_u32 )( i ), ( c_u16 )( i >> 32 ), ( c_u8 )( i >> 48 ), 0 };
+    return c_machine_process_object_id{ ( c_u32 )( i ), ( c_u16 )( i >> 32 ), ( c_u8 )( i >> 48 ), 0 };
 }
 
 /////////////////////////////////////////////////////////////////////

@@ -9,9 +9,9 @@ namespace mega::service
     class Ptr
     {
         using ProxyType = Proxy< T >;
-        ProxyType* p;
+        ProxyType* p = nullptr;
     public:
-        Ptr() : p(nullptr) {}
+        Ptr() = default;
         Ptr(ProxyType* p) : p(p) {}
 
         explicit operator bool() const { return p; }

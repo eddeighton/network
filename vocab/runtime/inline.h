@@ -75,7 +75,7 @@ typedef struct _c_pointer_net
     c_allocation_id             m_allocationID; // 2
     c_machine_id                m_machineID;    // 4
     c_process_id                m_processID;    // 2
-    c_owner_id                  m_ownerID;      // 1
+    c_object_id                 m_objectID;     // 1
     c_u8                        m_flags;        // 1
     c_concrete_type_id_instance m_type;         // 6
 } c_pointer_net;

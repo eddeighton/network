@@ -92,7 +92,7 @@ inline constexpr FiberID operator""_F( unsigned long long int value )
     return FiberID{ static_cast< FiberID::ValueType >( value ) };
 }
 
-static constexpr FiberID OWNER_ZERO = 0x0000_F;
+static constexpr FiberID FIBER_ZERO = 0x0000_F;
 
 inline std::ostream& operator<<( std::ostream& os, const FiberID& instance )
 {

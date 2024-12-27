@@ -28,7 +28,7 @@
 #include "vocab/service/mp.hpp"
 #include "vocab/service/machine_id.hpp"
 #include "vocab/service/process_id.hpp"
-#include "vocab/service/owner_id.hpp"
+#include "vocab/service/object_id.hpp"
 #include "vocab/service/mp.hpp"
 
 #include "common/serialisation.hpp"
@@ -40,7 +40,7 @@
 namespace mega::service
 {
 
-class MPO : public c_machine_process_owner_id
+class MPO : public c_machine_process_object_id
 {
 public:
     using ValueType = U64;
@@ -51,39 +51,39 @@ public:
     };
 
     constexpr inline MPO()
-        : c_machine_process_owner_id{ 0, 0, 0, 0 }
+        : c_machine_process_object_id{ 0, 0, 0, 0 }
     {
     }
 
-    constexpr inline explicit MPO( c_machine_id machineID, c_process_id processID, c_owner_id ownerID )
-        : c_machine_process_owner_id(
-            c_machine_process_owner_id_make( machineID.value, processID.value, ownerID.value ) )
+    constexpr inline explicit MPO( c_machine_id machineID, c_process_id processID, c_object_id objectID )
+        : c_machine_process_object_id(
+            c_machine_process_object_id_make( machineID.value, processID.value, objectID.value ) )
     {
     }
 
-    constexpr inline explicit MPO( MachineID machineID, ProcessID processID, OwnerID ownerID )
-        : c_machine_process_owner_id(
-            c_machine_process_owner_id_make( machineID.getValue(), processID.getValue(), ownerID.getValue() ) )
+    constexpr inline explicit MPO( MachineID machineID, ProcessID processID, ObjectID objectID )
+        : c_machine_process_object_id(
+            c_machine_process_object_id_make( machineID.getValue(), processID.getValue(), objectID.getValue() ) )
     {
     }
 
-    constexpr inline explicit MPO( MP mp, OwnerID ownerID )
-        : c_machine_process_owner_id( c_machine_process_owner_id_make(
-            mp.getMachineID().getValue(), mp.getProcessID().getValue(), ownerID.getValue() ) )
+    constexpr inline explicit MPO( MP mp, ObjectID objectID )
+        : c_machine_process_object_id( c_machine_process_object_id_make(
+            mp.getMachineID().getValue(), mp.getProcessID().getValue(), objectID.getValue() ) )
     {
     }
 
     constexpr inline explicit MPO( ValueType _value )
-        : c_machine_process_owner_id( c_machine_process_owner_id_from_int( _value ) )
+        : c_machine_process_object_id( c_machine_process_object_id_from_int( _value ) )
     {
     }
 
     constexpr inline MPO( const MPO& cpy ) = default;
 
-    constexpr inline ValueType getValue() const { return c_machine_process_owner_id_as_int( *this ); }
+    constexpr inline ValueType getValue() const { return c_machine_process_object_id_as_int( *this ); }
     constexpr inline MachineID getMachineID() const { return MachineID{ m_machine_id }; }
     constexpr inline ProcessID getProcessID() const { return ProcessID{ m_process_id }; }
-    constexpr inline OwnerID   getOwnerID() const { return OwnerID{ m_owner_id }; }
+    constexpr inline ObjectID  getObjectID() const { return ObjectID{ m_object_id }; }
 
     constexpr inline MP getMP() const { return MP{ m_machine_id, m_process_id }; }
 
@@ -100,32 +100,32 @@ public:
         {
             archive& boost::serialization::make_nvp( "machine_id", m_machine_id.value );
             archive& boost::serialization::make_nvp( "process_id", m_process_id.value );
-            archive& boost::serialization::make_nvp( "owner_id", m_owner_id.value );
+            archive& boost::serialization::make_nvp( "object_id", m_object_id.value );
         }
         else
         {
             archive& m_machine_id.value;
             archive& m_process_id.value;
-            archive& m_owner_id.value;
+            archive& m_object_id.value;
         }
     }
 };
 
-static_assert( sizeof( MPO ) == sizeof( MPO::ValueType ), "Invalid Concrete ObjectID Size" );
+static_assert( sizeof( MPO ) == sizeof( MPO::ValueType ), "Invalid Concrete MPO Size" );
 
 inline std::ostream& operator<<( std::ostream& os, const MPO& value )
 {
-    return os << value.getMachineID() << '.' << value.getProcessID() << '.' << value.getOwnerID();
+    return os << value.getMachineID() << '.' << value.getProcessID() << '.' << value.getObjectID();
 }
 
 inline std::istream& operator>>( std::istream& is, MPO& typeID )
 {
     MachineID machineID;
     ProcessID processID;
-    OwnerID   ownerID;
+    ObjectID  objectID;
     char      c;
-    is >> machineID >> c >> processID >> c >> ownerID;
-    typeID = MPO{ machineID, processID, ownerID };
+    is >> machineID >> c >> processID >> c >> objectID;
+    typeID = MPO{ machineID, processID, objectID };
     return is;
 }
 

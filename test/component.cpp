@@ -10,9 +10,14 @@ namespace mega::test
 {
     void runTestComponent(service::Network& network)
     {
-        service::Ptr< TestFactory > pFactory = OTestFactory::create( network );
+        using namespace service;
 
+        // Ptr< TestFactory > pFactory = 
+        //    OTestFactory::create( network );
 
+        // Ptr< Test > pTest = pFactory->create_test();
+
+        // std::cout << pTest->test1() << std::endl;
     }
 }
 

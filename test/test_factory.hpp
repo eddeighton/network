@@ -6,14 +6,16 @@
 
 #include "service/rtti.hpp"
 #include "service/logical_thread.hpp"
+#include "service/network.hpp"
+#include "service/registry.hpp"
 
 #include "common/assert_verify.hpp"
+
 namespace mega::test
 {
 
 class OTestFactory : public TestFactory
 {
-    static inline std::unique_ptr< OTestFactory > g_pObject;
     service::Network& m_network;
     service::LogicalThread m_logicalThread;
 public:
@@ -24,17 +26,18 @@ public:
 
     static service::Ptr< TestFactory > create( service::Network& network )
     {
-        g_pObject = std::make_unique< OTestFactory >( network );
+        static thread_local auto pObject = std::make_unique< OTestFactory >( network );
+        auto& lt = pObject->m_logicalThread;
 
-        const auto rtti = getRTTI( g_pObject.get() );
+        auto& reg = network.writeRegistry().get();
 
-        //TestFactory_InProcess proxy( g_pObject.get(), rtti, g_pObject->m_logicalThread );
+        const service::MPO mpo = 
+            reg.createInProcessProxy(*pObject, lt);
 
-        //network.writeRegistration().get().registerProxy( proxy );
-
-        THROW_TODO;
+        // THROW_TODO; 
 
        // return Ptr{ &proxy };
+        return {};
     }
 
     service::Ptr<Test> create_test() override
