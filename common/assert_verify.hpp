@@ -1,4 +1,3 @@
-
 //  Copyright (c) Deighton Systems Limited. 2022. All Rights Reserved.
 //  Author: Edward Deighton
 //  License: Please see license.txt in the project root folder.

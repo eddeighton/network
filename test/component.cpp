@@ -13,7 +13,7 @@ namespace mega::test
         using namespace service;
 
         // Ptr< TestFactory > pFactory = 
-        //    OTestFactory::create( network );
+            OTestFactory::create( network );
 
         // Ptr< Test > pTest = pFactory->create_test();
 
