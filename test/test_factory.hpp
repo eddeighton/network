@@ -2,11 +2,12 @@
 #pragma once
 
 #include "test/test_object.hpp"
-#include "test/service/testfactory.ptr.hxx"
+#include "test/service/testfactory.proxy.hxx"
 
 #include "service/rtti.hpp"
 #include "service/logical_thread.hpp"
 
+#include "common/assert_verify.hpp"
 namespace mega::test
 {
 
@@ -27,19 +28,18 @@ public:
 
         const auto rtti = getRTTI( g_pObject.get() );
 
-        service::Ptr< TestFactory > ptr( g_pObject.get(), rtti, g_pObject->m_logicalThread );
+        //TestFactory_InProcess proxy( g_pObject.get(), rtti, g_pObject->m_logicalThread );
 
-        network.writeRegistration().get().register_ptr( ptr );
+        //network.writeRegistration().get().registerProxy( proxy );
 
-        return ptr;
+        THROW_TODO;
+
+       // return Ptr{ &proxy };
     }
 
     service::Ptr<Test> create_test() override
     {
-        
-        
         THROW_TODO;
-        // return std::make_shared<OTest>();
     }
 };
 

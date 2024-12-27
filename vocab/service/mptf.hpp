@@ -1,5 +1,3 @@
-
-
 //  Copyright (c) Deighton Systems Limited. 2022. All Rights Reserved.
 //  Author: Edward Deighton
 //  License: Please see license.txt in the project root folder.
@@ -19,8 +17,8 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
-#ifndef GUARD_2024_January_07_mptf
-#define GUARD_2024_January_07_mptf
+#ifndef GUARD_2025_January_07_mptf
+#define GUARD_2025_January_07_mptf
 
 #include "vocab/runtime/inline.h"
 
@@ -136,4 +134,4 @@ inline std::istream& operator>>( std::istream& is, MPTF& typeID )
 
 } // namespace mega::service
 
-#endif // GUARD_2024_January_07_mptf
+#endif // GUARD_2025_January_07_mptf

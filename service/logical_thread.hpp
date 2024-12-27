@@ -5,6 +5,8 @@
 
 #include <boost/fiber/all.hpp>
 
+#include "common/assert_verify.hpp"
+
 #include <iostream>
 
 namespace mega::service

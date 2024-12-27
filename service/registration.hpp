@@ -2,7 +2,7 @@
 #pragma once
 
 #include "service/rtti.hpp"
-#include "service/ptr.hpp"
+#include "service/proxy.hpp"
 
 namespace mega::service
 {
@@ -14,7 +14,7 @@ namespace mega::service
         }
         
         template< typename T >
-        void register_ptr( Ptr< T >& ptr )
+        void registerProxy(Proxy< T >& proxy)
         {
 
         }
