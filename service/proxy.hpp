@@ -3,11 +3,12 @@
 
 #include "service/rtti.hpp"
 
+#include "common/disable_special_members.hpp"
+
 namespace mega::service
 {
-
     template< typename T >
-    class Proxy : public T
+    class Proxy : public T, Common::DisableCopy, Common::DisableMove
     {
     protected:
         RTTI m_rtti;
@@ -16,9 +17,7 @@ namespace mega::service
         :   m_rtti( rtti )
         {
         }
-
         Proxy(Proxy&)=delete;
     };
-
 }
 

@@ -102,6 +102,5 @@ namespace mega::service
             return *fiber_local_storage.get();
         }
     };
-
 }
 

@@ -74,7 +74,6 @@ void threadRoutine(service::Network& network)
             std::cout << "Caught exception: " << ex.what() <<
                 " In: " << LogicalThread::get().getMPTF() << std::endl;
         }
-
         thread.stop();
     });
 
