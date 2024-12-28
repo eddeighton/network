@@ -61,7 +61,10 @@ private:
     std::string m_name;
 };
 
-std::ostream& operator<<( std::ostream& os, const InterfaceTypeName& project );
+inline std::ostream& operator<<( std::ostream& os, const InterfaceTypeName& interfaceTypeName )
+{
+    return os << interfaceTypeName;
+}
 
 } // namespace mega::service
 

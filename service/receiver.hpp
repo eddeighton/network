@@ -5,6 +5,8 @@
 #include "service/asio.hpp"
 #include "service/sender.hpp"
 
+#include "service/protocol/packet.hpp"
+
 #include <array>
 #include <iostream>
 
@@ -28,27 +30,18 @@ namespace mega::service
             {
                 while( m_bContinue && m_socket.is_open() )
                 {
-                    // read message
-                    std::array<char, 4> buf;
 
-                    boost::system::error_code ec;
-                    auto szBytesTransferred
-                        = boost::asio::async_read(
-                            m_socket, 
-                            boost::asio::buffer( buf ),
-                            boost::fibers::asio::yield[ ec ] );
-
-                    if( ec )
+                    auto error = receive( m_socket, m_packetBuffer );
+                    if( error.failed() )
                     {
-                        m_bContinue = false;
+                        onSocketError( error );
                     }
                     else
                     {
-                        std::string s;
-                        std::copy(buf.begin(), buf.end(),
-                            std::back_inserter(s));
-                        std::cout << "Received: " << s << std::endl;
+                        // dispatch packet
+
                     }
+
                 }
 
                 m_disconnect_callback();
@@ -61,6 +54,7 @@ namespace mega::service
         bool                m_bContinue = true;
         Socket&             m_socket; 
         SocketSender        m_sender;
+        PacketBuffer        m_packetBuffer;
         DisconnectCallback  m_disconnect_callback;
     };
 }

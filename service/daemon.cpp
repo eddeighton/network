@@ -72,7 +72,7 @@ int main( int argc, const char* argv[] )
                 char c;
                 std::cin >> c;
             }
-            
+     
             std::thread networkThread(
                 [port]
                 {
