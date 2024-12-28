@@ -57,18 +57,14 @@ namespace mega::service
             VERIFY_RTE_MSG(status == boost::fibers::channel_op_status::success,
                 "Error sending message to channel" );
         }
-
-        void dispatchMsg(int iMsg)
-        {
-            THROW_TODO;
-        }
     
         static inline void registerFiber( MP mp )
         {
             static thread_local FiberID::ValueType m_fiberIDCounter{};
             if( nullptr == fiber_local_storage.get() )
             {
-                VERIFY_RTE_MSG( m_fiberIDCounter < std::numeric_limits<FiberID::ValueType>::max(),
+                VERIFY_RTE_MSG( m_fiberIDCounter <
+                    std::numeric_limits<FiberID::ValueType>::max(),
                     "No remaining fiber IDs available" );
                 const FiberID fiberID{ ++m_fiberIDCounter };
                 const MPTF mptf( mp, ThreadID{}, fiberID );
