@@ -87,6 +87,7 @@ void task_interface_analysis_report(TaskDependencies& dependencies)
 
     B interfaces{ { "Interfaces"s } };
     B factories{ { "Factories"s } };
+    B daemons{ { "Daemons"s } };
 
     for( auto pInterface : database.many< Interface >(src) )
     {
@@ -137,6 +138,11 @@ void task_interface_analysis_report(TaskDependencies& dependencies)
         {
             std::cout << "Report found factory: " << pInterface->get_full_type_name() << std::endl;
             factories.m_elements.push_back(r);
+        }   
+        else if( auto pDaemon = db_cast< Daemon >( pInterface ) )
+        {
+            std::cout << "Report found daemon: " << pInterface->get_full_type_name() << std::endl;
+            daemons.m_elements.push_back(r);
         }
         else
         {
@@ -151,7 +157,8 @@ void task_interface_analysis_report(TaskDependencies& dependencies)
             { "Megastructure Service Interface Report"s },
             {
                 interfaces,
-                factories
+                factories,
+                daemons
             }
         };
 

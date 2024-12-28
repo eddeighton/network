@@ -302,6 +302,7 @@ void task_interface_analysis(TaskDependencies& dependencies)
                     // determine if interface or factory via inheritance
                     bool bIsInterface = false;
                     bool bIsFactory = false;
+                    bool bIsDaemon = false;
                     if( const auto* pCXXRecordDecl = dyn_cast< CXXRecordDecl >( pRecordDecl ) )
                     {
                         if( pCXXRecordDecl->hasDefinition() )
@@ -317,6 +318,11 @@ void task_interface_analysis(TaskDependencies& dependencies)
                                 {
                                     bIsInterface = true;
                                     bIsFactory = true;
+                                }
+                                else if( strType == "struct mega::service::Daemon" )
+                                {
+                                    bIsInterface = true;
+                                    bIsDaemon = true;
                                 }
                                 else
                                 {
@@ -345,6 +351,10 @@ void task_interface_analysis(TaskDependencies& dependencies)
                         if( bIsFactory )
                         {
                             database.construct< Factory >(Factory::Args{ pInterface });
+                        }
+                        else if( bIsDaemon )
+                        {
+                            database.construct< Daemon >(Daemon::Args{ pInterface });
                         }
 
                         // determine functions

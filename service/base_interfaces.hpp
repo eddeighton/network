@@ -12,5 +12,9 @@ namespace mega::service
     struct Factory : public virtual Interface
     {
     };
+
+    struct Daemon : public virtual Interface
+    {
+    };
 }
 

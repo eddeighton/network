@@ -21,6 +21,14 @@ namespace mega
         {
             virtual service::Ptr<Test> create_test() = 0;
         };
+
+        struct Connectivity : public virtual mega::service::Daemon
+        {
+            virtual void connect() = 0;
+            virtual void disconnect() = 0;
+            virtual void shutdown() = 0;
+        };
+
     }
 }
 
