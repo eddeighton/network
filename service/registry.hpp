@@ -25,21 +25,10 @@
 
 namespace mega::service
 {
-    template< typename InterfaceType >
-    InterfaceTypeName getInterfaceTypeName();
-
-    template<>
-    inline InterfaceTypeName getInterfaceTypeName< mega::test::TestFactory >()
+    template< typename T >
+    InterfaceTypeName getInterfaceTypeName()
     {
-        using namespace std::string_literals;
-        return "mega::test::TestFactory"s;
-    } 
-
-    template<>
-    inline InterfaceTypeName getInterfaceTypeName< mega::test::Test >()
-    {
-        using namespace std::string_literals;
-        return "mega::test::Test"s;
+        return boost::typeindex::type_id<T>().pretty_name();
     }
     
     class Registry : public Common::DisableCopy, Common::DisableMove
@@ -74,6 +63,19 @@ namespace mega::service
 
         MP getMP() const { return m_mp; }
 
+        template< typename TInterface, typename TProxy >
+        void registerIfInterface(Interface* pInterface, MPO mpo, const RTTI& rtti)
+        {
+            if( auto p = dynamic_cast< TInterface* >( pInterface ) )
+            {
+                auto pProxy = std::make_unique< TProxy >(p, LogicalThread::get(), rtti);
+                const auto interfaceTypeName = getInterfaceTypeName< TInterface >();
+                m_mpoInterfaceMap.insert(
+                    std::make_pair( MPOInterface{ mpo, interfaceTypeName }, pProxy.get() ) );
+                m_proxies.push_back( std::move( pProxy ) );
+            }
+        }
+
         inline MPO createInProcessProxy(Interface& object)
         {
             VERIFY_RTE_MSG(
@@ -86,28 +88,8 @@ namespace mega::service
 
             RTTI rtti;
 
-            auto& logicalThread = LogicalThread::get();
-
-            if( auto p1 = dynamic_cast< mega::test::TestFactory* >( &object ) )
-            {
-                std::unique_ptr< test::TestFactory_InProcess >
-                    pProxy = std::make_unique< test::TestFactory_InProcess >(
-                        p1, logicalThread, rtti );
-                const auto interfaceTypeName = getInterfaceTypeName< mega::test::TestFactory >();
-                m_mpoInterfaceMap.insert(
-                    std::make_pair( MPOInterface{ mpo, interfaceTypeName }, pProxy.get() ) );
-                m_proxies.push_back( std::move( pProxy ) );
-            }
-            if( auto p2 = dynamic_cast< mega::test::Test* >( &object ) )
-            {
-                std::unique_ptr< test::Test_InProcess >
-                    pProxy = std::make_unique< test::Test_InProcess >(
-                        p2, logicalThread, rtti );
-                const auto interfaceTypeName = getInterfaceTypeName< mega::test::Test >();
-                m_mpoInterfaceMap.insert(
-                    std::make_pair( MPOInterface{ mpo, interfaceTypeName }, pProxy.get() ) );
-                m_proxies.push_back( std::move( pProxy ) );
-            }
+            registerIfInterface< test::TestFactory, test::TestFactory_InProcess >( &object, mpo, rtti );
+            registerIfInterface< test::Test,        test::Test_InProcess        >( &object, mpo, rtti );
 
             m_objects.push_back(&object);
             return mpo;

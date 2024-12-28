@@ -78,10 +78,7 @@ void threadRoutine(service::Network& network)
         thread.stop();
     });
 
-    // LogicalThread::get().receive();
-    // std::cout << pTest->test1() << std::endl;
     LogicalThread::get().runMessageLoop();
-    
     test.join();
 }
 
