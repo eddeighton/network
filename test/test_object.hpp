@@ -8,6 +8,7 @@
 
 #include <string>
 #include <memory>
+#include <iostream>
 
 namespace mega::test
 {
@@ -18,6 +19,7 @@ public:
     virtual std::string test1() 
     {
         using namespace std::string_literals;
+        std::cout << "Hello World inside OTest::test1"s << std::endl;
         return "Hello World"s;
     }
 };

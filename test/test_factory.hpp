@@ -20,17 +20,17 @@ class OTestFactory : public TestFactory
     service::Network& m_network;
     service::MPO m_mpo;
     service::Ptr< TestFactory > m_pProxy;
+
+    using TestPtr    = std::unique_ptr< OTest >;
+    using TestVector = std::vector< TestPtr >;
+    TestVector m_tests;
 public:
     OTestFactory(service::Network& network)
     :   m_network( network )
     {
         auto& reg = network.writeRegistry().get();
-
         m_mpo = reg.createInProcessProxy(*this);
-
-        auto factories = reg.get< TestFactory >( m_mpo );
-        VERIFY_RTE(factories.size()==1);
-        m_pProxy = factories.front();
+        m_pProxy = reg.one< TestFactory >(m_mpo);
     }
 
     const service::MPO getMPO() const { return m_mpo; }
@@ -39,7 +39,12 @@ public:
     service::Ptr<Test> create_test() override
     {
         std::cout << "create_test called in OTestFactory" << std::endl;
-        return {};
+        
+        TestPtr pTest = std::make_unique< OTest >();
+        auto& reg = m_network.writeRegistry().get();
+        const auto mpo = reg.createInProcessProxy(*pTest);
+        m_tests.push_back( std::move( pTest ) );
+        return reg.one< Test >( mpo );
     }
 };
 
@@ -47,22 +52,36 @@ void threadRoutine(service::Network& network)
 {
     using namespace mega::service;
     LogicalThread::registerFiber(network.getMP());
+    LogicalThread& thread = LogicalThread::get();
+
     OTestFactory testFactory(network);
 
     Ptr< TestFactory > pFactory = testFactory.getPtr();
     std::cout << "Created TestFactory: " << testFactory.getMPO() << std::endl;
     Ptr< Test > pTest2 = pFactory->create_test();
+    std::cout << "Test returned: " << pTest2->test1() << std::endl;
 
     boost::fibers::fiber test( [&]()
     {
         LogicalThread::registerFiber(network.getMP());
-        Ptr< Test > pTest = pFactory->create_test();
-        // std::cout << "Created test object" << std::endl;
+        try
+        {
+            Ptr< Test > pTest = pFactory->create_test();
+            std::cout << "Test returned: " << pTest->test1() << std::endl;
+        }
+        catch( std::exception& ex )
+        {
+            std::cout << "Caught exception: " << ex.what() <<
+                " In: " << LogicalThread::get().getMPTF() << std::endl;
+        }
+
+        thread.stop();
     });
 
-    LogicalThread::get().receive();
+    // LogicalThread::get().receive();
     // std::cout << pTest->test1() << std::endl;
-
+    LogicalThread::get().runMessageLoop();
+    
     test.join();
 }
 

@@ -28,6 +28,7 @@ namespace mega::service
 
         Channel m_receiveChannel;
         MPTF m_mptf;
+        bool m_bContinue = true;
     public:
 
         LogicalThread()
@@ -49,6 +50,27 @@ namespace mega::service
             {
                 THROW_RTE("Failed to dispatch message");
             }
+        }
+
+        void runMessageLoop()
+        {
+            while(m_bContinue)
+            {
+                receive();
+            }
+        }
+
+        void stop()
+        {
+            m_bContinue = false;
+           
+            auto functor = []()
+            {
+                // do nothing
+            };
+            auto status = m_receiveChannel.push(std::move(functor));
+            VERIFY_RTE_MSG(status == boost::fibers::channel_op_status::success,
+                "Error sending message to channel" );
         }
 
         void send(Functor functor)

@@ -16,6 +16,8 @@
 
 #include "common/disable_special_members.hpp"
 
+#include <boost/type_index.hpp>
+
 #include <map>
 #include <vector>
 #include <memory>
@@ -31,7 +33,7 @@ namespace mega::service
     {
         using namespace std::string_literals;
         return "mega::test::TestFactory"s;
-    }
+    } 
 
     template<>
     inline InterfaceTypeName getInterfaceTypeName< mega::test::Test >()
@@ -39,7 +41,6 @@ namespace mega::service
         using namespace std::string_literals;
         return "mega::test::Test"s;
     }
-    
     
     class Registry : public Common::DisableCopy, Common::DisableMove
     {
@@ -79,9 +80,9 @@ namespace mega::service
                  m_objects.size() < std::numeric_limits< ObjectID::ValueType >::max(),
                  "No remaining ObjectIDs available" );
 
-            const ObjectID objectID{ static_cast< ObjectID::ValueType >( m_objects.size() ) };
+            const ObjectID objectID{static_cast< ObjectID::ValueType >( m_objects.size() )};
 
-            const MPO mpo( m_mp, objectID );
+            const MPO mpo(m_mp, objectID);
 
             RTTI rtti;
 
@@ -93,7 +94,8 @@ namespace mega::service
                     pProxy = std::make_unique< test::TestFactory_InProcess >(
                         p1, logicalThread, rtti );
                 const auto interfaceTypeName = getInterfaceTypeName< mega::test::TestFactory >();
-                m_mpoInterfaceMap.insert( std::make_pair( MPOInterface{ mpo, interfaceTypeName }, pProxy.get() ) );
+                m_mpoInterfaceMap.insert(
+                    std::make_pair( MPOInterface{ mpo, interfaceTypeName }, pProxy.get() ) );
                 m_proxies.push_back( std::move( pProxy ) );
             }
             if( auto p2 = dynamic_cast< mega::test::Test* >( &object ) )
@@ -102,7 +104,8 @@ namespace mega::service
                     pProxy = std::make_unique< test::Test_InProcess >(
                         p2, logicalThread, rtti );
                 const auto interfaceTypeName = getInterfaceTypeName< mega::test::Test >();
-                m_mpoInterfaceMap.insert( std::make_pair( MPOInterface{ mpo, interfaceTypeName }, pProxy.get() ) );
+                m_mpoInterfaceMap.insert(
+                    std::make_pair( MPOInterface{ mpo, interfaceTypeName }, pProxy.get() ) );
                 m_proxies.push_back( std::move( pProxy ) );
             }
 
@@ -134,6 +137,16 @@ namespace mega::service
                 result.push_back( Ptr< T >( p ) );
             }
             return result;
+        }
+
+        template< typename T >
+        Ptr< T > one(MPO mpo) const
+        {
+            auto r = get<T>(mpo);
+            VERIFY_RTE_MSG(r.size()==1,
+                "Non-singular result finding type: " <<
+                boost::typeindex::type_id<T>().pretty_name());
+            return r.front();
         }
     };
 }
