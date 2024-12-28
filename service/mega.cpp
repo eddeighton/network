@@ -112,7 +112,7 @@ int main( int argc, const char* argv[] )
 
                 mega::service::Network network( mp );
 
-                mega::test::threadRoutine(network);
+                // mega::test::threadRoutine(network);
             }
         }
         catch(std::exception& ex)

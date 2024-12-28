@@ -1,13 +1,12 @@
 
-set_source_files_properties( ${GENERATED_INTERFACE_FILES} PROPERTIES GENERATED TRUE )
+set( COMMON_UNIT_TESTS
+     basic_tests.cpp)
 
-add_library( test_component 
-    ${GENERATED_INTERFACE_FILES}
-    component.cpp
-)
-target_link_libraries( test_component Boost::program_options )
-target_link_libraries( test_component Boost::fiber )
+add_executable( service_tests ${COMMON_UNIT_TESTS} )
+target_link_libraries(service_tests service)
+target_link_libraries(service_tests commonlib)
+target_link_libraries(service_tests Boost::fiber)
+target_link_libraries(service_tests GTest::gtest GTest::gtest_main)
 
-add_dependencies( test_component run_meta_pipeline )
-
+gtest_add_tests( TARGET service_tests SOURCES ${COMMON_UNIT_TESTS} )
 
