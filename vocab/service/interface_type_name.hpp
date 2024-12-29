@@ -63,7 +63,7 @@ private:
 
 inline std::ostream& operator<<( std::ostream& os, const InterfaceTypeName& interfaceTypeName )
 {
-    return os << interfaceTypeName;
+    return os << interfaceTypeName.str();
 }
 
 } // namespace mega::service

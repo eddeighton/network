@@ -18,6 +18,8 @@
 #include "service/asio.hpp"
 #include "service/server.hpp"
 
+#include "service/logical_thread.hpp"
+
 #include <boost/program_options.hpp>
 
 #include <iostream>
@@ -73,36 +75,44 @@ int main( int argc, const char* argv[] )
                 std::cin >> c;
             }
      
+            mega::service::IOContextPtr pIOContext =
+                std::make_shared< boost::asio::io_context >();
+
             std::thread networkThread(
-                [port]
-                {
-                    mega::service::IOContextPtr pIOContext =
-                        std::make_shared< boost::asio::io_context >();
-
+                [&]
+                {                    
                     mega::service::init_fiber_scheduler(pIOContext);
-
-                    mega::service::ReceiverCallback receiverCallback = 
-                        []( mega::service::SocketSender& responseSender,
-                            const mega::service::PacketBuffer& buffer)
-                        {
-                            static constexpr auto boostArchiveFlags = boost::archive::no_header | boost::archive::no_codecvt
-                                              | boost::archive::no_xml_tag_checking | boost::archive::no_tracking;
-                            boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer(buffer);
-                            boost::archive::binary_iarchive ia( vectorBuffer, boostArchiveFlags );
-
-                            std::string strMsg;
-                            ia >> strMsg;
-                            std::cout << "Got packet: " << strMsg << std::endl;
-                        };
-
-                    mega::service::Server server(*pIOContext, port, std::move(receiverCallback));
-
                     pIOContext->run();
                 }
             );
-            networkThread.join();
 
-            return 0;
+            mega::service::MP mp
+            { 
+                mega::service::MachineID{0}, 
+                mega::service::ProcessID{0}
+            };
+    
+            mega::service::LogicalThread::registerFiber(mp);
+
+            mega::service::ReceiverCallback receiverCallback = 
+                []( mega::service::SocketSender& responseSender,
+                    const mega::service::PacketBuffer& buffer)
+                {
+                    static constexpr auto boostArchiveFlags = boost::archive::no_header | boost::archive::no_codecvt
+                                      | boost::archive::no_xml_tag_checking | boost::archive::no_tracking;
+                    boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer(buffer);
+                    boost::archive::binary_iarchive ia(vectorBuffer, boostArchiveFlags);
+
+                    mega::service::Header header;
+                    ia >> header;
+                    std::cout << "Got packet: " << header << std::endl;
+                };
+
+            mega::service::Server server(*pIOContext, port, std::move(receiverCallback));
+
+
+            mega::service::LogicalThread::get().runMessageLoop();
+            networkThread.join();
         }
         catch( std::exception& e )
         {

@@ -77,11 +77,11 @@ namespace mega::service
     inline std::ostream& operator<<( std::ostream& os, const Header& header )
     {
         return os 
-        << "Message ID : " << header.m_messageID 
-        << "Requester MPTF : " << header.m_requester  
-        << "Responder MPTF : " << header.m_responder  
-        << "Interface Name : " << header.m_interfaceName  
-        << "Function Name : " << header.m_functionName
+        << " Message ID : " << header.m_messageID 
+        << " Requester MPTF : " << header.m_requester  
+        << " Responder MPTF : " << header.m_responder  
+        << " Interface Name : " << header.m_interfaceName  
+        << " Function Name : " << header.m_functionName
         ;
     }
 }

@@ -17,6 +17,8 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
+#include "service/gen/daemon.proxy.hxx"
+
 #include "test/test_object.hpp"
 #include "test/test_factory.hpp"
 
@@ -112,51 +114,56 @@ int main( int argc, const char* argv[] )
             }
             else
             {
+                mega::service::IOContextPtr pIOContext =
+                    std::make_shared< boost::asio::io_context >();
+
                 std::thread networkThread(
-                    [ipAddress, port]
+                    [&]
                     {
-                        mega::service::IOContextPtr pIOContext =
-                            std::make_shared< boost::asio::io_context >();
-
                         mega::service::init_fiber_scheduler(pIOContext);
-
-                        mega::service::ReceiverCallback receiverCallback = 
-                            []( mega::service::SocketSender& responseSender,
-                                const mega::service::PacketBuffer& buffer)
-                            {
-                                static constexpr auto boostArchiveFlags = boost::archive::no_header | boost::archive::no_codecvt
-                                                  | boost::archive::no_xml_tag_checking | boost::archive::no_tracking;
-                                boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer(buffer);
-                                boost::archive::binary_iarchive ia( vectorBuffer, boostArchiveFlags );
-
-                                std::string strMsg;
-                                ia >> strMsg;
-
-                                std::cout << "Got packet: " << strMsg << std::endl;
-                            };
-
-                        mega::service::Client client(*pIOContext, std::move(receiverCallback));
-
-                        auto pConnection = client.connect(ipAddress, port);
-
-                        static constexpr auto boostArchiveFlags = boost::archive::no_header | boost::archive::no_codecvt
-                                          | boost::archive::no_xml_tag_checking | boost::archive::no_tracking;
-                        boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer;
-                        boost::archive::binary_oarchive oa( vectorBuffer, boostArchiveFlags );
-
-                        oa << "Hello World"s;
-
-                        pConnection->getSender().send(vectorBuffer.vector());
-                        
                         pIOContext->run();
                     }
                 );
-            
+
+                mega::service::MP mp
+                { 
+                    mega::service::MachineID{0}, 
+                    mega::service::ProcessID{1}
+                };
+        
+                mega::service::LogicalThread::registerFiber(mp);
+     
+                mega::service::ReceiverCallback receiverCallback = 
+                    []( mega::service::SocketSender& responseSender,
+                        const mega::service::PacketBuffer& buffer)
+                    {
+                        static constexpr auto boostArchiveFlags = boost::archive::no_header | boost::archive::no_codecvt
+                                          | boost::archive::no_xml_tag_checking | boost::archive::no_tracking;
+                        boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer(buffer);
+                        boost::archive::binary_iarchive ia(vectorBuffer, boostArchiveFlags);
+
+                        std::string strMsg;
+                        ia >> strMsg;
+
+                        std::cout << "Got packet: " << strMsg << std::endl;
+                    };
+                mega::service::Client client(*pIOContext, std::move(receiverCallback));
+
+                auto pConnection = client.connect(ipAddress, port);
+
+                mega::service::RTTI rtti;
+
+                mega::test::Connectivity_Daemon test(pConnection->getSender(),
+                    mega::service::MPTFO{},
+                    rtti);
+
+                test.shutdown();
                 // mega::service::MP mp{};
                 // mega::service::Network network( mp );
                 // mega::service::LogicalThread::registerFiber(network.getMP());
                 // mega::service::LogicalThread::get().runMessageLoop();
 
+                mega::service::LogicalThread::get().runMessageLoop();
                 networkThread.join();
             }
         }

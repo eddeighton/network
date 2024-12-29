@@ -98,6 +98,7 @@ namespace mega::service
         inline void createInterProcessProxy()
         {
 
+            // registerIfInterface< test::Connectivity,test::Connectivity_Daemon   >( &object, mpo, rtti );
         }
 
         template< typename T >
