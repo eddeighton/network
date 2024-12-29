@@ -13,7 +13,6 @@
 
 namespace mega::test
 {
-
 class OTest : public Test
 {
 public:
@@ -25,5 +24,4 @@ public:
     }
 };
 }
-
 
