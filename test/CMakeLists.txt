@@ -1,6 +1,8 @@
 
 set( COMMON_UNIT_TESTS
-     basic_tests.cpp)
+     basic_tests.cpp
+     daemon_tests.cpp
+)
 
 add_executable( service_tests ${COMMON_UNIT_TESTS} )
 target_link_libraries(service_tests service)

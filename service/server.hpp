@@ -33,7 +33,7 @@ namespace mega::service
             : m_server( server )
             , m_strand( boost::asio::make_strand( ioContext ) )
             , m_socket( m_strand )
-            , m_receiver( m_socket, [ this ] { disconnected(); } )
+            , m_receiver( m_socket, server.m_receiverCallback, [ this ] { disconnected(); } )
             , m_sender( m_socket )
             {
             }
@@ -83,9 +83,10 @@ namespace mega::service
 
         using ConnectionPtrSet = std::set< Connection::Ptr >;
 
-        Server(boost::asio::io_context& ioContext, PortNumber port_number)
+        Server(boost::asio::io_context& ioContext, PortNumber port_number, ReceiverCallback receiverCallback)
         :   m_ioContext(ioContext)
         ,   m_port_number(port_number)
+        ,   m_receiverCallback(std::move(receiverCallback))
         ,   m_acceptor( m_ioContext,
                 boost::asio::ip::tcp::endpoint( boost::asio::ip::tcp::v4(), port_number.value ) )
         {
@@ -133,6 +134,7 @@ namespace mega::service
 
         boost::asio::io_context&        m_ioContext;
         PortNumber                      m_port_number;
+        ReceiverCallback                m_receiverCallback;
         boost::asio::ip::tcp::acceptor  m_acceptor;
         ConnectionPtrSet                m_connections;
     };

@@ -1,8 +1,8 @@
 
 #pragma once
 
-#include "service/proxy/testfactory.proxy.hxx"
-#include "service/proxy/test.proxy.hxx"
+#include "service/gen/testfactory.proxy.hxx"
+#include "service/gen/test.proxy.hxx"
 
 #include "service/registration.hpp"
 #include "service/logical_thread.hpp"

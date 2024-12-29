@@ -3,7 +3,7 @@
 
 #include "service/interface/test.interface.hpp"
 
-#include "service/proxy/test.proxy.hxx"
+#include "service/gen/test.proxy.hxx"
 
 #include "common/assert_verify.hpp"
 

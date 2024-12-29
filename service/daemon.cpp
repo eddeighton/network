@@ -81,7 +81,21 @@ int main( int argc, const char* argv[] )
 
                     mega::service::init_fiber_scheduler(pIOContext);
 
-                    mega::service::Server server(*pIOContext, port);
+                    mega::service::ReceiverCallback receiverCallback = 
+                        []( mega::service::SocketSender& responseSender,
+                            const mega::service::PacketBuffer& buffer)
+                        {
+                            static constexpr auto boostArchiveFlags = boost::archive::no_header | boost::archive::no_codecvt
+                                              | boost::archive::no_xml_tag_checking | boost::archive::no_tracking;
+                            boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer(buffer);
+                            boost::archive::binary_iarchive ia( vectorBuffer, boostArchiveFlags );
+
+                            std::string strMsg;
+                            ia >> strMsg;
+                            std::cout << "Got packet: " << strMsg << std::endl;
+                        };
+
+                    mega::service::Server server(*pIOContext, port, std::move(receiverCallback));
 
                     pIOContext->run();
                 }

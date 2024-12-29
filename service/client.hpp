@@ -36,7 +36,7 @@ namespace mega::service
             ,   m_resolver(client.m_io_context)
             ,   m_strand( boost::asio::make_strand( client.m_io_context ) )
             ,   m_socket( m_strand )
-            ,   m_receiver( m_socket, [ this ] { disconnected(); } )
+            ,   m_receiver( m_socket, client.m_receiverCallback, [ this ] { disconnected(); } )
             ,   m_sender( m_socket )
             {
                 Resolver::query        query( m_ip_address.value, m_port_number.str() );
@@ -88,8 +88,9 @@ namespace mega::service
         };
         using ConnectionPtrSet = std::set< Connection::Ptr >;
 
-        Client(boost::asio::io_context& io_context)
+        Client(boost::asio::io_context& io_context, ReceiverCallback receiverCallback)
         :   m_io_context(io_context)
+        ,   m_receiverCallback(std::move(receiverCallback))
         {
         }
 
@@ -107,6 +108,7 @@ namespace mega::service
 
     private:
         boost::asio::io_context&  m_io_context;
+        ReceiverCallback          m_receiverCallback;
         ConnectionPtrSet          m_connections;
 
     };

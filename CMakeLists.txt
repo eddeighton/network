@@ -53,9 +53,9 @@ add_subdirectory( report )
 # run system wide meta pipeline
 set(SERVICE_INTERFACES ${CMAKE_SOURCE_DIR}/service/interface/test.interface.hpp)
 set(GENERATED_INTERFACE_FILES 
-    ${CMAKE_SOURCE_DIR}/service/proxy/test.proxy.hxx
-    ${CMAKE_SOURCE_DIR}/service/proxy/testfactory.proxy.hxx
-    ${CMAKE_SOURCE_DIR}/service/proxy/decode.hxx
+    ${CMAKE_SOURCE_DIR}/service/gen/test.proxy.hxx
+    ${CMAKE_SOURCE_DIR}/service/gen/testfactory.proxy.hxx
+    ${CMAKE_SOURCE_DIR}/service/gen/decode.hxx
 )
 
 message( STATUS "Generated interface files: ${GENERATED_INTERFACE_FILES}" )

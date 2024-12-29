@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "service/gen/decoder.hxx"
+
 #include "service/asio.hpp"
 #include "service/sender_socket.hpp"
 
@@ -16,17 +18,21 @@
 
 #include <array>
 #include <iostream>
+#include <functional>
 
 namespace mega::service
 {
+    using ReceiverCallback = std::function< void( SocketSender& responseSender, const PacketBuffer& ) >;
+    
     template<typename Socket, typename DisconnectCallback >
     class Receiver
     {
     public:
         template< typename Functor >
-        Receiver(Socket& socket, Functor disconnect_callback)
+        Receiver(Socket& socket, ReceiverCallback receiverCallback, Functor disconnect_callback)
         :   m_socket(socket)
         ,   m_sender(m_socket)
+        ,   m_callback( std::move(receiverCallback) )
         ,   m_disconnect_callback( std::move( disconnect_callback ) )
         {
         }
@@ -44,23 +50,10 @@ namespace mega::service
                     }
                     else
                     {
-                        // dispatch packet
-                        
-                        static constexpr auto boostArchiveFlags = boost::archive::no_header | boost::archive::no_codecvt
-                                          | boost::archive::no_xml_tag_checking | boost::archive::no_tracking;
-                        boost::archive::binary_iarchive ia( m_vectorBuffer, boostArchiveFlags );
-
-                        Header header;
-                        ia >> header;
-
-                        // determine the target InProcessProxy and logical thread
-                        
-
+                        m_callback(m_sender, m_packetBuffer);
                     }
                 }
-
                 m_disconnect_callback();
-
             }).detach();
         }
 
@@ -70,7 +63,7 @@ namespace mega::service
         Socket&             m_socket; 
         SocketSender        m_sender;
         PacketBuffer        m_packetBuffer;
-        boost::interprocess::basic_vectorbuf< service::PacketBuffer > m_vectorBuffer;
+        ReceiverCallback    m_callback;
         DisconnectCallback  m_disconnect_callback;
     };
 }

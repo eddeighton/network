@@ -32,6 +32,7 @@
 #include <iostream>
 #include <chrono>
 
+using namespace std::string_literals;
 
 int main( int argc, const char* argv[] )
 {
@@ -44,6 +45,9 @@ int main( int argc, const char* argv[] )
         std::filesystem::path logDir = std::filesystem::current_path();
         bool                  bGeneralWait = false;
         bool                  bTime = false;
+
+        mega::service::PortNumber port{1234};
+        mega::service::IPAddress  ipAddress{"localhost"s};
 
         std::vector<std::string> commandArgs;
 
@@ -108,11 +112,52 @@ int main( int argc, const char* argv[] )
             }
             else
             {
-                mega::service::MP mp{};
+                std::thread networkThread(
+                    [ipAddress, port]
+                    {
+                        mega::service::IOContextPtr pIOContext =
+                            std::make_shared< boost::asio::io_context >();
 
-                mega::service::Network network( mp );
+                        mega::service::init_fiber_scheduler(pIOContext);
 
-                // mega::test::threadRoutine(network);
+                        mega::service::ReceiverCallback receiverCallback = 
+                            []( mega::service::SocketSender& responseSender,
+                                const mega::service::PacketBuffer& buffer)
+                            {
+                                static constexpr auto boostArchiveFlags = boost::archive::no_header | boost::archive::no_codecvt
+                                                  | boost::archive::no_xml_tag_checking | boost::archive::no_tracking;
+                                boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer(buffer);
+                                boost::archive::binary_iarchive ia( vectorBuffer, boostArchiveFlags );
+
+                                std::string strMsg;
+                                ia >> strMsg;
+
+                                std::cout << "Got packet: " << strMsg << std::endl;
+                            };
+
+                        mega::service::Client client(*pIOContext, std::move(receiverCallback));
+
+                        auto pConnection = client.connect(ipAddress, port);
+
+                        static constexpr auto boostArchiveFlags = boost::archive::no_header | boost::archive::no_codecvt
+                                          | boost::archive::no_xml_tag_checking | boost::archive::no_tracking;
+                        boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer;
+                        boost::archive::binary_oarchive oa( vectorBuffer, boostArchiveFlags );
+
+                        oa << "Hello World"s;
+
+                        pConnection->getSender().send(vectorBuffer.vector());
+                        
+                        pIOContext->run();
+                    }
+                );
+            
+                // mega::service::MP mp{};
+                // mega::service::Network network( mp );
+                // mega::service::LogicalThread::registerFiber(network.getMP());
+                // mega::service::LogicalThread::get().runMessageLoop();
+
+                networkThread.join();
             }
         }
         catch(std::exception& ex)
