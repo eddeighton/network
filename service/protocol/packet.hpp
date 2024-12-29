@@ -17,37 +17,8 @@
 
 #include <boost/system/error_code.hpp>
 
-
 namespace mega::service
 {
-
-
-/*
-    void decode()
-    {
-
-            
-        VERIFY_RTE( size == szBytesTransferred );
-        Message msg;
-        {
-            boost::interprocess::basic_vectorbuf< ReceiveBuffer > is( buffer );
-            decode( is, msg );
-        }
-        const ReceivedMessage receivedMsg{ pSender, std::move( msg ) };
-        m_logicalThreadManager.dispatch( receivedMsg );
-
-    }
-
-    template< typename T >
-    PacketBuffer encode(const T& data)
-    {
-        boost::interprocess::basic_vectorbuf< PacketBuffer > os;
-
-        os << data;
-
-        return os.vector();
-    }
-*/
     inline void onSocketError( const boost::system::error_code& ec )
     {
         if( ec.value() == boost::asio::error::eof )

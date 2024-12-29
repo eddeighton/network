@@ -8,8 +8,13 @@
 
 #include "common/serialisation.hpp"
 
+#include <cstdint>
+#include <iostream>
+
 namespace mega::service
 {
+    using MessageID = std::uint64_t;
+
     struct MPTFO
     {
         MPTF     m_mptf;
@@ -31,8 +36,17 @@ namespace mega::service
         }
     };
 
+    inline std::ostream& operator<<( std::ostream& os, const MPTFO& mptf )
+    {
+        return os 
+        << "MPTF : " << mptf.m_mptf
+        << "ObjectID : " << mptf.m_objectID  
+        ;
+    }
+
     struct Header
     {
+        MessageID m_messageID;
         MPTF m_requester;
         MPTFO m_responder;
         InterfaceTypeName m_interfaceName;
@@ -43,6 +57,7 @@ namespace mega::service
         {
             if constexpr( boost::serialization::IsXMLArchive< Archive >::value )
             {
+                archive& boost::serialization::make_nvp( "messageID", m_messageID );
                 archive& boost::serialization::make_nvp( "requester", m_requester );
                 archive& boost::serialization::make_nvp( "responder", m_responder );
                 archive& boost::serialization::make_nvp( "interfaceName", m_interfaceName );
@@ -50,6 +65,7 @@ namespace mega::service
             }
             else
             {
+                archive& m_messageID;
                 archive& m_requester;
                 archive& m_responder;
                 archive& m_interfaceName;
@@ -57,5 +73,16 @@ namespace mega::service
             }
         }
     };
+
+    inline std::ostream& operator<<( std::ostream& os, const Header& header )
+    {
+        return os 
+        << "Message ID : " << header.m_messageID 
+        << "Requester MPTF : " << header.m_requester  
+        << "Responder MPTF : " << header.m_responder  
+        << "Interface Name : " << header.m_interfaceName  
+        << "Function Name : " << header.m_functionName
+        ;
+    }
 }
 

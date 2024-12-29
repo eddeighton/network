@@ -25,8 +25,8 @@ namespace Common
     struct DisableCopy
     {
         DisableCopy() = default;
-        DisableCopy(DisableCopy&&)=delete;
-        DisableCopy& operator=(DisableCopy&&)=delete;
+        DisableCopy(const DisableCopy&)=delete;
+        DisableCopy& operator=(const DisableCopy&)=delete;
     };
 
     struct DisableMove

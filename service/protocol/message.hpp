@@ -3,6 +3,10 @@
 #pragma once
 
 #include "service/protocol/buffer.hpp"
+#include "service/protocol/header.hpp"
+#include "service/sender.hpp"
+
+#include "common/disable_special_members.hpp"
 
 #include <functional>
 #include <variant>
@@ -23,15 +27,18 @@ namespace mega::service
 
     struct InterProcessRequest
     {
+        Sender* m_responseSender;
+        Header m_header;
         PacketBuffer m_buffer;
     };
 
     struct InterProcessResponse 
     {
+        Header m_header;
         PacketBuffer m_buffer;
     };
 
-    struct Other
+    struct Other //: public Common::DisableCopy
     {
     };
 

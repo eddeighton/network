@@ -11,6 +11,7 @@
 #include "common/assert_verify.hpp"
 
 #include <iostream>
+#include <map>
 
 namespace mega::service
 {
@@ -29,6 +30,7 @@ namespace mega::service
         Channel m_receiveChannel;
         MPTF m_mptf;
         bool m_bContinue = true;
+        MessageID m_interProcessMessageID;
     public:
 
         LogicalThread()
@@ -37,6 +39,12 @@ namespace mega::service
         }
 
         MPTF getMPTF() const { return m_mptf; }
+        
+        auto getUniqueMessageID()
+        {
+            ++m_interProcessMessageID;
+            return m_interProcessMessageID;
+        }
 
         inline void operator()( const InProcessRequest& inProcessRequest )
         {
@@ -52,8 +60,32 @@ namespace mega::service
         {
         }
 
+        std::map< MessageID, std::function< void(const InterProcessResponse& interProcessResponse) > >
+            m_interProcessResponseCallbacks;
+
         inline void operator()( const InterProcessResponse& interProcessResponse )
         {
+            // check for callbacks]
+            auto iFind = m_interProcessResponseCallbacks.find(
+                interProcessResponse.m_header.m_messageID );
+            if( iFind != m_interProcessResponseCallbacks.end() )
+            {
+                iFind->second(interProcessResponse);
+                m_interProcessResponseCallbacks.erase( iFind );
+            }
+            else
+            {
+                THROW_RTE("Failed to locate response callback for interprocess response: " <<
+                    interProcessResponse.m_header );
+            }
+
+        }
+
+        template< typename T >
+        inline void setInterProcessResponseCallback(MessageID messageID, T&& callback)
+        {
+            // record the callback
+            m_interProcessResponseCallbacks.insert( std::make_pair( messageID, std::move( callback ) ) );
         }
 
         inline void operator()( const Other& other )
@@ -85,7 +117,7 @@ namespace mega::service
         inline void stop()
         {
             m_bContinue = false;
-            auto status = m_receiveChannel.push(Other{});
+            auto status = m_receiveChannel.push(Message{Other{}});
             VERIFY_RTE_MSG(status == boost::fibers::channel_op_status::success,
                 "Error sending message to channel" );
         }
