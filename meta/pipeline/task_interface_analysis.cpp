@@ -421,8 +421,8 @@ void task_interface_analysis(TaskDependencies& dependencies)
         tool.run( newFrontendActionFactory( &finder ).get() );
     }
 
-    auto pFile = boost::filesystem::createNewFileStream("/src/test/service/test.cxx");
-    *pFile << "// Hello World from meta pipeline\n\n";
+    //auto pFile = boost::filesystem::createNewFileStream("/src/test/service/test.cxx");
+    //*pFile << "// Hello World from meta pipeline\n\n";
 
     using namespace AnalysisStage::Service;
 
