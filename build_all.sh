@@ -2,17 +2,7 @@
 
 set -euxo pipefail
 
+./build_debug.sh
 
-cmake -S . -B /build/debug \
-    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-    -DCMAKE_BUILD_TYPE=Debug \
-    -DCMAKE_CXX_STANDARD=20 \
-    -GNinja \
-    -Wno-dev
+./build_release.sh
 
-cmake -S . -B /build/release \
-    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_CXX_STANDARD=20 \
-    -GNinja \
-    -Wno-dev

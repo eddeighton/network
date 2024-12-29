@@ -1,8 +1,9 @@
 
 #pragma once
 
-#include "test/test.interface.hpp"
-#include "test/service/test.proxy.hxx"
+#include "service/interface/test.interface.hpp"
+
+#include "service/proxy/test.proxy.hxx"
 
 #include "common/assert_verify.hpp"
 

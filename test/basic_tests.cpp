@@ -2,11 +2,6 @@
 #include "test/test_object.hpp"
 #include "test/test_factory.hpp"
 
-#include "test/test_object.hpp"
-#include "test/service/testfactory.proxy.hxx"
-#include "test/service/test.proxy.hxx"
-
-#include "service/rtti.hpp"
 #include "service/logical_thread.hpp"
 #include "service/network.hpp"
 #include "service/registry.hpp"

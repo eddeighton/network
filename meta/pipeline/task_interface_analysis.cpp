@@ -80,6 +80,7 @@ struct ToolDB : public clang::tooling::CompilationDatabase
             "-D__GCC_HAVE_DWARF2_CFI_ASM=1"s,
 
             "-Wno-unused-command-line-argument"s,
+            "-Wno-pragma-once-outside-header"s,
 
             "-x"s,
             "c++"s,

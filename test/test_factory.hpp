@@ -1,8 +1,8 @@
 
 #pragma once
 
-#include "test/test_object.hpp"
-#include "test/service/testfactory.proxy.hxx"
+#include "service/interface/test.interface.hpp"
+#include "service/proxy/testfactory.proxy.hxx"
 
 #include "service/rtti.hpp"
 #include "service/logical_thread.hpp"
