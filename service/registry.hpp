@@ -3,6 +3,7 @@
 
 #include "service/gen/testfactory.proxy.hxx"
 #include "service/gen/test.proxy.hxx"
+#include "service/gen/daemon.proxy.hxx"
 
 #include "service/registration.hpp"
 #include "service/logical_thread.hpp"
@@ -43,13 +44,15 @@ namespace mega::service
             std::unique_ptr< test::TestFactory_InProcess >,
             std::unique_ptr< test::TestFactory_InterProcess >,
             std::unique_ptr< test::Test_InProcess >,
-            std::unique_ptr< test::Test_InterProcess >
+            std::unique_ptr< test::Test_InterProcess >,
+            std::unique_ptr< test::Connectivity_InProccess >,
+            std::unique_ptr< test::Connectivity_InterProcess >
         >;
         using ProxyVariantVector = std::vector< ProxyVariant >;
 
         ProxyVariantVector m_proxies;
 
-        using MPOInterface = std::pair< MPO, InterfaceTypeName >;
+        using MPOInterface    = std::pair< MPO, InterfaceTypeName >;
         using MPOInterfaceMap = std::map< MPOInterface, Interface* >;
 
         MPOInterfaceMap m_mpoInterfaceMap;
@@ -88,8 +91,9 @@ namespace mega::service
 
             RTTI rtti;
 
-            registerIfInterface< test::TestFactory, test::TestFactory_InProcess >( &object, mpo, rtti );
-            registerIfInterface< test::Test,        test::Test_InProcess        >( &object, mpo, rtti );
+            registerIfInterface< test::TestFactory,  test::TestFactory_InProcess   >( &object, mpo, rtti );
+            registerIfInterface< test::Test,         test::Test_InProcess          >( &object, mpo, rtti );
+            registerIfInterface< test::Connectivity, test::Connectivity_InProccess >( &object, mpo, rtti );
 
             m_objects.push_back(&object);
             return mpo;

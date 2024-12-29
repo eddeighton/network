@@ -15,10 +15,11 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
+#include "service/connectivity.hpp"
+
 #include "service/asio.hpp"
 #include "service/server.hpp"
 #include "service/network.hpp"
-
 #include "service/logical_thread.hpp"
 
 #include <boost/program_options.hpp>
@@ -101,6 +102,8 @@ int main( int argc, const char* argv[] )
                 };
 
             mega::service::Server server(network, port, std::move(receiverCallback));
+
+            mega::test::OConnectivity connectivity(network);
 
             mega::service::LogicalThread::get().runMessageLoop();
         }
