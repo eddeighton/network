@@ -20,7 +20,7 @@
 #ifndef GUARD_2025_January_07_mptf
 #define GUARD_2025_January_07_mptf
 
-#include "vocab/runtime/inline.h"
+#include "vocab/service/inline.h"
 
 #include "vocab/native_types.hpp"
 

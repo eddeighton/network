@@ -2,21 +2,25 @@
 
 #pragma once
 
+#include "service/protocol/buffer.hpp"
+
 #include "service/fibers.hpp"
 
 #include "common/assert_verify.hpp"
 
+#include <boost/asio/read.hpp>
+#include <boost/asio/write.hpp>
+#include <boost/asio/buffer.hpp>
+
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/streams/vectorstream.hpp>
 
-#include <cstdint>
+#include <boost/system/error_code.hpp>
+
 
 namespace mega::service
 {
 
-    using PacketSizeType = std::uint64_t;
-    static constexpr auto PacketSizeSize = sizeof(PacketSizeType);
-    using PacketBuffer = std::vector< char >;
 
 /*
     void decode()
@@ -63,8 +67,8 @@ namespace mega::service
         }
     }
 
-    template< typename TSocket >
-    boost::system::error_code send( TSocket& socket, const PacketBuffer& payload )
+    template< typename TSocket, typename TPayload >
+    boost::system::error_code send( TSocket& socket, const TPayload& payload )
     {
         PacketBuffer packetBuffer;
         {

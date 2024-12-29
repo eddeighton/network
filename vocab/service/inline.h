@@ -117,7 +117,7 @@ typedef struct _c_machine_process_object_id
 {
     c_machine_id m_machine_id;
     c_process_id m_process_id;
-    c_object_id   m_object_id;
+    c_object_id  m_object_id;
     c_u8         m_padding;
 } c_machine_process_object_id;
 #pragma pack()

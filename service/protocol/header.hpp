@@ -12,7 +12,7 @@ namespace mega::service
 {
     struct MPTFO
     {
-        MPFT     m_mptf;
+        MPTF     m_mptf;
         ObjectID m_objectID;
 
         template < class Archive >
@@ -20,22 +20,22 @@ namespace mega::service
         {
             if constexpr( boost::serialization::IsXMLArchive< Archive >::value )
             {
-                archive& boost::serialization::make_nvp( "mptf", m_mptf.value );
-                archive& boost::serialization::make_nvp( "objectID", m_objectID.value );
+                archive& boost::serialization::make_nvp( "mptf", m_mptf );
+                archive& boost::serialization::make_nvp( "objectID", m_objectID );
             }
             else
             {
-                archive& m_mptf.value;
-                archive& m_objectID.value;
+                archive& m_mptf;
+                archive& m_objectID;
             }
         }
     };
 
     struct Header
     {
-        MPTFO m_requester;
+        MPTF m_requester;
         MPTFO m_responder;
-        IntefaceTypeName m_interfaceName;
+        InterfaceTypeName m_interfaceName;
         FunctionTypeName m_functionName;
 
         template < class Archive >

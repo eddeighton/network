@@ -2,9 +2,12 @@
 #pragma once
 
 
-#include "service/message.hpp"
+#include "service/protocol/message.hpp"
 #include "service/fibers.hpp"
 
+#include "service/protocol/packet.hpp"
+
+#include <boost/asio/ip/tcp.hpp>
 #include <boost/system/error_code.hpp>
 
 #include <memory>
@@ -16,7 +19,7 @@ class Sender
 {
 public:
     virtual ~Sender() = 0;
-    virtual boost::system::error_code send( const Message& msg ) = 0;
+    virtual boost::system::error_code send( const PacketBuffer& msg ) = 0;
 };
 inline Sender::~Sender() = default;
 
@@ -30,19 +33,9 @@ public:
     {
     }
 
-    boost::system::error_code send( const Message& msg ) final
+    boost::system::error_code send( const PacketBuffer& payload ) final
     {
-        boost::system::error_code ec;
-
-        const auto szBytesWritten
-            = boost::asio::async_write( m_socket,
-                boost::asio::buffer( msg ),
-                boost::fibers::asio::yield[ ec ]);
-        if( !ec )
-        {
-            // VERIFY_RTE( szBytesWritten == msg.size() );
-        }
-        return ec;
+        return service::send( m_socket, payload );
     }
 
 private:

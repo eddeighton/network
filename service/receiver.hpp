@@ -30,7 +30,6 @@ namespace mega::service
             {
                 while( m_bContinue && m_socket.is_open() )
                 {
-
                     auto error = receive( m_socket, m_packetBuffer );
                     if( error.failed() )
                     {
@@ -39,9 +38,7 @@ namespace mega::service
                     else
                     {
                         // dispatch packet
-
                     }
-
                 }
 
                 m_disconnect_callback();

@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "service/protocol/message.hpp"
+
 #include "vocab/service/mptf.hpp"
 #include "vocab/value.hpp"
 
@@ -15,8 +17,6 @@ namespace mega::service
     class LogicalThread;
 
     static inline boost::fibers::fiber_specific_ptr< LogicalThread > fiber_local_storage;
-
-    using Functor = std::function< void() >;
     
     class LogicalThread
     {
@@ -24,7 +24,7 @@ namespace mega::service
     public:
     
     private:
-        using Channel = boost::fibers::buffered_channel< Functor >;
+        using Channel = boost::fibers::buffered_channel< Message >;
 
         Channel m_receiveChannel;
         MPTF m_mptf;
@@ -38,13 +38,35 @@ namespace mega::service
 
         MPTF getMPTF() const { return m_mptf; }
 
-        void receive()
+        inline void operator()( const InProcessRequest& inProcessRequest )
         {
-            Functor functor;
-            auto status = m_receiveChannel.pop(functor);
+            inProcessRequest.m_functor();
+        }
+
+        inline void operator()( const InProcessResponse& inProcessResponse )
+        {
+            inProcessResponse.m_functor();
+        }
+
+        inline void operator()( const InterProcessRequest& interProcessRequest )
+        {
+        }
+
+        inline void operator()( const InterProcessResponse& interProcessResponse )
+        {
+        }
+
+        inline void operator()( const Other& other )
+        {
+        }
+
+        inline void receive()
+        {
+            Message message;
+            auto status = m_receiveChannel.pop(message);
             if( status == boost::fibers::channel_op_status::success )
             {
-                functor();
+                std::visit(*this, message); 
             }
             else
             {
@@ -52,7 +74,7 @@ namespace mega::service
             }
         }
 
-        void runMessageLoop()
+        inline void runMessageLoop()
         {
             while(m_bContinue)
             {
@@ -60,22 +82,18 @@ namespace mega::service
             }
         }
 
-        void stop()
+        inline void stop()
         {
             m_bContinue = false;
-           
-            auto functor = []()
-            {
-                // do nothing
-            };
-            auto status = m_receiveChannel.push(std::move(functor));
+            auto status = m_receiveChannel.push(Other{});
             VERIFY_RTE_MSG(status == boost::fibers::channel_op_status::success,
                 "Error sending message to channel" );
         }
 
-        void send(Functor functor)
+        template< typename T >
+        inline void send(T&& message)
         {
-            auto status = m_receiveChannel.push(std::move(functor));
+            auto status = m_receiveChannel.push(std::forward<T>(message));
             VERIFY_RTE_MSG(status == boost::fibers::channel_op_status::success,
                 "Error sending message to channel" );
         }

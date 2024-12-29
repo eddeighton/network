@@ -18,8 +18,8 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
-#ifndef PROJECT_20_JUNE_2022
-#define PROJECT_20_JUNE_2022
+#pragma once
+// Sun Dec 29 00:07:21 UTC 2024
 
 #include "common/serialisation.hpp"
 
@@ -62,11 +62,10 @@ private:
     std::string m_name;
 };
 
-std::ostream& operator<<( std::ostream& os, const FunctionTypeName& functionTypeName )
+inline std::ostream& operator<<( std::ostream& os, const FunctionTypeName& functionTypeName )
 {
-    return os << functionTypeName;
+    return os << functionTypeName.str();
 }
 
 } // namespace mega::service
 
-#endif // PROJECT_20_JUNE_2022
