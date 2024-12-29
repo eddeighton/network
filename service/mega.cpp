@@ -114,23 +114,14 @@ int main( int argc, const char* argv[] )
             }
             else
             {
-                mega::service::IOContextPtr pIOContext =
-                    std::make_shared< boost::asio::io_context >();
-
-                std::thread networkThread(
-                    [&]
-                    {
-                        mega::service::init_fiber_scheduler(pIOContext);
-                        pIOContext->run();
-                    }
-                );
-
                 mega::service::MP mp
                 { 
                     mega::service::MachineID{0}, 
                     mega::service::ProcessID{1}
                 };
-        
+
+                mega::service::Network network(mp);
+
                 mega::service::LogicalThread::registerFiber(mp);
      
                 mega::service::ReceiverCallback receiverCallback = 
@@ -147,13 +138,13 @@ int main( int argc, const char* argv[] )
 
                         std::cout << "Got packet: " << strMsg << std::endl;
                     };
-                mega::service::Client client(*pIOContext, std::move(receiverCallback));
+                mega::service::Client client(network, std::move(receiverCallback));
 
                 auto pConnection = client.connect(ipAddress, port);
 
                 mega::service::RTTI rtti;
 
-                mega::test::Connectivity_Daemon test(pConnection->getSender(),
+                mega::test::Connectivity_InterProcess test(pConnection->getSender(),
                     mega::service::MPTFO{},
                     rtti);
 
@@ -164,7 +155,6 @@ int main( int argc, const char* argv[] )
                 // mega::service::LogicalThread::get().runMessageLoop();
 
                 mega::service::LogicalThread::get().runMessageLoop();
-                networkThread.join();
             }
         }
         catch(std::exception& ex)

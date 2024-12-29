@@ -7,6 +7,7 @@
 #include "service/receiver.hpp"
 #include "service/sender_socket.hpp"
 #include "service/socket_info.hpp"
+#include "service/network.hpp"
 
 #include <set>
 #include <iostream>
@@ -63,7 +64,7 @@ namespace mega::service
                 std::cout << "Client connection stop from: " << m_socket_info << std::endl;
                 boost::system::error_code ec;
                 m_socket.shutdown( m_socket.shutdown_both, ec );
-                m_socket.close();
+                m_socket.close  ();
             }
 
         private:
@@ -88,6 +89,11 @@ namespace mega::service
         };
         using ConnectionPtrSet = std::set< Connection::Ptr >;
 
+        Client(Network& network, ReceiverCallback receiverCallback)
+        :   m_io_context(network.getIOContext())
+        ,   m_receiverCallback(std::move(receiverCallback))
+        {
+        }
         Client(boost::asio::io_context& io_context, ReceiverCallback receiverCallback)
         :   m_io_context(io_context)
         ,   m_receiverCallback(std::move(receiverCallback))

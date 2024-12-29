@@ -7,6 +7,7 @@
 #include "service/receiver.hpp"
 #include "service/sender_socket.hpp"
 #include "service/socket_info.hpp"
+#include "service/network.hpp"
 
 #include <set>
 #include <iostream>
@@ -83,6 +84,18 @@ namespace mega::service
 
         using ConnectionPtrSet = std::set< Connection::Ptr >;
 
+        Server(Network& network, PortNumber port_number, ReceiverCallback receiverCallback)
+        :   m_ioContext(network.getIOContext())
+        ,   m_port_number(port_number)
+        ,   m_receiverCallback(std::move(receiverCallback))
+        ,   m_acceptor( m_ioContext,
+                boost::asio::ip::tcp::endpoint( boost::asio::ip::tcp::v4(), port_number.value ) )
+        {
+            boost::fibers::fiber([this]
+            {
+                waitForConnection();
+            }).detach();
+        }
         Server(boost::asio::io_context& ioContext, PortNumber port_number, ReceiverCallback receiverCallback)
         :   m_ioContext(ioContext)
         ,   m_port_number(port_number)

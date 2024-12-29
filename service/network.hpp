@@ -45,6 +45,7 @@ namespace mega::service
         }
 
         MP getMP() const { return m_registry.getMP(); }
+        auto& getIOContext() { return *m_pIOContext; }
 
         struct RegistryReadAccess
         {

@@ -17,6 +17,7 @@
 
 #include "service/asio.hpp"
 #include "service/server.hpp"
+#include "service/network.hpp"
 
 #include "service/logical_thread.hpp"
 
@@ -75,23 +76,14 @@ int main( int argc, const char* argv[] )
                 std::cin >> c;
             }
      
-            mega::service::IOContextPtr pIOContext =
-                std::make_shared< boost::asio::io_context >();
-
-            std::thread networkThread(
-                [&]
-                {                    
-                    mega::service::init_fiber_scheduler(pIOContext);
-                    pIOContext->run();
-                }
-            );
-
             mega::service::MP mp
             { 
                 mega::service::MachineID{0}, 
                 mega::service::ProcessID{0}
             };
-    
+
+            mega::service::Network network(mp);
+ 
             mega::service::LogicalThread::registerFiber(mp);
 
             mega::service::ReceiverCallback receiverCallback = 
@@ -108,11 +100,9 @@ int main( int argc, const char* argv[] )
                     std::cout << "Got packet: " << header << std::endl;
                 };
 
-            mega::service::Server server(*pIOContext, port, std::move(receiverCallback));
-
+            mega::service::Server server(network, port, std::move(receiverCallback));
 
             mega::service::LogicalThread::get().runMessageLoop();
-            networkThread.join();
         }
         catch( std::exception& e )
         {
