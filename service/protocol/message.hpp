@@ -27,9 +27,7 @@ namespace mega::service
 
     struct InterProcessRequest
     {
-        Sender* m_responseSender;
-        Header m_header;
-        PacketBuffer m_buffer;
+        Functor m_functor;
     };
 
     struct InterProcessResponse 

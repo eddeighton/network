@@ -27,8 +27,8 @@
 //MEGA_VALUE_TYPE(mega::runtime::TimeStamp)
 
 MEGA_VALUE_TYPE(mega::service::MP)
-MEGA_VALUE_TYPE(mega::service::MPO)
 MEGA_VALUE_TYPE(mega::service::MPTF)
+MEGA_VALUE_TYPE(mega::service::MPTFO)
 //MEGA_VALUE_TYPE(mega::network::LogicalThreadID)
 // MEGA_VALUE_TYPE(mega::network::Node)
 

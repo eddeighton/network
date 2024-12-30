@@ -36,7 +36,7 @@ namespace mega::service
 class ProcessID : public c_process_id
 {
 public:
-    using ValueType = U16;
+    using ValueType = U8;
 
     constexpr inline ProcessID()
         : c_process_id{ 0U }
@@ -88,7 +88,7 @@ static constexpr ProcessID PROCESS_ZERO = 0x0000_P;
 
 inline std::ostream& operator<<( std::ostream& os, const ProcessID& instance )
 {
-    return os << "0x" << std::hex << std::setw( 4 ) << std::setfill( '0' ) << instance.getValue() << std::dec << "_P";
+    return os << "0x" << std::hex << std::setw( 2 ) << std::setfill( '0' ) << instance.getValue() << std::dec << "_P";
 }
 
 inline std::istream& operator>>( std::istream& is, ProcessID& instance )

@@ -92,7 +92,7 @@ inline constexpr ObjectID operator""_O( unsigned long long int value )
     return ObjectID{ static_cast< ObjectID::ValueType >( value ) };
 }
 
-static constexpr ObjectID OBJECT_ZERO = 0x0000_O;
+static constexpr ObjectID OBJECT_ZERO = 0x00_O;
 
 inline std::ostream& operator<<( std::ostream& os, const ObjectID& instance )
 {

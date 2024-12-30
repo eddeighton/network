@@ -92,7 +92,7 @@ inline constexpr ThreadID operator""_T( unsigned long long int value )
     return ThreadID{ static_cast< ThreadID::ValueType >( value ) };
 }
 
-static constexpr ThreadID THREAD_ZERO = 0x0000_T;
+static constexpr ThreadID THREAD_ZERO = 0x00_T;
 
 inline std::ostream& operator<<( std::ostream& os, const ThreadID& instance )
 {

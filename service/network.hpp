@@ -62,10 +62,15 @@ namespace mega::service
             {
             }
 
+            RegistryReadAccess(const RegistryReadAccess&)=delete;
+            RegistryReadAccess(RegistryReadAccess&&)=default;
+            RegistryReadAccess& operator=(const RegistryReadAccess&)=delete;
+            RegistryReadAccess& operator=(RegistryReadAccess&&)=default;
+
             Registry& get()
             {
                 // lock the reader on access
-                m_mutex.lock();
+                m_shared_lock.lock();
                 return m_registry;
             }
         };
@@ -84,6 +89,11 @@ namespace mega::service
             {
             }
 
+            RegistryWriteAccess(const RegistryWriteAccess&)=delete;
+            RegistryWriteAccess(RegistryWriteAccess&&)=default;
+            RegistryWriteAccess& operator=(const RegistryWriteAccess&)=delete;
+            RegistryWriteAccess& operator=(RegistryWriteAccess&&)=default;
+            
             Registry& get()
             {
                 return m_registry;

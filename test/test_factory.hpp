@@ -18,7 +18,7 @@ namespace mega::test
 class OTestFactory : public TestFactory
 {
     service::Network& m_network;
-    service::MPO m_mpo;
+    service::MPTFO m_mptfo;
     service::Ptr< TestFactory > m_pProxy;
 
     using TestPtr    = std::unique_ptr< OTest >;
@@ -29,11 +29,11 @@ public:
     :   m_network( network )
     {
         auto& reg = network.writeRegistry().get();
-        m_mpo = reg.createInProcessProxy(*this);
-        m_pProxy = reg.one< TestFactory >(m_mpo);
+        m_mptfo = reg.createInProcessProxy(service::LogicalThread::get().getMPTF(), *this);
+        m_pProxy = reg.one< TestFactory >(m_mptfo);
     }
 
-    const service::MPO getMPO() const { return m_mpo; }
+    const service::MPTFO getMPTFO() const { return m_mptfo; }
     service::Ptr< TestFactory > getPtr() const { return m_pProxy; }
 
     service::Ptr<Test> create_test() override
@@ -42,7 +42,7 @@ public:
         
         TestPtr pTest = std::make_unique< OTest >();
         auto& reg = m_network.writeRegistry().get();
-        const auto mpo = reg.createInProcessProxy(*pTest);
+        const auto mpo = reg.createInProcessProxy(m_mptfo.getMPTF(), *pTest);
         m_tests.push_back( std::move( pTest ) );
         return reg.one< Test >( mpo );
     }

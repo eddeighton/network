@@ -128,9 +128,14 @@ int main( int argc, const char* argv[] )
                     []( mega::service::SocketSender& responseSender,
                         const mega::service::PacketBuffer& buffer)
                     {
-                        static constexpr auto boostArchiveFlags = boost::archive::no_header | boost::archive::no_codecvt
-                                          | boost::archive::no_xml_tag_checking | boost::archive::no_tracking;
-                        boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer(buffer);
+                        static constexpr auto boostArchiveFlags =
+                            boost::archive::no_header
+                          | boost::archive::no_codecvt
+                          | boost::archive::no_xml_tag_checking
+                          | boost::archive::no_tracking;
+
+                        boost::interprocess::basic_vectorbuf
+                            < mega::service::PacketBuffer > vectorBuffer(buffer);
                         boost::archive::binary_iarchive ia(vectorBuffer, boostArchiveFlags);
 
                         std::string strMsg;
@@ -145,7 +150,7 @@ int main( int argc, const char* argv[] )
                 mega::service::RTTI rtti;
 
                 mega::test::Connectivity_InterProcess test(pConnection->getSender(),
-                    mega::service::MPTFO{},
+                    mega::service::MPTFO{}, // for now 0,0,0,0 is correct for the test
                     rtti);
 
                 test.shutdown();

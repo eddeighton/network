@@ -58,14 +58,16 @@ namespace mega::service
 
         inline void operator()( const InterProcessRequest& interProcessRequest )
         {
+            interProcessRequest.m_functor();
         }
 
-        std::map< MessageID, std::function< void(const InterProcessResponse& interProcessResponse) > >
+        std::map< MessageID, 
+            std::function< void(const InterProcessResponse& interProcessResponse) > >
             m_interProcessResponseCallbacks;
 
         inline void operator()( const InterProcessResponse& interProcessResponse )
         {
-            // check for callbacks]
+            // check for callbacks
             auto iFind = m_interProcessResponseCallbacks.find(
                 interProcessResponse.m_header.m_messageID );
             if( iFind != m_interProcessResponseCallbacks.end() )

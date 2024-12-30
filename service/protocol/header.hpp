@@ -3,6 +3,7 @@
 
 #include "vocab/service/object_id.hpp"
 #include "vocab/service/mptf.hpp"
+#include "vocab/service/mptfo.hpp"
 #include "vocab/service/interface_type_name.hpp"
 #include "vocab/service/function_type_name.hpp"
 
@@ -14,35 +15,6 @@
 namespace mega::service
 {
     using MessageID = std::uint64_t;
-
-    struct MPTFO
-    {
-        MPTF     m_mptf;
-        ObjectID m_objectID;
-
-        template < class Archive >
-        inline void serialize( Archive& archive, const unsigned int )
-        {
-            if constexpr( boost::serialization::IsXMLArchive< Archive >::value )
-            {
-                archive& boost::serialization::make_nvp( "mptf", m_mptf );
-                archive& boost::serialization::make_nvp( "objectID", m_objectID );
-            }
-            else
-            {
-                archive& m_mptf;
-                archive& m_objectID;
-            }
-        }
-    };
-
-    inline std::ostream& operator<<( std::ostream& os, const MPTFO& mptf )
-    {
-        return os 
-        << "MPTF : " << mptf.m_mptf
-        << "ObjectID : " << mptf.m_objectID  
-        ;
-    }
 
     struct Header
     {

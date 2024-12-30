@@ -88,10 +88,11 @@ int main( int argc, const char* argv[] )
             mega::service::LogicalThread::registerFiber(mp);
 
             mega::service::ReceiverCallback receiverCallback = 
-                []( mega::service::SocketSender& responseSender,
+                [&]( mega::service::SocketSender& responseSender,
                     const mega::service::PacketBuffer& buffer)
                 {
-                    static constexpr auto boostArchiveFlags = boost::archive::no_header | boost::archive::no_codecvt
+                    static constexpr auto boostArchiveFlags = 
+                        boost::archive::no_header | boost::archive::no_codecvt
                                       | boost::archive::no_xml_tag_checking | boost::archive::no_tracking;
                     boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer(buffer);
                     boost::archive::binary_iarchive ia(vectorBuffer, boostArchiveFlags);
@@ -99,6 +100,27 @@ int main( int argc, const char* argv[] )
                     mega::service::Header header;
                     ia >> header;
                     std::cout << "Got packet: " << header << std::endl;
+
+                    const auto& objectInfo = [&]()
+                    {
+                        auto reg = network.readRegistry();
+                        return reg.get().getObjectInfo(header.m_responder);
+                    }();
+
+                    // request or response
+                    objectInfo.logicalThread.send(
+                        mega::service::InterProcessRequest
+                        {
+                            [&]()
+                            {
+                                auto p = dynamic_cast<mega::test::Connectivity*>(objectInfo.pObject);
+                                p->shutdown();
+
+                                mega::service::PacketBuffer responseBuffer;
+                                // responseSender.send(responseBuffer);
+                            }
+                        }
+                    );
                 };
 
             mega::service::Server server(network, port, std::move(receiverCallback));

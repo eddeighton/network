@@ -27,7 +27,7 @@ TEST( Service, Basic )
     OTestFactory testFactory(network);
 
     Ptr< TestFactory > pFactory = testFactory.getPtr();
-    std::cout << "Created TestFactory: " << testFactory.getMPO() << std::endl;
+    std::cout << "Created TestFactory: " << testFactory.getMPTFO() << std::endl;
     Ptr< mega::test::Test > pTest2 = pFactory->create_test();
     std::cout << "Test returned: " << pTest2->test1() << std::endl;
 

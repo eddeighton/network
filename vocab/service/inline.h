@@ -30,7 +30,7 @@ C_RUNTIME_START
 
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
-typedef struct c_machine_id
+typedef struct _c_machine_id
 {
     c_u32 value;
 } c_machine_id;
@@ -39,15 +39,8 @@ typedef struct c_machine_id
 ////////////////////////////////////////////////////////////////////////
 typedef struct _c_process_id
 {
-    c_u16 value;
-} c_process_id;
-
-////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////
-typedef struct _c_object_id
-{
     c_u8 value;
-} c_object_id;
+} c_process_id;
 
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
@@ -65,12 +58,20 @@ typedef struct _c_fiber_id
 
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
+typedef struct _c_object_id
+{
+    c_u8 value;
+} c_object_id;
+
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
 #pragma pack( 1 )
 typedef struct _c_machine_process_id
 {
     c_machine_id m_machine_id;
     c_process_id m_process_id;
-    c_u16        m_padding;
+    c_u8         m_padding1;
+    c_u16        m_padding2;
 } c_machine_process_id;
 #pragma pack()
 
@@ -82,12 +83,13 @@ static_assert( sizeof( c_machine_process_id ) == 8U, "Invalid c_machine_process_
 constexpr
 #endif
     inline c_machine_process_id
-    c_machine_process_id_make( c_u32 machine_id, c_u16 process_id )
+    c_machine_process_id_make( c_u32 machine_id, c_u8 process_id )
 {
     c_machine_process_id result;
     result.m_machine_id.value = machine_id;
     result.m_process_id.value = process_id;
-    result.m_padding          = 0;
+    result.m_padding1          = 0;
+    result.m_padding2          = 0;
     return result;
 }
 
@@ -106,36 +108,36 @@ constexpr
     inline c_machine_process_id
     c_machine_process_id_from_int( c_u64 i )
 {
-    return c_machine_process_id{ ( c_u32 )( i ), ( c_u16 )( i >> 32 ), 0 };
+    return c_machine_process_id{ ( c_u32 )( i ), ( c_u8 )( i >> 32 ), 0 };
 }
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
-// c_machine_process_object_id
+// c_machine_process_thread_id
 #pragma pack( 1 )
-typedef struct _c_machine_process_object_id
+typedef struct _c_machine_process_thread_id
 {
     c_machine_id m_machine_id;
     c_process_id m_process_id;
-    c_object_id  m_object_id;
-    c_u8         m_padding;
-} c_machine_process_object_id;
+    c_thread_id  m_thread_id;
+    c_u16        m_padding;
+} c_machine_process_thread_id;
 #pragma pack()
 
 #ifndef MEGAJIT
-static_assert( sizeof( c_machine_process_object_id ) == 8U, "Invalid c_machine_process_object_id Size" );
+static_assert( sizeof( c_machine_process_thread_id ) == 8U, "Invalid c_machine_process_thread_id Size" );
 #endif
 
 #ifdef __cplusplus
 constexpr
 #endif
-    inline c_machine_process_object_id
-    c_machine_process_object_id_make( c_u32 machine_id, c_u16 process_id, c_u8 object_id )
+    inline c_machine_process_thread_id
+    c_machine_process_thread_id_make( c_u32 machine_id, c_u8 process_id, c_u8 thread_id )
 {
-    c_machine_process_object_id result;
+    c_machine_process_thread_id result;
     result.m_machine_id.value = machine_id;
     result.m_process_id.value = process_id;
-    result.m_object_id.value   = object_id;
+    result.m_thread_id.value  = thread_id;
     result.m_padding          = 0;
     return result;
 }
@@ -144,19 +146,19 @@ constexpr
 constexpr
 #endif
     inline c_u64
-    c_machine_process_object_id_as_int( c_machine_process_object_id id )
+    c_machine_process_thread_id_as_int( c_machine_process_thread_id id )
 {
     return ( ( c_u64 )id.m_machine_id.value ) + ( ( ( c_u64 )id.m_process_id.value ) << 32 )
-           + ( ( ( c_u64 )id.m_object_id.value ) << 48 );
+           + ( ( ( c_u64 )id.m_thread_id.value ) << 40 );
 }
 
 #ifdef __cplusplus
 constexpr
 #endif
-    inline c_machine_process_object_id
-    c_machine_process_object_id_from_int( c_u64 i )
+    inline c_machine_process_thread_id
+    c_machine_process_thread_id_from_int( c_u64 i )
 {
-    return c_machine_process_object_id{ ( c_u32 )( i ), ( c_u16 )( i >> 32 ), ( c_u8 )( i >> 48 ), 0 };
+    return c_machine_process_thread_id{ ( c_u32 )( i ), ( c_u8 )( i >> 32 ), ( c_u8 )( i >> 40 ), 0 };
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -169,6 +171,7 @@ typedef struct _c_machine_process_thread_fiber_id
     c_process_id m_process_id;
     c_thread_id  m_thread_id;
     c_fiber_id   m_fiber_id;
+    c_u8         m_padding;
 } c_machine_process_thread_fiber_id;
 #pragma pack()
 
@@ -180,13 +183,14 @@ static_assert( sizeof( c_machine_process_thread_fiber_id ) == 8U, "Invalid c_mac
 constexpr
 #endif
     inline c_machine_process_thread_fiber_id
-    c_machine_process_thread_fiber_id_make( c_u32 machine_id, c_u16 process_id, c_u8 thread_id, c_u8 fiber_id )
+    c_machine_process_thread_fiber_id_make( c_u32 machine_id, c_u8 process_id, c_u8 thread_id, c_u8 fiber_id )
 {
     c_machine_process_thread_fiber_id result;
     result.m_machine_id.value = machine_id;
     result.m_process_id.value = process_id;
     result.m_thread_id.value  = thread_id;
     result.m_fiber_id.value   = fiber_id;
+    result.m_padding          = 0;
     return result;
 }
 
@@ -198,8 +202,8 @@ constexpr
 {
     return     ( ( c_u64 )id.m_machine_id.value )
            + ( ( ( c_u64 )id.m_process_id.value ) << 32 )
-           + ( ( ( c_u64 )id.m_thread_id.value  ) << 48 )
-           + ( ( ( c_u64 )id.m_fiber_id.value   ) << 56 );
+           + ( ( ( c_u64 )id.m_thread_id.value  ) << 40 )
+           + ( ( ( c_u64 )id.m_fiber_id.value   ) << 48 );
 }
 
 #ifdef __cplusplus
@@ -208,8 +212,67 @@ constexpr
     inline c_machine_process_thread_fiber_id
     c_machine_process_thread_fiber_id_from_int( c_u64 i )
 {
-    return c_machine_process_thread_fiber_id{ ( c_u32 )( i ), ( c_u16 )( i >> 32 ), ( c_u8 )( i >> 48 ), ( c_u8 )( i >> 56 ) };
+    return c_machine_process_thread_fiber_id{ ( c_u32 )( i ), ( c_u8 )( i >> 32 ), ( c_u8 )( i >> 40 ), ( c_u8 )( i >> 48 ) };
 }
 
+/////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+// c_machine_process_thread_fiber_object_id
+#pragma pack( 1 )
+typedef struct _c_machine_process_thread_fiber_object_id
+{
+    c_machine_id m_machine_id;
+    c_process_id m_process_id;
+    c_thread_id  m_thread_id;
+    c_fiber_id   m_fiber_id;
+    c_object_id  m_object_id;
+} c_machine_process_thread_fiber_object_id;
+#pragma pack()
+
+#ifndef MEGAJIT
+static_assert( sizeof( c_machine_process_thread_fiber_object_id ) == 8U, "Invalid c_machine_process_thread_fiber_object_id Size" );
+#endif
+
+#ifdef __cplusplus
+constexpr
+#endif
+    inline c_machine_process_thread_fiber_object_id
+    c_machine_process_thread_fiber_object_id_make( c_u32 machine_id, c_u8 process_id, c_u8 thread_id, c_u8 fiber_id, c_u8 object_id )
+{
+    c_machine_process_thread_fiber_object_id result;
+    result.m_machine_id.value = machine_id;
+    result.m_process_id.value = process_id;
+    result.m_thread_id.value  = thread_id;
+    result.m_fiber_id.value   = fiber_id;
+    result.m_object_id.value  = object_id;
+    return result;
+}
+
+#ifdef __cplusplus
+constexpr
+#endif
+    inline c_u64
+    c_machine_process_thread_fiber_object_id_as_int( c_machine_process_thread_fiber_object_id id )
+{
+    return     ( ( c_u64 )id.m_machine_id.value )
+           + ( ( ( c_u64 )id.m_process_id.value ) << 32 )
+           + ( ( ( c_u64 )id.m_thread_id.value  ) << 40 )
+           + ( ( ( c_u64 )id.m_fiber_id.value   ) << 48 )
+           + ( ( ( c_u64 )id.m_object_id.value  ) << 56 );
+}
+
+#ifdef __cplusplus
+constexpr
+#endif
+    inline c_machine_process_thread_fiber_object_id
+    c_machine_process_thread_fiber_object_id_from_int( c_u64 i )
+{
+    return c_machine_process_thread_fiber_object_id{ 
+        ( c_u32 )( i ), 
+        ( c_u8 )( i >> 32 ),
+        ( c_u8 )( i >> 40 ),
+        ( c_u8 )( i >> 48 ),
+        ( c_u8 )( i >> 56 ) };
+}
 C_RUNTIME_END
 #endif // GUARD_2025_January_11_inline
