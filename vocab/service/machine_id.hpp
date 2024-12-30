@@ -92,7 +92,7 @@ inline constexpr MachineID operator""_M( unsigned long long int value )
     return MachineID{ static_cast< MachineID::ValueType >( value ) };
 }
 
-static constexpr MachineID MACHINE_ZERO = 0x0000_M;
+static constexpr MachineID MACHINE_ZERO = 0x00000000_M;
 
 inline std::ostream& operator<<( std::ostream& os, const MachineID& instance )
 {

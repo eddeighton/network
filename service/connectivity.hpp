@@ -4,7 +4,6 @@
 
 #include "service/interface/test.interface.hpp"
 
-#include "service/network.hpp"
 #include "service/registry.hpp"
 
 #include <iostream>
@@ -16,11 +15,11 @@ namespace mega::test
         service::MPTFO m_mptfo;
         service::Ptr< Connectivity > m_pProxy;
     public:
-        OConnectivity(service::Network& network)
+        OConnectivity()
         {
-            auto& reg = network.writeRegistry().get();
-            m_mptfo = reg.createInProcessProxy(service::LogicalThread::get().getMPTF(), *this);
-            m_pProxy = reg.one< Connectivity >(m_mptfo);
+            auto reg = service::Registry::getWriteAccess();
+            m_mptfo = reg->createInProcessProxy(service::LogicalThread::get().getMPTF(), *this);
+            m_pProxy = reg->one< Connectivity >(m_mptfo);
         }
         void shutdown() override
         {

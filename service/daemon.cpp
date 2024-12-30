@@ -46,11 +46,15 @@ int main( int argc, const char* argv[] )
 
         mega::service::PortNumber port{1234};
 
+        mega::service::MachineID machineID{};
+
         namespace po = boost::program_options;
-        po::options_description commandOptions( " Execute inja template" );
+        po::options_description commandOptions( " Daemon Configuration" );
         {
             // clang-format off
             commandOptions.add_options()
+            ( "MachineID,m",  po::value< mega::service::MachineID >( &machineID ),      "Four byte machine ID by which this daemon will be know.  MUST be unique!" )
+            ( "Port,p",       po::value< mega::service::PortNumber >( &port ),          "Port number daemon should bind to on localhost" )
                 ;
             // clang-format on
         }
@@ -77,13 +81,13 @@ int main( int argc, const char* argv[] )
                 std::cin >> c;
             }
      
-            mega::service::MP mp
+            const mega::service::MP mp
             { 
-                mega::service::MachineID{0}, 
-                mega::service::ProcessID{0}
+                machineID, 
+                mega::service::PROCESS_ZERO
             };
 
-            mega::service::Network network(mp);
+            mega::service::Network network;
  
             mega::service::LogicalThread::registerFiber(mp);
 
@@ -103,8 +107,8 @@ int main( int argc, const char* argv[] )
 
                     const auto& objectInfo = [&]()
                     {
-                        auto reg = network.readRegistry();
-                        return reg.get().getObjectInfo(header.m_responder);
+                        auto reg = mega::service::Registry::getReadAccess();
+                        return reg->getObjectInfo(header.m_responder);
                     }();
 
                     // request or response
@@ -125,7 +129,7 @@ int main( int argc, const char* argv[] )
 
             mega::service::Server server(network, port, std::move(receiverCallback));
 
-            mega::test::OConnectivity connectivity(network);
+            mega::test::OConnectivity connectivity;
 
             mega::service::LogicalThread::get().runMessageLoop();
         }

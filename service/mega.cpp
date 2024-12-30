@@ -120,7 +120,7 @@ int main( int argc, const char* argv[] )
                     mega::service::ProcessID{1}
                 };
 
-                mega::service::Network network(mp);
+                mega::service::Network network;
 
                 mega::service::LogicalThread::registerFiber(mp);
      

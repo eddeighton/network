@@ -24,6 +24,8 @@
 #include <memory>
 #include <variant>
 #include <unordered_map>
+#include <mutex>
+#include <shared_mutex>
 
 namespace mega::service
 {
@@ -35,8 +37,6 @@ namespace mega::service
     
     class Registry : public Common::DisableCopy, Common::DisableMove
     {
-        const MP m_mp;
-
     public:
         struct ObjectInfo
         {
@@ -64,13 +64,52 @@ namespace mega::service
         using InterfaceMPTFOMap = std::map< InterfaceMPTFO, Interface* >;
 
         InterfaceMPTFOMap m_interfaceMPTFOMap;
-    public:
-        inline Registry( MP machineProcess )
-            : m_mp( machineProcess )
-        {
-        }
 
-        MP getMP() const { return m_mp; }
+    public:
+        class RegistryReadAccess
+        {
+            std::shared_mutex& m_mutex;
+            std::shared_lock< std::shared_mutex > m_shared_lock;
+            Registry& m_registry;
+        public:
+            RegistryReadAccess(std::shared_mutex& mut, Registry& reg)
+                : m_mutex( mut )
+                , m_shared_lock( m_mutex )
+                , m_registry( reg )
+            {
+            }
+
+            RegistryReadAccess(const RegistryReadAccess&)=delete;
+            RegistryReadAccess(RegistryReadAccess&&)=default;
+            RegistryReadAccess& operator=(const RegistryReadAccess&)=delete;
+            RegistryReadAccess& operator=(RegistryReadAccess&&)=default;
+
+            const Registry* operator->() { return &m_registry; }
+        };
+
+        class RegistryWriteAccess
+        {
+            std::shared_mutex& m_mutex;
+            std::lock_guard< std::shared_mutex > m_lock_guard;
+            Registry& m_registry;
+        public:
+            RegistryWriteAccess(std::shared_mutex& mut, Registry& reg)
+                : m_mutex( mut )
+                , m_lock_guard( m_mutex )
+                , m_registry( reg )
+            {
+            }
+
+            RegistryWriteAccess(const RegistryWriteAccess&)=delete;
+            RegistryWriteAccess(RegistryWriteAccess&&)=default;
+            RegistryWriteAccess& operator=(const RegistryWriteAccess&)=delete;
+            RegistryWriteAccess& operator=(RegistryWriteAccess&&)=default;
+            
+            Registry* operator->() { return &m_registry; }
+        };
+
+        static inline RegistryReadAccess getReadAccess();
+        static inline RegistryWriteAccess getWriteAccess();
 
         template< typename TInterface, typename TProxy >
         void registerIfInterface(Interface* pInterface, MPTFO mptfo, const RTTI& rtti)
@@ -191,5 +230,24 @@ namespace mega::service
             return r.front();
         }
     };
+
+    namespace detail
+    {
+        // Global registry singleton with reader writer lock
+        static inline std::shared_mutex g_mutex;
+        static inline Registry g_registry;
+    }
+
+    inline Registry::RegistryReadAccess Registry::getReadAccess()
+    {
+        return {detail::g_mutex, detail::g_registry};
+    }
+    inline Registry::RegistryWriteAccess Registry::getWriteAccess()
+    {
+        return {detail::g_mutex, detail::g_registry};
+    }
+
+
+
 }
 

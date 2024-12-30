@@ -19,12 +19,12 @@ TEST( Service, Basic )
     
     MP mp{};
 
-    Network network( mp );
+    Network network;
 
-    LogicalThread::registerFiber(network.getMP());
+    LogicalThread::registerFiber(mp);
     LogicalThread& thread = LogicalThread::get();
 
-    OTestFactory testFactory(network);
+    OTestFactory testFactory;
 
     Ptr< TestFactory > pFactory = testFactory.getPtr();
     std::cout << "Created TestFactory: " << testFactory.getMPTFO() << std::endl;
@@ -33,13 +33,13 @@ TEST( Service, Basic )
 
     boost::fibers::fiber test( [&]()
     {
-        LogicalThread::registerFiber(network.getMP());
+        LogicalThread::registerFiber(mp);
         try
         {
             Ptr< mega::test::Test > pTest = pFactory->create_test();
             std::cout << "Test returned: " << pTest->test1() << std::endl;
         }
-        catch( std::exception& ex )
+        catch(std::exception& ex)
         {
             std::cout << "Caught exception: " << ex.what() <<
                 " In: " << LogicalThread::get().getMPTF() << std::endl;
