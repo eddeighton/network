@@ -10,11 +10,13 @@
 
 #include <functional>
 #include <variant>
+#include <cstdint>
 
 namespace mega::service
 {
     using Functor = std::function< void() >;
 
+    // Messages that are dispatched internally
     struct InProcessRequest
     {
         Functor m_functor;
@@ -48,5 +50,17 @@ namespace mega::service
         InterProcessResponse,
         Other
     >;
+
+    // Protocol for messages sent over the wire
+    enum class MessageType : std::uint32_t
+    {
+        eEnrole           = 0,
+        eRegistryUpdate   = 1,
+        eConnect          = 2,
+        eDisconnect       = 3,
+        eRoute            = 4,
+        eShutdown         = 5,
+        TOTAL_MESSAGES
+    };
 }
 

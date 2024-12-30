@@ -10,6 +10,10 @@ namespace mega::service
     class Enrole
     {
     public:
+        Enrole()
+        {
+        }
+
         Enrole( ProcessID processID )
             : m_processID( processID )
         {
@@ -31,8 +35,7 @@ namespace mega::service
         }
 
     private:
-        ProcessID m_processID;
+        ProcessID m_processID{};
     };
-
 }
 

@@ -24,6 +24,9 @@
 
 #include "service/client.hpp"
 #include "service/network.hpp"
+#include "service/enrole.hpp"
+
+#include "service/protocol/message.hpp"
 
 #include <boost/program_options.hpp>
 #include <boost/fiber/operations.hpp>
@@ -138,10 +141,48 @@ int main( int argc, const char* argv[] )
                             < mega::service::PacketBuffer > vectorBuffer(buffer);
                         boost::archive::binary_iarchive ia(vectorBuffer, boostArchiveFlags);
 
-                        std::string strMsg;
-                        ia >> strMsg;
+                        mega::service::MessageType messageType;
+                        ia >> messageType;
 
-                        std::cout << "Got packet: " << strMsg << std::endl;
+                        switch( messageType )
+                        {
+                            case mega::service::MessageType::eEnrole         :
+                                {
+                                    mega::service::Enrole enrolement;
+                                    ia >> enrolement;
+                                    std::cout << "Got enrolement of process ID: " 
+                                        << enrolement.getProcessID() << std::endl; 
+                                }
+                                break;
+                            case mega::service::MessageType::eRegistryUpdate  :
+                                {
+                                }
+                                break;
+                            case mega::service::MessageType::eConnect         :
+                                {
+                                }
+                                break;
+                            case mega::service::MessageType::eDisconnect      :
+                                {
+                                }
+                                break;
+                            case mega::service::MessageType::eRoute           :
+                                {
+                                }
+                                break;
+                            case mega::service::MessageType::eShutdown        :
+                                {
+                                }
+                                break;
+                            case mega::service::MessageType::TOTAL_MESSAGES   :
+                                {
+                                    std::string strMsg;
+                                    ia >> strMsg;
+                                    std::cout << "Got packet: " << strMsg << std::endl;
+                                }
+                                break;
+                        }
+
                     };
                 mega::service::Client client(network, std::move(receiverCallback));
 

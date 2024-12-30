@@ -97,17 +97,19 @@ inline constexpr ProcessID operator""_P( unsigned long long int value )
 }
 
 static constexpr ProcessID PROCESS_ZERO = 0x0000_P;
+static constexpr ProcessID PROCESS_ONE  = 0x0001_P;
 
-inline std::ostream& operator<<( std::ostream& os, const ProcessID& instance )
+inline std::ostream& operator<<( std::ostream& os, const ProcessID& instance)
 {
-    return os << "0x" << std::hex << std::setw( 2 ) << std::setfill( '0' ) << instance.getValue() << std::dec << "_P";
+    return os << "0x" << std::hex << std::setw( 2 ) << std::setfill( '0' ) << 
+        static_cast< int >(instance.getValue()) << std::dec << "_P";
 }
 
-inline std::istream& operator>>( std::istream& is, ProcessID& instance )
+inline std::istream& operator>>( std::istream& is, ProcessID& instance)
 {
-    ProcessID::ValueType value;
+    int value;
     is >> value;
-    instance = ProcessID{ value };
+    instance = ProcessID{ static_cast< ProcessID::ValueType >( value ) };
     return is;
 }
 

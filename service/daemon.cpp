@@ -128,7 +128,8 @@ int main( int argc, const char* argv[] )
                     );
                 };
 
-            mega::service::ProcessID nextMegaProcessID{ 1 };
+            mega::service::ProcessID nextMegaProcessID = mega::service::PROCESS_ONE;
+           // mega::service::ProcessID* p = &nextMegaProcessID;
 
             mega::service::Server server(network, port, std::move(receiverCallback),
                 [&](mega::service::Server::Connection::Ptr pConnection)
@@ -146,6 +147,9 @@ int main( int argc, const char* argv[] )
                     boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer;
                     boost::archive::binary_oarchive oa(vectorBuffer, boostArchiveFlags);
 
+                    oa << mega::service::MessageType::eEnrole;
+
+                    std::cout << "Assigning enrolement of ProcessID: " << nextMegaProcessID << std::endl;
                     mega::service::Enrole enrole{ nextMegaProcessID++ };
 
                     oa << enrole;
