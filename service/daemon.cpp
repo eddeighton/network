@@ -178,8 +178,6 @@ int main( int argc, const char* argv[] )
 
                 };
 
-            mega::service::ProcessID nextMegaProcessID = mega::service::PROCESS_ONE;
-
             mega::service::Server server(network, port, std::move(receiverCallback),
                 [&](mega::service::Server::Connection::Ptr pConnection)
                 {
@@ -205,7 +203,7 @@ int main( int argc, const char* argv[] )
                         mega::service::Enrole enrole
                         {
                             mp,
-                            mega::service::MP{ mp.getMachineID(), nextMegaProcessID++ }
+                            mega::service::MP{ mp.getMachineID(), pConnection->getProcessID() }
                         };
 
                         oa << enrole;

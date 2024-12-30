@@ -47,6 +47,7 @@ namespace mega::service
                     if( error.failed() )
                     {
                         onSocketError( error );
+                        m_bContinue = false;
                     }
                     else
                     {
