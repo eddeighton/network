@@ -30,6 +30,7 @@
 #include "vocab/service/thread_id.hpp"
 #include "vocab/service/fiber_id.hpp"
 #include "vocab/service/object_id.hpp"
+#include "vocab/service/mptf.hpp"
 
 #include "common/serialisation.hpp"
 

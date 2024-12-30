@@ -17,7 +17,6 @@
 
 #include "common/disable_special_members.hpp"
 
-#include <boost/type_index.hpp>
 
 #include <map>
 #include <vector>
@@ -29,11 +28,6 @@
 
 namespace mega::service
 {
-    template< typename T >
-    InterfaceTypeName getInterfaceTypeName()
-    {
-        return boost::typeindex::type_id<T>().pretty_name();
-    }
     
     class Registry : public Common::DisableCopy, Common::DisableMove
     {
@@ -66,6 +60,23 @@ namespace mega::service
         InterfaceMPTFOMap m_interfaceMPTFOMap;
 
     public:
+        inline Registration getRegistration() const
+        {
+            Registration registration;
+            for(const auto& proxy : m_proxies)
+            {
+                std::visit([&registration](const auto& pProxyUniquePtr)
+                {
+                    registration.m_registrants.emplace_back
+                    (                        
+                        pProxyUniquePtr->m_mptfo,
+                        pProxyUniquePtr->m_rtti
+                    );
+                }, proxy);
+            }
+            return registration;
+        }
+
         class RegistryReadAccess
         {
             std::shared_mutex& m_mutex;
@@ -111,12 +122,21 @@ namespace mega::service
         static inline RegistryReadAccess getReadAccess();
         static inline RegistryWriteAccess getWriteAccess();
 
+        template< typename TInterface >
+        void conditionallyAddRTTI(Interface* pInterface, RTTI& rtti)
+        {
+            if(auto p = dynamic_cast< TInterface* >( pInterface ))
+            {
+                rtti.m_interfaces.push_back(getInterfaceTypeName< TInterface >());
+            }
+        }
+
         template< typename TInterface, typename TProxy >
         void registerIfInterface(Interface* pInterface, MPTFO mptfo, const RTTI& rtti)
         {
             if(auto p = dynamic_cast< TInterface* >( pInterface ))
             {
-                auto pProxy = std::make_unique< TProxy >(p, LogicalThread::get(), rtti);
+                auto pProxy = std::make_unique< TProxy >(p, LogicalThread::get(), mptfo, rtti);
                 const auto interfaceTypeName = getInterfaceTypeName< TInterface >();
                 m_interfaceMPTFOMap.insert(
                     std::make_pair( InterfaceMPTFO{ interfaceTypeName, mptfo }, pProxy.get() ) );
@@ -135,6 +155,9 @@ namespace mega::service
             const MPTFO mptfo(mptf, objectID);
 
             RTTI rtti;
+            conditionallyAddRTTI< test::TestFactory  >( &object, rtti );
+            conditionallyAddRTTI< test::Test         >( &object, rtti );
+            conditionallyAddRTTI< test::Connectivity >( &object, rtti );
 
             registerIfInterface< test::TestFactory,  test::TestFactory_InProcess   >( &object, mptfo, rtti );
             registerIfInterface< test::Test,         test::Test_InProcess          >( &object, mptfo, rtti );
@@ -158,11 +181,6 @@ namespace mega::service
             VERIFY_RTE_MSG(iFind!=m_objects.end(),
                 "Failed to locate object: " << mptfo);
             return iFind->second;
-        }
-
-        inline void createInterProcessProxy()
-        {
-
         }
 
         template< typename T >
