@@ -64,7 +64,12 @@ namespace mega::service
                 std::cout << "Client connection stop from: " << m_socket_info << std::endl;
                 boost::system::error_code ec;
                 m_socket.shutdown( m_socket.shutdown_both, ec );
-                m_socket.close  ();
+                m_socket.close();
+
+                while(m_bDisconnected == false)
+                {
+                    boost::this_fiber::yield();
+                }
             }
 
         private:
@@ -73,6 +78,7 @@ namespace mega::service
                 std::cout << "Client connection disconnect from: " << m_socket_info << std::endl;
                 m_client.onDisconnect(shared_from_this());
                 std::cout << "Disconnected" << std::endl;
+                m_bDisconnected = true;
             }
 
         private:
@@ -86,6 +92,7 @@ namespace mega::service
             EndPoint        m_endPoint;
             SocketReceiver  m_receiver;
             SocketSender    m_sender;
+            bool            m_bDisconnected = false;
         };
         using ConnectionPtrSet = std::set< Connection::Ptr >;
 

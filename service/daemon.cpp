@@ -151,7 +151,6 @@ int main( int argc, const char* argv[] )
                                             auto p = dynamic_cast<mega::test::Connectivity*>(pObject);
                                             p->shutdown();
 
-                                            // send enrole message
                                             {
                                                 boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer;
                                                 boost::archive::binary_oarchive oa(vectorBuffer, boostArchiveFlags);

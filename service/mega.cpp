@@ -191,7 +191,8 @@ int main( int argc, const char* argv[] )
                                     ia >> header;
                                     // std::cout << "Got response: " << header << std::endl;
 
-                                    mega::service::LogicalThread& logicalThread = [&]() -> mega::service::LogicalThread&
+                                    mega::service::LogicalThread& logicalThread =
+                                        [&]() -> mega::service::LogicalThread&
                                     {
                                         auto reg = mega::service::Registry::getReadAccess();
                                         return reg->getLogicalThread(header.m_requester);
@@ -217,28 +218,30 @@ int main( int argc, const char* argv[] )
                     };
 
                 mega::service::Client client(network, std::move(receiverCallback));
+                {
 
-                auto pConnection = client.connect(ipAddress, port);
+                    auto pConnection = client.connect(ipAddress, port);
 
-                // wait for enrolement and registration to complete
-                registrationFuture.get();
+                    // wait for enrolement and registration to complete
+                    registrationFuture.get();
 
-                mega::service::LogicalThread::registerFiber(enrolement.getMP());
+                    mega::service::LogicalThread::registerFiber(enrolement.getMP());
 
-                using namespace mega::service;
-                using namespace mega::test;
-                auto pDaemonConnectivity = 
-                    Registry::getReadAccess()->one< Connectivity >(
-                        enrolement.getDaemon()
-                    );
+                    using namespace mega::service;
+                    using namespace mega::test;
+                    auto pDaemonConnectivity = 
+                        Registry::getReadAccess()->one< Connectivity >(
+                            enrolement.getDaemon()
+                        );
 
-                pDaemonConnectivity->shutdown();
+                    pDaemonConnectivity->shutdown();
 
-                pConnection->stop();
+                    pConnection->stop();
+                }
 
                 // if( runAsServer )
                 // {
-                // mega::service::LogicalThread::get().runMessageLoop();
+                //     mega::service::LogicalThread::get().runMessageLoop();
                 // }
             }
         }

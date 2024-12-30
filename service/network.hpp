@@ -30,6 +30,8 @@ namespace mega::service
         {
         }
 
+        inline void run_one() { m_pIOContext->run_one(); }
+
         inline Network(const Network&) = delete;
         inline Network& operator=(const Network&) = delete;
 
