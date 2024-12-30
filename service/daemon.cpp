@@ -93,7 +93,7 @@ int main( int argc, const char* argv[] )
             mega::service::LogicalThread::registerFiber(mp);
 
             mega::service::ReceiverCallback receiverCallback = 
-                [&]( mega::service::SocketSender& responseSender,
+                []( mega::service::SocketSender& responseSender,
                     const mega::service::PacketBuffer& buffer)
                 {
                     static constexpr auto boostArchiveFlags = 
@@ -160,7 +160,7 @@ int main( int argc, const char* argv[] )
                                                 oa << header;
 
                                                 responseSender.send(vectorBuffer.vector());
-                                                std::cout << "Response to request sent" << std::endl;
+                                                // std::cout << "Response to request sent" << std::endl;
                                             }
                                         }
                                     }
@@ -180,7 +180,6 @@ int main( int argc, const char* argv[] )
                 };
 
             mega::service::ProcessID nextMegaProcessID = mega::service::PROCESS_ONE;
-           // mega::service::ProcessID* p = &nextMegaProcessID;
 
             mega::service::Server server(network, port, std::move(receiverCallback),
                 [&](mega::service::Server::Connection::Ptr pConnection)

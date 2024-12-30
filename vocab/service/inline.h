@@ -212,7 +212,11 @@ constexpr
     inline c_machine_process_thread_fiber_id
     c_machine_process_thread_fiber_id_from_int( c_u64 i )
 {
-    return c_machine_process_thread_fiber_id{ ( c_u32 )( i ), ( c_u8 )( i >> 32 ), ( c_u8 )( i >> 40 ), ( c_u8 )( i >> 48 ) };
+    return c_machine_process_thread_fiber_id{
+        ( c_u32 )( i ),
+        ( c_u8 )( i >> 32 ),
+        ( c_u8 )( i >> 40 ),
+        ( c_u8 )( i >> 48 ) };
 }
 
 /////////////////////////////////////////////////////////////////////

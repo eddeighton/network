@@ -121,10 +121,12 @@ int main( int argc, const char* argv[] )
                 mega::service::Enrole enrolement;
 
                 boost::fibers::promise<void> waitForRegistryPromise;
-                boost::fibers::future<void> registrationFuture = waitForRegistryPromise.get_future();
+                boost::fibers::future<void> registrationFuture =
+                    waitForRegistryPromise.get_future();
      
                 mega::service::ReceiverCallback receiverCallback = 
-                    [ &waitForRegistryPromise, &enrolement ]( mega::service::SocketSender& responseSender,
+                    [ &waitForRegistryPromise, &enrolement ]( 
+                        mega::service::SocketSender& responseSender,
                         const mega::service::PacketBuffer& buffer)
                     {
                         static constexpr auto boostArchiveFlags =
@@ -212,8 +214,8 @@ int main( int argc, const char* argv[] )
                                 }
                                 break;
                         }
-
                     };
+
                 mega::service::Client client(network, std::move(receiverCallback));
 
                 auto pConnection = client.connect(ipAddress, port);

@@ -6,31 +6,47 @@
 
 namespace mega::service
 {
-    static boost::fibers::fiber_specific_ptr< LogicalThread > fiber_local_storage;
-    
+    namespace detail
+    {
+        // Global registry singleton with reader writer lock
+        static std::shared_mutex g_mutex;
+        static Registry g_registry;
+        static boost::fibers::fiber_specific_ptr< LogicalThread > fiber_local_storage;
+    }
+
+    Registry::RegistryReadAccess Registry::getReadAccess()
+    {
+        return {detail::g_mutex, detail::g_registry};
+    }
+    Registry::RegistryWriteAccess Registry::getWriteAccess()
+    {
+        return {detail::g_mutex, detail::g_registry};
+    }
+
     void LogicalThread::registerFiber( MP mp )
     {
         static thread_local FiberID::ValueType m_fiberIDCounter{};
-        if( nullptr == fiber_local_storage.get() )
+        if( nullptr == detail::fiber_local_storage.get() )
         {
             VERIFY_RTE_MSG( m_fiberIDCounter <
                 std::numeric_limits<FiberID::ValueType>::max(),
                 "No remaining fiber IDs available" );
             const FiberID fiberID{ m_fiberIDCounter++ };
             const MPTF mptf( mp, ThreadID{}, fiberID );
-            fiber_local_storage.reset( new LogicalThread );
-            fiber_local_storage->m_mptf = mptf;
+            detail::fiber_local_storage.reset( new LogicalThread );
+            detail::fiber_local_storage->m_mptf = mptf;
 
             Registry::getWriteAccess()->registerLogicalThread(mptf,
-                fiber_local_storage.get());
+                detail::fiber_local_storage.get());
+            std::cout << "Register fiber: " << mptf << std::endl;
         }
     }
 
     LogicalThread& LogicalThread::get()
     {
-        VERIFY_RTE_MSG( fiber_local_storage.get() != nullptr,
+        VERIFY_RTE_MSG( detail::fiber_local_storage.get() != nullptr,
             "Fiber does not have logical thread fiber local storage set" );
-        return *fiber_local_storage.get();
+        return *detail::fiber_local_storage.get();
     }
 }
 

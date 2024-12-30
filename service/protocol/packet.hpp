@@ -46,11 +46,15 @@ namespace mega::service
             // encode the size
             const PacketSizeType size = payload.size();
             const std::string_view sizeView( reinterpret_cast< const char* >( &size ), PacketSizeSize );
-            packetBuffer.reserve( size + PacketSizeSize );
-            std::copy( sizeView.begin(), sizeView.end(), std::back_inserter( packetBuffer ) );
-
-            // encode the message
-            std::copy( payload.begin(), payload.end(), std::back_inserter( packetBuffer ) );
+            // packetBuffer.reserve( PacketSizeSize + size );
+            for( auto c : sizeView )
+            {
+                packetBuffer.push_back(c);
+            }
+            for( auto c : payload )
+            {
+                packetBuffer.push_back(c);
+            }
         }
 
         boost::system::error_code ec;

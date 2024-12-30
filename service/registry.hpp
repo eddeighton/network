@@ -165,7 +165,13 @@ namespace mega::service
 
         void registerLogicalThread(MPTF mptf, LogicalThread* pLogicalThread)
         {
-            m_logicalThreads.insert(std::make_pair(mptf, pLogicalThread));
+            auto ib = m_logicalThreads.insert(std::make_pair(mptf, pLogicalThread));
+            VERIFY_RTE_MSG( ib.second,
+                "Failed to register logical thread.  Duplicate mptf found: " << mptf );
+            auto iFind = m_logicalThreads.find(mptf);
+            VERIFY_RTE_MSG(iFind != m_logicalThreads.end(),
+                "Failed to locate logical thread straight away: " << mptf);
+            std::cout << "Registry registered logical thread: " << mptf << std::endl;
         }
 
         Interface* getObject(MPTFO mptfo) const
@@ -286,27 +292,8 @@ namespace mega::service
             Registry* operator->() { return &m_registry; }
         };
 
-        static inline RegistryReadAccess getReadAccess();
-        static inline RegistryWriteAccess getWriteAccess();
+        static RegistryReadAccess getReadAccess();
+        static RegistryWriteAccess getWriteAccess();
     };
-
-    namespace detail
-    {
-        // Global registry singleton with reader writer lock
-        static inline std::shared_mutex g_mutex;
-        static inline Registry g_registry;
-    }
-
-    inline Registry::RegistryReadAccess Registry::getReadAccess()
-    {
-        return {detail::g_mutex, detail::g_registry};
-    }
-    inline Registry::RegistryWriteAccess Registry::getWriteAccess()
-    {
-        return {detail::g_mutex, detail::g_registry};
-    }
-
-
-
 }
 
