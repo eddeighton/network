@@ -140,21 +140,39 @@ int main( int argc, const char* argv[] )
 
                     auto& sender = pConnection->getSender();
 
-                    // send enrole message
                     static constexpr auto boostArchiveFlags = 
-                        boost::archive::no_header | boost::archive::no_codecvt
-                                      | boost::archive::no_xml_tag_checking | boost::archive::no_tracking;
-                    boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer;
-                    boost::archive::binary_oarchive oa(vectorBuffer, boostArchiveFlags);
+                          boost::archive::no_header           | 
+                          boost::archive::no_codecvt          | 
+                          boost::archive::no_xml_tag_checking | 
+                          boost::archive::no_tracking;
 
-                    oa << mega::service::MessageType::eEnrole;
+                    // send enrole message
+                    {
+                        boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer;
+                        boost::archive::binary_oarchive oa(vectorBuffer, boostArchiveFlags);
 
-                    std::cout << "Assigning enrolement of ProcessID: " << nextMegaProcessID << std::endl;
-                    mega::service::Enrole enrole{ nextMegaProcessID++ };
+                        oa << mega::service::MessageType::eEnrole;
 
-                    oa << enrole;
+                        mega::service::Enrole enrole{ nextMegaProcessID++ };
 
-                    sender.send(vectorBuffer.vector());
+                        oa << enrole;
+
+                        sender.send(vectorBuffer.vector());
+                    }
+                    {
+                        // send registration
+                        boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer;
+                        boost::archive::binary_oarchive oa(vectorBuffer, boostArchiveFlags);
+
+                        oa << mega::service::MessageType::eRegistry;
+
+                        const auto registration = 
+                            mega::service::Registry::getReadAccess()->getRegistration();
+
+                        oa << registration;
+
+                        sender.send(vectorBuffer.vector());
+                    }
                 });
 
             mega::test::OConnectivity connectivity;

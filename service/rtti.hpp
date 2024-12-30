@@ -19,6 +19,17 @@ namespace mega::service
 
         InterfaceTypeNameVector m_interfaces;
 
+        inline bool operator<( const RTTI& cmp ) const
+        {
+            return m_interfaces < cmp.m_interfaces;
+        }
+
+        inline bool contains(const InterfaceTypeName& name) const
+        {
+            return std::find(m_interfaces.begin(), m_interfaces.end(), name)
+                != m_interfaces.end();
+        }
+
         template < class Archive >
         inline void serialize( Archive& archive, const unsigned int )
         {

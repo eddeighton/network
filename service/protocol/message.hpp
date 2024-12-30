@@ -55,7 +55,7 @@ namespace mega::service
     enum class MessageType : std::uint32_t
     {
         eEnrole           = 0,
-        eRegistryUpdate   = 1,
+        eRegistry         = 1,
         eConnect          = 2,
         eDisconnect       = 3,
         eRoute            = 4,

@@ -126,9 +126,12 @@ int main( int argc, const char* argv[] )
                 mega::service::Network network;
 
                 mega::service::LogicalThread::registerFiber(mp);
+
+                boost::fibers::promise<void> waitForRegistryPromise;
+                boost::fibers::future<void> registrationFuture = waitForRegistryPromise.get_future();
      
                 mega::service::ReceiverCallback receiverCallback = 
-                    []( mega::service::SocketSender& responseSender,
+                    [ &waitForRegistryPromise ]( mega::service::SocketSender& responseSender,
                         const mega::service::PacketBuffer& buffer)
                     {
                         static constexpr auto boostArchiveFlags =
@@ -154,8 +157,14 @@ int main( int argc, const char* argv[] )
                                         << enrolement.getProcessID() << std::endl; 
                                 }
                                 break;
-                            case mega::service::MessageType::eRegistryUpdate  :
+                            case mega::service::MessageType::eRegistry        :
                                 {
+                                    std::cout << "Got registration update" << std::endl;
+                                    mega::service::Registration registration;
+                                    ia >> registration;
+                                    mega::service::Registry::getWriteAccess()->update(
+                                        responseSender,registration);
+                                    waitForRegistryPromise.set_value();
                                 }
                                 break;
                             case mega::service::MessageType::eConnect         :
@@ -188,13 +197,23 @@ int main( int argc, const char* argv[] )
 
                 auto pConnection = client.connect(ipAddress, port);
 
-                mega::service::RTTI rtti;
+                registrationFuture.get();
 
-                mega::test::Connectivity_InterProcess test(pConnection->getSender(),
-                    mega::service::MPTFO{}, // for now 0,0,0,0 is correct for the test
-                    rtti);
+                using namespace mega::service;
+                auto pDaemonConnectivity = 
+                    Registry::getReadAccess()->one< mega::test::Connectivity >(MPTFO{});
 
-                test.shutdown();
+                pDaemonConnectivity->shutdown();
+
+                network.shutdown();
+
+                // mega::service::RTTI rtti;
+
+                // mega::test::Connectivity_InterProcess test(pConnection->getSender(),
+                //     mega::service::MPTFO{}, // for now 0,0,0,0 is correct for the test
+                //     rtti);
+
+                // test.shutdown();
                 // mega::service::MP mp{};
                 // mega::service::Network network( mp );
                 // mega::service::LogicalThread::registerFiber(network.getMP());

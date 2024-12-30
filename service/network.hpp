@@ -15,13 +15,13 @@ namespace mega::service
         mega::service::IOContextPtr m_pIOContext;
         std::thread m_networkThread;
 
-        void run()
+        inline void run()
         {
             mega::service::init_fiber_scheduler(m_pIOContext);
             m_pIOContext->run();
         }
     public:
-        Network()
+        inline Network()
         :   m_pIOContext(std::make_shared< boost::asio::io_context >())
         ,   m_networkThread( [this]
             {
@@ -30,16 +30,21 @@ namespace mega::service
         {
         }
 
-        Network(const Network&) = delete;
-        Network& operator=(const Network&) = delete;
+        inline Network(const Network&) = delete;
+        inline Network& operator=(const Network&) = delete;
 
-        ~Network()
+        inline ~Network()
         {
             m_pIOContext->stop();
             m_networkThread.join();
         }
 
-        auto& getIOContext() { return *m_pIOContext; }
+        inline auto& getIOContext() { return *m_pIOContext; }
+
+        inline void shutdown()
+        {
+            m_pIOContext->stop();
+        }
     };
 }
 

@@ -9,6 +9,7 @@
 #include "common/serialisation.hpp"
 
 #include <vector>
+#include <tuple>
 
 namespace mega::service
 {
@@ -21,6 +22,11 @@ namespace mega::service
             RTTI m_rtti;
 
             using RegistrantVector = std::vector<Registrant>;
+
+            inline bool operator<(const Registrant& cmp) const
+            {
+                return std::tie(m_mptfo, m_rtti) < std::tie(cmp.m_mptfo, cmp.m_rtti);
+            }
 
             template < class Archive >
             inline void serialize( Archive& archive, const unsigned int )

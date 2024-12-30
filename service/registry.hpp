@@ -63,69 +63,56 @@ namespace mega::service
         inline Registration getRegistration() const
         {
             Registration registration;
+            std::set<Registration::Registrant> uniqueRegistrants;
             for(const auto& proxy : m_proxies)
             {
-                std::visit([&registration](const auto& pProxyUniquePtr)
+                std::visit([&uniqueRegistrants](const auto& pProxyUniquePtr)
                 {
-                    registration.m_registrants.emplace_back
-                    (                        
-                        pProxyUniquePtr->m_mptfo,
-                        pProxyUniquePtr->m_rtti
+                    uniqueRegistrants.insert
+                    (
+                        Registration::Registrant
+                        {
+                            pProxyUniquePtr->m_mptfo,
+                            pProxyUniquePtr->m_rtti
+                        }
                     );
                 }, proxy);
             }
+            std::copy(uniqueRegistrants.begin(), uniqueRegistrants.end(),
+                std::back_inserter(registration.m_registrants));
             return registration;
         }
 
-        class RegistryReadAccess
+        template< typename TInterface, typename TProxy >
+        void registerIfInterfaceIP(Sender& sender, const Registration::Registrant& registrant)
         {
-            std::shared_mutex& m_mutex;
-            std::shared_lock< std::shared_mutex > m_shared_lock;
-            Registry& m_registry;
-        public:
-            RegistryReadAccess(std::shared_mutex& mut, Registry& reg)
-                : m_mutex( mut )
-                , m_shared_lock( m_mutex )
-                , m_registry( reg )
+            const auto interfaceTypeName = getInterfaceTypeName< TInterface >();
+            if(registrant.m_rtti.contains(interfaceTypeName))
             {
+                const auto key = InterfaceMPTFO{interfaceTypeName, registrant.m_mptfo};
+                if(m_interfaceMPTFOMap.find(key) == m_interfaceMPTFOMap.end())
+                {
+                    auto pProxy = std::make_unique<TProxy>(sender, registrant.m_mptfo, registrant.m_rtti);
+                    m_interfaceMPTFOMap.insert(std::make_pair(key, pProxy.get()));
+                    m_proxies.push_back(std::move(pProxy));
+                }
             }
+        }
 
-            RegistryReadAccess(const RegistryReadAccess&)=delete;
-            RegistryReadAccess(RegistryReadAccess&&)=default;
-            RegistryReadAccess& operator=(const RegistryReadAccess&)=delete;
-            RegistryReadAccess& operator=(RegistryReadAccess&&)=default;
-
-            const Registry* operator->() { return &m_registry; }
-        };
-
-        class RegistryWriteAccess
+        void update(Sender& sender, const Registration& registration )
         {
-            std::shared_mutex& m_mutex;
-            std::lock_guard< std::shared_mutex > m_lock_guard;
-            Registry& m_registry;
-        public:
-            RegistryWriteAccess(std::shared_mutex& mut, Registry& reg)
-                : m_mutex( mut )
-                , m_lock_guard( m_mutex )
-                , m_registry( reg )
+            for( const auto& registrant : registration.m_registrants )
             {
+                registerIfInterfaceIP< test::TestFactory,  test::TestFactory_InterProcess   >(sender, registrant);
+                registerIfInterfaceIP< test::Test,         test::Test_InterProcess          >(sender, registrant);
+                registerIfInterfaceIP< test::Connectivity, test::Connectivity_InterProcess  >(sender, registrant);
             }
-
-            RegistryWriteAccess(const RegistryWriteAccess&)=delete;
-            RegistryWriteAccess(RegistryWriteAccess&&)=default;
-            RegistryWriteAccess& operator=(const RegistryWriteAccess&)=delete;
-            RegistryWriteAccess& operator=(RegistryWriteAccess&&)=default;
-            
-            Registry* operator->() { return &m_registry; }
-        };
-
-        static inline RegistryReadAccess getReadAccess();
-        static inline RegistryWriteAccess getWriteAccess();
+        }
 
         template< typename TInterface >
         void conditionallyAddRTTI(Interface* pInterface, RTTI& rtti)
         {
-            if(auto p = dynamic_cast< TInterface* >( pInterface ))
+            if(dynamic_cast< TInterface* >( pInterface ))
             {
                 rtti.m_interfaces.push_back(getInterfaceTypeName< TInterface >());
             }
@@ -150,7 +137,7 @@ namespace mega::service
                  m_objects.size() < std::numeric_limits< ObjectID::ValueType >::max(),
                  "No remaining ObjectIDs available" );
 
-            const ObjectID objectID{static_cast< ObjectID::ValueType >( m_objects.size() )};
+            const ObjectID objectID{static_cast< ObjectID::ValueType >(m_objects.size())};
 
             const MPTFO mptfo(mptf, objectID);
 
@@ -242,11 +229,59 @@ namespace mega::service
         Ptr< T > one(MP mp) const
         {
             auto r = get<T>(mp);
+            VERIFY_RTE_MSG(r.size()!=0,
+                "Could not find instance of proxy type: " <<
+                boost::typeindex::type_id<T>().pretty_name());
             VERIFY_RTE_MSG(r.size()==1,
                 "Non-singular result finding type: " <<
                 boost::typeindex::type_id<T>().pretty_name());
             return r.front();
         }
+
+        class RegistryReadAccess
+        {
+            std::shared_mutex& m_mutex;
+            std::shared_lock< std::shared_mutex > m_shared_lock;
+            Registry& m_registry;
+        public:
+            RegistryReadAccess(std::shared_mutex& mut, Registry& reg)
+                : m_mutex( mut )
+                , m_shared_lock( m_mutex )
+                , m_registry( reg )
+            {
+            }
+
+            RegistryReadAccess(const RegistryReadAccess&)=delete;
+            RegistryReadAccess(RegistryReadAccess&&)=default;
+            RegistryReadAccess& operator=(const RegistryReadAccess&)=delete;
+            RegistryReadAccess& operator=(RegistryReadAccess&&)=default;
+
+            const Registry* operator->() { return &m_registry; }
+        };
+
+        class RegistryWriteAccess
+        {
+            std::shared_mutex& m_mutex;
+            std::lock_guard< std::shared_mutex > m_lock_guard;
+            Registry& m_registry;
+        public:
+            RegistryWriteAccess(std::shared_mutex& mut, Registry& reg)
+                : m_mutex( mut )
+                , m_lock_guard( m_mutex )
+                , m_registry( reg )
+            {
+            }
+
+            RegistryWriteAccess(const RegistryWriteAccess&)=delete;
+            RegistryWriteAccess(RegistryWriteAccess&&)=default;
+            RegistryWriteAccess& operator=(const RegistryWriteAccess&)=delete;
+            RegistryWriteAccess& operator=(RegistryWriteAccess&&)=default;
+            
+            Registry* operator->() { return &m_registry; }
+        };
+
+        static inline RegistryReadAccess getReadAccess();
+        static inline RegistryWriteAccess getWriteAccess();
     };
 
     namespace detail
