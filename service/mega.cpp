@@ -181,14 +181,14 @@ int main( int argc, const char* argv[] )
                                 {
                                     mega::service::Header header;
                                     ia >> header;
-                                    std::cout << "Got request: " << header << std::endl;
+                                    // std::cout << "Got request: " << header << std::endl;
                                 }
                                 break;
                             case mega::service::MessageType::eResponse        :
                                 {
                                     mega::service::Header header;
                                     ia >> header;
-                                    std::cout << "Got response: " << header << std::endl;
+                                    // std::cout << "Got response: " << header << std::endl;
 
                                     mega::service::LogicalThread& logicalThread = [&]() -> mega::service::LogicalThread&
                                     {
@@ -236,14 +236,11 @@ int main( int argc, const char* argv[] )
 
                 pDaemonConnectivity->shutdown();
 
-                
-                // mega::service::LogicalThread::get().stop();
-
-                //network.shutdown();
+                pConnection->stop();
 
                 // if( runAsServer )
                 // {
-                mega::service::LogicalThread::get().runMessageLoop();
+                // mega::service::LogicalThread::get().runMessageLoop();
                 // }
             }
         }
