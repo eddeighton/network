@@ -20,8 +20,6 @@ namespace mega::service
     class LogicalThread
     {
         friend class Registry;
-    public:
-    
     private:
         using Channel = boost::fibers::buffered_channel< Message >;
 
@@ -30,7 +28,6 @@ namespace mega::service
         bool m_bContinue = true;
         MessageID m_interProcessMessageID;
     public:
-
         LogicalThread()
             : m_receiveChannel( 128 )
         {

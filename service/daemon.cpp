@@ -135,7 +135,7 @@ int main( int argc, const char* argv[] )
                             {
                                 mega::service::Header header;
                                 ia >> header;
-                                std::cout << "Got request: " << header << std::endl;
+                                //  std::cout << "Got request: " << header << std::endl;
                                    
                                 auto reg = mega::service::Registry::getReadAccess();
 
@@ -204,7 +204,11 @@ int main( int argc, const char* argv[] )
 
                         oa << mega::service::MessageType::eEnrole;
 
-                        mega::service::Enrole enrole{ nextMegaProcessID++ };
+                        mega::service::Enrole enrole
+                        {
+                            mp,
+                            mega::service::MP{ mp.getMachineID(), nextMegaProcessID++ }
+                        };
 
                         oa << enrole;
 

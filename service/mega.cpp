@@ -67,7 +67,6 @@ int main( int argc, const char* argv[] )
             // clang-format on
         }
 
-
         po::options_description commandOptions( " Commands" );
         {
             commandOptions.add_options()
@@ -117,7 +116,6 @@ int main( int argc, const char* argv[] )
             }
             else
             {
-
                 mega::service::Network network;
 
                 mega::service::Enrole enrolement;
@@ -147,8 +145,9 @@ int main( int argc, const char* argv[] )
                             case mega::service::MessageType::eEnrole         :
                                 {                                   
                                     ia >> enrolement;
-                                    std::cout << "Got enrolement of process ID: " 
-                                        << enrolement.getProcessID() << std::endl; 
+                                    std::cout << "Got enrolement from daemon: " 
+                                        << enrolement.getDaemon() << " with mp: "
+                                        << enrolement.getMP() << std::endl; 
                                 }
                                 break;
                             case mega::service::MessageType::eRegistry        :
@@ -219,20 +218,17 @@ int main( int argc, const char* argv[] )
 
                 auto pConnection = client.connect(ipAddress, port);
 
+                // wait for enrolement and registration to complete
                 registrationFuture.get();
 
-                mega::service::MP mp
-                { 
-                    mega::service::MachineID{0}, 
-                    mega::service::ProcessID{enrolement.getProcessID()}
-                };
-                mega::service::LogicalThread::registerFiber(mp);
-                std::cout << "Registered fiber: " << 
-                    mega::service::LogicalThread::get().getMPTF() << std::endl;
+                mega::service::LogicalThread::registerFiber(enrolement.getMP());
 
                 using namespace mega::service;
+                using namespace mega::test;
                 auto pDaemonConnectivity = 
-                    Registry::getReadAccess()->one< mega::test::Connectivity >(MPTFO{});
+                    Registry::getReadAccess()->one< Connectivity >(
+                        enrolement.getDaemon()
+                    );
 
                 pDaemonConnectivity->shutdown();
 

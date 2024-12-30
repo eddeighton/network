@@ -40,12 +40,6 @@ namespace mega::service
         }
 
         inline auto& getIOContext() { return *m_pIOContext; }
-
-        inline void shutdown()
-        {
-            // mega::service::LogicalThread::get().stop();
-            m_pIOContext->stop();
-        }
     };
 }
 
