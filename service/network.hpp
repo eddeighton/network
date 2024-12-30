@@ -43,6 +43,7 @@ namespace mega::service
 
         inline void shutdown()
         {
+            // mega::service::LogicalThread::get().stop();
             m_pIOContext->stop();
         }
     };

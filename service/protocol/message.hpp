@@ -60,6 +60,8 @@ namespace mega::service
         eDisconnect       = 3,
         eRoute            = 4,
         eShutdown         = 5,
+        eRequest          = 6,
+        eResponse         = 7,
         TOTAL_MESSAGES
     };
 }

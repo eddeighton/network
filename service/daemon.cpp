@@ -102,30 +102,81 @@ int main( int argc, const char* argv[] )
                     boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer(buffer);
                     boost::archive::binary_iarchive ia(vectorBuffer, boostArchiveFlags);
 
-                    mega::service::Header header;
-                    ia >> header;
-                    std::cout << "Got packet: " << header << std::endl;
+                    mega::service::MessageType messageType;
+                    ia >> messageType;
 
-                    const auto& objectInfo = [&]()
+                    switch( messageType )
                     {
-                        auto reg = mega::service::Registry::getReadAccess();
-                        return reg->getObjectInfo(header.m_responder);
-                    }();
-
-                    // request or response
-                    objectInfo.logicalThread.send(
-                        mega::service::InterProcessRequest
-                        {
-                            [&]()
+                        case mega::service::MessageType::eEnrole         :
                             {
-                                auto p = dynamic_cast<mega::test::Connectivity*>(objectInfo.pObject);
-                                p->shutdown();
-
-                                mega::service::PacketBuffer responseBuffer;
-                                // responseSender.send(responseBuffer);
                             }
-                        }
-                    );
+                            break;
+                        case mega::service::MessageType::eRegistry        :
+                            {
+                            }
+                            break;
+                        case mega::service::MessageType::eConnect         :
+                            {
+                            }
+                            break;
+                        case mega::service::MessageType::eDisconnect      :
+                            {
+                            }
+                            break;
+                        case mega::service::MessageType::eRoute           :
+                            {
+                            }
+                            break;
+                        case mega::service::MessageType::eShutdown        :
+                            {
+                            }
+                            break;
+                        case mega::service::MessageType::eRequest        :
+                            {
+                                mega::service::Header header;
+                                ia >> header;
+                                std::cout << "Got request: " << header << std::endl;
+                                   
+                                auto reg = mega::service::Registry::getReadAccess();
+
+                                auto& logicalThread = reg->getLogicalThread(header.m_responder.getMPTF());
+                                auto pObject = reg->getObject(header.m_responder);
+
+                                // request or response
+                                logicalThread.send(
+                                    mega::service::InterProcessRequest
+                                    {
+                                        [pObject, &responseSender, header]()
+                                        {
+                                            auto p = dynamic_cast<mega::test::Connectivity*>(pObject);
+                                            p->shutdown();
+
+                                            // send enrole message
+                                            {
+                                                boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer;
+                                                boost::archive::binary_oarchive oa(vectorBuffer, boostArchiveFlags);
+
+                                                oa << mega::service::MessageType::eResponse;
+                                                oa << header;
+
+                                                responseSender.send(vectorBuffer.vector());
+                                                std::cout << "Response to request sent" << std::endl;
+                                            }
+                                        }
+                                    }
+                                );
+                            }
+                            break;
+                        case mega::service::MessageType::eResponse        :
+                            {
+                            }
+                            break;
+                        case mega::service::MessageType::TOTAL_MESSAGES   :
+                            {
+                            }
+                            break;
+                    }
+
                 };
 
             mega::service::ProcessID nextMegaProcessID = mega::service::PROCESS_ONE;

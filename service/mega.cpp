@@ -117,21 +117,16 @@ int main( int argc, const char* argv[] )
             }
             else
             {
-                mega::service::MP mp
-                { 
-                    mega::service::MachineID{0}, 
-                    mega::service::ProcessID{1}
-                };
 
                 mega::service::Network network;
 
-                mega::service::LogicalThread::registerFiber(mp);
+                mega::service::Enrole enrolement;
 
                 boost::fibers::promise<void> waitForRegistryPromise;
                 boost::fibers::future<void> registrationFuture = waitForRegistryPromise.get_future();
      
                 mega::service::ReceiverCallback receiverCallback = 
-                    [ &waitForRegistryPromise ]( mega::service::SocketSender& responseSender,
+                    [ &waitForRegistryPromise, &enrolement ]( mega::service::SocketSender& responseSender,
                         const mega::service::PacketBuffer& buffer)
                     {
                         static constexpr auto boostArchiveFlags =
@@ -150,8 +145,7 @@ int main( int argc, const char* argv[] )
                         switch( messageType )
                         {
                             case mega::service::MessageType::eEnrole         :
-                                {
-                                    mega::service::Enrole enrolement;
+                                {                                   
                                     ia >> enrolement;
                                     std::cout << "Got enrolement of process ID: " 
                                         << enrolement.getProcessID() << std::endl; 
@@ -163,7 +157,7 @@ int main( int argc, const char* argv[] )
                                     mega::service::Registration registration;
                                     ia >> registration;
                                     mega::service::Registry::getWriteAccess()->update(
-                                        responseSender,registration);
+                                        responseSender, registration);
                                     waitForRegistryPromise.set_value();
                                 }
                                 break;
@@ -183,6 +177,34 @@ int main( int argc, const char* argv[] )
                                 {
                                 }
                                 break;
+                            case mega::service::MessageType::eRequest        :
+                                {
+                                    mega::service::Header header;
+                                    ia >> header;
+                                    std::cout << "Got request: " << header << std::endl;
+                                }
+                                break;
+                            case mega::service::MessageType::eResponse        :
+                                {
+                                    mega::service::Header header;
+                                    ia >> header;
+                                    std::cout << "Got response: " << header << std::endl;
+
+                                    mega::service::LogicalThread& logicalThread = [&]() -> mega::service::LogicalThread&
+                                    {
+                                        auto reg = mega::service::Registry::getReadAccess();
+                                        return reg->getLogicalThread(header.m_requester);
+                                    }();
+
+                                    logicalThread.send(
+                                        mega::service::InterProcessResponse
+                                        {
+                                            header,
+                                            {}
+                                        }
+                                    );
+                                }
+                                break;
                             case mega::service::MessageType::TOTAL_MESSAGES   :
                                 {
                                     std::string strMsg;
@@ -199,27 +221,30 @@ int main( int argc, const char* argv[] )
 
                 registrationFuture.get();
 
+                mega::service::MP mp
+                { 
+                    mega::service::MachineID{0}, 
+                    mega::service::ProcessID{enrolement.getProcessID()}
+                };
+                mega::service::LogicalThread::registerFiber(mp);
+                std::cout << "Registered fiber: " << 
+                    mega::service::LogicalThread::get().getMPTF() << std::endl;
+
                 using namespace mega::service;
                 auto pDaemonConnectivity = 
                     Registry::getReadAccess()->one< mega::test::Connectivity >(MPTFO{});
 
                 pDaemonConnectivity->shutdown();
 
-                network.shutdown();
+                
+                // mega::service::LogicalThread::get().stop();
 
-                // mega::service::RTTI rtti;
+                //network.shutdown();
 
-                // mega::test::Connectivity_InterProcess test(pConnection->getSender(),
-                //     mega::service::MPTFO{}, // for now 0,0,0,0 is correct for the test
-                //     rtti);
-
-                // test.shutdown();
-                // mega::service::MP mp{};
-                // mega::service::Network network( mp );
-                // mega::service::LogicalThread::registerFiber(network.getMP());
-                // mega::service::LogicalThread::get().runMessageLoop();
-
+                // if( runAsServer )
+                // {
                 mega::service::LogicalThread::get().runMessageLoop();
+                // }
             }
         }
         catch(std::exception& ex)

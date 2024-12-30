@@ -17,7 +17,6 @@
 
 #include "common/disable_special_members.hpp"
 
-
 #include <map>
 #include <vector>
 #include <memory>
@@ -28,7 +27,6 @@
 
 namespace mega::service
 {
-    
     class Registry : public Common::DisableCopy, Common::DisableMove
     {
     public:
@@ -38,8 +36,11 @@ namespace mega::service
             LogicalThread& logicalThread;
         };
     private:
-        using ObjectMap = std::unordered_map< MPTFO, ObjectInfo, MPTFO::Hash >;
-        ObjectMap m_objects;
+        using Objects        = std::unordered_map< MPTFO, Interface*,     MPTFO::Hash >;
+        using LogicalThreads = std::unordered_map< MPTF,  LogicalThread*, MPTF::Hash >;
+
+        Objects         m_objects;
+        LogicalThreads  m_logicalThreads;
 
         using ProxyVariant = std::variant
         <
@@ -150,22 +151,27 @@ namespace mega::service
             registerIfInterface< test::Test,         test::Test_InProcess          >( &object, mptfo, rtti );
             registerIfInterface< test::Connectivity, test::Connectivity_InProccess >( &object, mptfo, rtti );
 
-            m_objects.insert(
-                std::make_pair(
-                    mptfo,
-                    ObjectInfo
-                    {
-                        &object,
-                        LogicalThread::get()
-                    })
-                );
+            m_objects.insert(std::make_pair(mptfo, &object));
             return mptfo;
         }
 
-        const ObjectInfo& getObjectInfo(MPTFO mptfo) const
+        LogicalThread& getLogicalThread(MPTF mptf) const
+        {
+            auto iFind = m_logicalThreads.find(mptf);
+            VERIFY_RTE_MSG(iFind != m_logicalThreads.end(),
+                "Failed to locate logical thread: " << mptf);
+            return *iFind->second;
+        }
+
+        void registerLogicalThread(MPTF mptf, LogicalThread* pLogicalThread)
+        {
+            m_logicalThreads.insert(std::make_pair(mptf, pLogicalThread));
+        }
+
+        Interface* getObject(MPTFO mptfo) const
         {
             auto iFind = m_objects.find(mptfo);
-            VERIFY_RTE_MSG(iFind!=m_objects.end(),
+            VERIFY_RTE_MSG(iFind != m_objects.end(),
                 "Failed to locate object: " << mptfo);
             return iFind->second;
         }

@@ -3,7 +3,11 @@
 add_subdirectory( protocol )
 
 set_source_files_properties( ${GENERATED_INTERFACE_FILES} PROPERTIES GENERATED TRUE )
-add_library( service ${GENERATED_INTERFACE_FILES} asio.cpp )
+add_library( service ${GENERATED_INTERFACE_FILES}
+    asio.cpp
+    logical_thread.cpp
+)
+
 target_link_libraries( service Boost::serialization )
 add_dependencies( service run_meta_pipeline )
 
