@@ -21,6 +21,7 @@
 #include "service/server.hpp"
 #include "service/network.hpp"
 #include "service/logical_thread.hpp"
+#include "service/enrole.hpp"
 
 #include <boost/program_options.hpp>
 
@@ -127,7 +128,30 @@ int main( int argc, const char* argv[] )
                     );
                 };
 
-            mega::service::Server server(network, port, std::move(receiverCallback));
+            mega::service::ProcessID nextMegaProcessID{ 1 };
+
+            mega::service::Server server(network, port, std::move(receiverCallback),
+                [&](mega::service::Server::Connection::Ptr pConnection)
+                {
+                    // enrole connection
+                    std::cout << "Connection callback called for: " <<
+                        pConnection->getSocketInfo() << std::endl;
+
+                    auto& sender = pConnection->getSender();
+
+                    // send enrole message
+                    static constexpr auto boostArchiveFlags = 
+                        boost::archive::no_header | boost::archive::no_codecvt
+                                      | boost::archive::no_xml_tag_checking | boost::archive::no_tracking;
+                    boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer;
+                    boost::archive::binary_oarchive oa(vectorBuffer, boostArchiveFlags);
+
+                    mega::service::Enrole enrole{ nextMegaProcessID++ };
+
+                    oa << enrole;
+
+                    sender.send(vectorBuffer.vector());
+                });
 
             mega::test::OConnectivity connectivity;
 

@@ -27,6 +27,9 @@
 
 #include "common/serialisation.hpp"
 
+#include "common/assert_verify.hpp"
+
+#include <limits>
 #include <ostream>
 #include <istream>
 
@@ -62,6 +65,15 @@ public:
     constexpr inline bool operator<( const ProcessID& cpy ) const { return value < cpy.value; }
     constexpr inline bool operator==( const ProcessID& cpy ) const { return value == cpy.value; }
     constexpr inline bool operator!=( const ProcessID& cpy ) const { return !this->operator==( cpy ); }
+
+    inline ProcessID operator++(int)
+    {
+        ProcessID tmp = *this;
+        VERIFY_RTE_MSG(value < std::numeric_limits< ValueType >::max(),
+            "Invalid increment of process ID with maximum value" );
+        ++value;
+        return tmp;
+    }
 
     template < class Archive >
     inline void serialize( Archive& archive, const unsigned int )

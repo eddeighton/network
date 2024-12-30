@@ -140,7 +140,7 @@ namespace mega::service
                 VERIFY_RTE_MSG( m_fiberIDCounter <
                     std::numeric_limits<FiberID::ValueType>::max(),
                     "No remaining fiber IDs available" );
-                const FiberID fiberID{ ++m_fiberIDCounter };
+                const FiberID fiberID{ m_fiberIDCounter++ };
                 const MPTF mptf( mp, ThreadID{}, fiberID );
                 fiber_local_storage.reset( new LogicalThread );
                 fiber_local_storage->m_mptf = mptf;
