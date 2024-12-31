@@ -55,6 +55,7 @@ namespace mega::service
                     }
                 }
                 m_disconnect_callback();
+                std::cout << "Receiver shutdown" << std::endl;
             }).detach();
         }
 

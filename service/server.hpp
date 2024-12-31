@@ -42,6 +42,12 @@ namespace mega::service
             {
             }
 
+            ~Connection()
+            {
+
+                m_receiver.stop();
+            }
+
             Sender& getSender() { return m_sender; }
             const TCPSocketInfo& getSocketInfo() const { return m_socket_info; }
             ProcessID getProcessID() const { return m_processID; }
@@ -59,6 +65,11 @@ namespace mega::service
                 // std::cout << "Server connection stop " << m_socket_info << std::endl;
                 m_socket.shutdown( Socket::shutdown_both );
                 m_receiver.stop();
+
+                while(m_bDisconnected == false)
+                {
+                    boost::this_fiber::yield();
+                }
             }
 
             void disconnected()
@@ -72,6 +83,7 @@ namespace mega::service
                 }
                 m_server.onDisconnect( shared_from_this() );
                 //std::cout << "Disconnect" << std::endl;
+                m_bDisconnected = true;
             }
 
         private:
@@ -82,6 +94,7 @@ namespace mega::service
             SocketReceiver  m_receiver;
             SocketSender    m_sender;
             ProcessID       m_processID;
+            bool            m_bDisconnected = false;
         };
 
         using ConnectionPtrMap = std::map< ProcessID, Connection::Ptr >;
@@ -105,13 +118,19 @@ namespace mega::service
             // simply add ALL valid ProcessIDs to the freelist on startup
             for( int i = 1; i != std::numeric_limits< ProcessID::ValueType >::max(); ++i )
             {
-                m_processIDFreeList.push_back( ProcessID{ static_cast< ProcessID::ValueType >(i) } );
+                m_processIDFreeList.push_back(
+                    ProcessID{ static_cast< ProcessID::ValueType >(i) } );
             }
 
             boost::fibers::fiber([this]
             {
                 waitForConnection();
             }).detach();
+        }
+
+        void stop()
+        {
+            m_acceptor.close();
         }
 
     private:
@@ -125,12 +144,7 @@ namespace mega::service
                 boost::fibers::asio::yield[ ec ]);
  
             onConnect( pNewConnection, ec );
-            //m_acceptor.async_accept( pNewConnection->m_socket,
-           //     boost::asio::bind_executor( pNewConnection->m_strand,
-           //         boost::bind( &Server::onConnect, this, pNewConnection,
-           //             boost::asio::placeholders::error ) ) );
         }
-
 
         void onConnect( Connection::Ptr pNewConnection, const boost::system::error_code& ec )
         {

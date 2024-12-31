@@ -7,6 +7,7 @@
 #include "vocab/service/mp.hpp"
 
 #include <thread>
+#include <atomic>
 
 namespace mega::service
 {
@@ -14,6 +15,7 @@ namespace mega::service
     {
         mega::service::IOContextPtr m_pIOContext;
         std::thread m_networkThread;
+        std::atomic<bool> m_bShutdown{false};
 
         inline void run()
         {
@@ -40,6 +42,15 @@ namespace mega::service
         }
 
         inline auto& getIOContext() { return *m_pIOContext; }
+        inline bool running() const 
+        { 
+            return !m_bShutdown.load(std::memory_order_relaxed);
+        }
+        inline void shutdown() 
+        { 
+            // m_pIOContext->stop();
+            m_bShutdown = true;
+        }
     };
 }
 

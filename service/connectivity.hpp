@@ -5,6 +5,7 @@
 #include "service/interface/test.interface.hpp"
 
 #include "service/registry.hpp"
+#include "service/network.hpp"
 
 #include <iostream>
 
@@ -14,8 +15,10 @@ namespace mega::test
     {
         service::MPTFO m_mptfo;
         service::Ptr< Connectivity > m_pProxy;
+        service::Network& m_network;
     public:
-        OConnectivity()
+        OConnectivity(service::Network& network)
+        :   m_network(network)
         {
             auto reg = service::Registry::getWriteAccess();
             m_mptfo = reg->createInProcessProxy(service::LogicalThread::get().getMPTF(), *this);
@@ -24,6 +27,7 @@ namespace mega::test
         void shutdown() override
         {
             std::cout << "shutdown received" << std::endl;
+            m_network.shutdown();
         }
     };
 }

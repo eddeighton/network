@@ -226,9 +226,18 @@ int main( int argc, const char* argv[] )
                     }
                 });
 
-            mega::test::OConnectivity connectivity;
+            mega::test::OConnectivity connectivity(network);
 
-            mega::service::LogicalThread::get().runMessageLoop();
+            // run this logical thread while network running
+            mega::service::LogicalThread& thisLogicalThread
+                = mega::service::LogicalThread::get();
+            while(network.running())
+            {
+                thisLogicalThread.receive();
+            }
+
+            // shutdown the acceptors
+            server.stop();
         }
         catch( std::exception& e )
         {
