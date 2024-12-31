@@ -52,6 +52,43 @@ namespace mega::io
         {
         }
 
+        const mega::io::Directories& getDirectories() const { return m_directories; }
+
+        // service code gen paths
+        inline const boost::filesystem::path getServiceCodeGen_registry() const
+        {
+            return m_directories.srcDir / "service/gen/registry.hxx";
+        }
+        inline const boost::filesystem::path getServiceCodeGen_receiver() const
+        {
+            return m_directories.srcDir / "service/gen/receiver.hxx";
+        }
+        inline const boost::filesystem::path getServiceCodeGen_proxy_itc() const
+        {
+            return m_directories.srcDir / "service/gen/proxy_itc.hxx";
+        }
+        inline const boost::filesystem::path getServiceCodeGen_proxy_ipc() const
+        {
+            return m_directories.srcDir / "service/gen/proxy_ipc.hxx";
+        }
+
+        inline const boost::filesystem::path getServiceTemplate_registry() const
+        {
+            return "registry.hxx.jinja";
+        }
+        inline const boost::filesystem::path getServiceTemplate_receiver() const
+        {
+            return "receiver.hxx.jinja";
+        }
+        inline const boost::filesystem::path getServiceTemplate_proxy_itc() const
+        {
+            return "proxy_itc.hxx.jinja";
+        }
+        inline const boost::filesystem::path getServiceTemplate_proxy_ipc() const
+        {
+            return "proxy_ipc.hxx.jinja";
+        }
+
         ////////////////////////////////////////////////////
         ////////////////////////////////////////////////////
         // FileSystem

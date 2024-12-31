@@ -225,14 +225,17 @@ bool updateFileIfChanged( const boost::filesystem::path& filePath, const std::st
     // special case where file is empty
     if( strContents.empty() )
     {
-        if( boost::filesystem::file_size( filePath ) > 0 )
+        if( boost::filesystem::exists( filePath ) )
         {
-            boost::filesystem::resize_file( filePath, 0U );
-            return true;
-        }
-        else
-        {
-            return false;
+            if( boost::filesystem::file_size( filePath ) > 0 )
+            {
+                boost::filesystem::resize_file( filePath, 0U );
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 

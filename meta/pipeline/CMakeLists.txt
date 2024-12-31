@@ -9,9 +9,8 @@ add_library( meta_pipeline SHARED
     meta.cpp
     task_interface_analysis.cpp
     task_interface_analysis_report.cpp
+    task_service_gen.cpp
 )
-
-#set_property(TARGET meta_pipeline PROPERTY CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_dependencies( meta_pipeline database_compiler_driver )
 

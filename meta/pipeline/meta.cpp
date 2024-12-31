@@ -34,6 +34,8 @@ extern void task_interface_analysis(
         TaskDependencies& dependencies );
 extern void task_interface_analysis_report(
         TaskDependencies& dependencies );
+extern void task_service_gen(
+        TaskDependencies& dependencies );
 
 namespace
 {
@@ -88,6 +90,9 @@ class MetaPipeline : public pipeline::Pipeline
         const TskDesc task_interface_analysis_report = encode( Task{ "task_interface_analysis_report" } );
         dependencies.add( task_interface_analysis_report, {task_interface_analysis} );
 
+        const TskDesc task_service_gen = encode( Task{ "task_service_gen" } );
+        dependencies.add( task_service_gen, {task_interface_analysis} );
+
         return { dependencies };
     }
 
@@ -118,6 +123,10 @@ class MetaPipeline : public pipeline::Pipeline
         else if( task.strTaskName == "task_interface_analysis_report" )
         {
            mega::meta::task_interface_analysis_report( task_dependencies );
+        }
+        else if( task.strTaskName == "task_service_gen" )
+        {
+           mega::meta::task_service_gen( task_dependencies );
         }
         else
         {

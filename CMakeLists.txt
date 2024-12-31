@@ -12,7 +12,7 @@ set(Boost_USE_STATIC_LIBS ON)
 
 # always enable some gcc diagnostic options
 add_compile_options(-fdiagnostics-color)
-add_compile_options(-fdiagnostics-urls=always)
+# add_compile_options(-fdiagnostics-urls=always)
 
 
 # strict warnings cos why not!
@@ -52,10 +52,12 @@ add_subdirectory( report )
 ################################################################################
 # run system wide meta pipeline
 set(SERVICE_INTERFACES ${CMAKE_SOURCE_DIR}/service/interface/test.interface.hpp)
+
 set(GENERATED_INTERFACE_FILES 
-    ${CMAKE_SOURCE_DIR}/service/gen/test.proxy.hxx
-    ${CMAKE_SOURCE_DIR}/service/gen/testfactory.proxy.hxx
-    ${CMAKE_SOURCE_DIR}/service/gen/decode.hxx
+    ${CMAKE_SOURCE_DIR}/service/gen/proxy_itc.hxx
+    ${CMAKE_SOURCE_DIR}/service/gen/proxy_ipc.hxx
+    ${CMAKE_SOURCE_DIR}/service/gen/receiver.hxx
+    ${CMAKE_SOURCE_DIR}/service/gen/registry.hxx
 )
 
 message( STATUS "Generated interface files: ${GENERATED_INTERFACE_FILES}" )
@@ -67,7 +69,7 @@ add_custom_command(
         --src_dir ${CMAKE_SOURCE_DIR}
         --build_dir ${CMAKE_BINARY_DIR}
         --stash_dir ${CMAKE_CURRENT_BINARY_DIR}/stash
-        --templates ${CMAKE_CURRENT_SOURCE_DIR}/templates
+        --templates ${CMAKE_SOURCE_DIR}/meta/pipeline/templates
         --pipeline "$<TARGET_FILE:meta_pipeline>"
         --interfaces \"${SERVICE_INTERFACES}\"
  
