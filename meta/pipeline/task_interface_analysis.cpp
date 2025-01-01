@@ -186,10 +186,12 @@ void task_interface_analysis(TaskDependencies& dependencies)
     class InterfaceCallback : public MatchFinder::MatchCallback
     {
         Database& database;
+        boost::filesystem::path interfaceFilePath;
 
     public:
-        InterfaceCallback( Database& _database )
+        InterfaceCallback( Database& _database, boost::filesystem::path interfaceFilePath )
             : database( _database )
+            , interfaceFilePath( interfaceFilePath )
         {
         }
         virtual void run( const MatchFinder::MatchResult& Result )
@@ -339,10 +341,11 @@ void task_interface_analysis(TaskDependencies& dependencies)
                         //std::cout << "Found RecordDecl: " << type.getAsString()  << std::endl;
                         const std::string strFullTypeName = fromName(type.getAsString());
                         const std::string strTypeName = typeNameFromFullName(strFullTypeName, namespaces);
-                            
+ 
                         Interface* pInterface = database.construct< Interface >(
                                 Interface::Args
                                 {
+                                    interfaceFilePath.string(),
                                     strTypeName, 
                                     strFullTypeName,
                                     namespaces,
@@ -415,7 +418,7 @@ void task_interface_analysis(TaskDependencies& dependencies)
         ClangTool   tool( db, { interfacePath.string() } );
         MatchFinder finder;
 
-        InterfaceCallback interfaceCallback( database );
+        InterfaceCallback interfaceCallback( database, interfacePath );
         DeclarationMatcher interfaceMatcher = recordDecl().bind( "interfaces" );
         finder.addMatcher( interfaceMatcher, &interfaceCallback );
 

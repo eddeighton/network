@@ -27,6 +27,7 @@
 #include "service/enrole.hpp"
 
 #include "service/protocol/message.hpp"
+#include "service/protocol/serialization.hpp"
 
 #include <boost/program_options.hpp>
 #include <boost/fiber/operations.hpp>
@@ -129,15 +130,10 @@ int main( int argc, const char* argv[] )
                         mega::service::SocketSender& responseSender,
                         const mega::service::PacketBuffer& buffer)
                     {
-                        static constexpr auto boostArchiveFlags =
-                            boost::archive::no_header
-                          | boost::archive::no_codecvt
-                          | boost::archive::no_xml_tag_checking
-                          | boost::archive::no_tracking;
-
                         boost::interprocess::basic_vectorbuf
                             < mega::service::PacketBuffer > vectorBuffer(buffer);
-                        boost::archive::binary_iarchive ia(vectorBuffer, boostArchiveFlags);
+                        boost::archive::binary_iarchive ia(vectorBuffer, 
+                                mega::service::boostArchiveFlags);
 
                         mega::service::MessageType messageType;
                         ia >> messageType;

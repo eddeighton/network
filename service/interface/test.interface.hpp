@@ -25,8 +25,8 @@ namespace mega
 
         struct Connectivity : public virtual mega::service::Daemon
         {
-            // virtual void connect() = 0;
-            // virtual void disconnect() = 0;
+            //virtual void connect() = 0;
+            //virtual void disconnect() = 0;
             virtual void shutdown() = 0;
         };
 

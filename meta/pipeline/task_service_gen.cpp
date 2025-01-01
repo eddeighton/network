@@ -61,6 +61,7 @@ void task_service_gen(TaskDependencies& dependencies)
 
     nlohmann::json data(
         {
+            { "includes", nlohmann::json::array() },
             { "interfaces", nlohmann::json::array() }
         }
     );
@@ -91,8 +92,12 @@ void task_service_gen(TaskDependencies& dependencies)
         return os.str();
     };
  
+    std::set< std::string > includes;
+
     for( auto pInterface : database.many< Interface >(src) )
     {
+        includes.insert(pInterface->get_include_path());
+
         nlohmann::json interface(
             {
                 { "type_name", pInterface->get_type_name() },
@@ -125,6 +130,11 @@ void task_service_gen(TaskDependencies& dependencies)
         data[ "interfaces" ].push_back( interface );
     }
 
+    for( const auto& include : includes )
+    {
+        data[ "includes" ].push_back( include );
+    }
+ 
     renderTemplate( 
         dependencies.m_environment.getServiceTemplate_registry(),
         dependencies.m_environment.getServiceCodeGen_registry(),

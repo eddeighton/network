@@ -15,6 +15,8 @@
 #include "vocab/service/mptf.hpp"
 #include "vocab/service/interface_type_name.hpp"
 
+#include "service/gen/registry.hxx"
+
 #include "common/disable_special_members.hpp"
 
 #include <map>
@@ -39,26 +41,10 @@ namespace mega::service
         using Objects        = std::unordered_map< MPTFO, Interface*,     MPTFO::Hash >;
         using LogicalThreads = std::unordered_map< MPTF,  LogicalThread*, MPTF::Hash >;
 
-        Objects         m_objects;
-        LogicalThreads  m_logicalThreads;
-
-        using ProxyVariant = std::variant
-        <
-            std::unique_ptr< test::TestFactory_InProcess >,
-            std::unique_ptr< test::TestFactory_InterProcess >,
-            std::unique_ptr< test::Test_InProcess >,
-            std::unique_ptr< test::Test_InterProcess >,
-            std::unique_ptr< test::Connectivity_InProccess >,
-            std::unique_ptr< test::Connectivity_InterProcess >
-        >;
-        using ProxyVariantVector = std::vector< ProxyVariant >;
-
-        ProxyVariantVector m_proxies;
-
-        using InterfaceMPTFO    = std::pair< InterfaceTypeName, MPTFO >;
-        using InterfaceMPTFOMap = std::map< InterfaceMPTFO, Interface* >;
-
-        InterfaceMPTFOMap m_interfaceMPTFOMap;
+        Objects             m_objects;
+        LogicalThreads      m_logicalThreads;
+        ProxyVariantVector  m_proxies;
+        InterfaceMPTFOMap   m_interfaceMPTFOMap;
 
     public:
         inline Registration getRegistration() const
@@ -84,52 +70,9 @@ namespace mega::service
             return registration;
         }
 
-        template< typename TInterface, typename TProxy >
-        void registerIfInterfaceIP(Sender& sender, const Registration::Registrant& registrant)
-        {
-            const auto interfaceTypeName = getInterfaceTypeName< TInterface >();
-            if(registrant.m_rtti.contains(interfaceTypeName))
-            {
-                const auto key = InterfaceMPTFO{interfaceTypeName, registrant.m_mptfo};
-                if(m_interfaceMPTFOMap.find(key) == m_interfaceMPTFOMap.end())
-                {
-                    auto pProxy = std::make_unique<TProxy>(sender, registrant.m_mptfo, registrant.m_rtti);
-                    m_interfaceMPTFOMap.insert(std::make_pair(key, pProxy.get()));
-                    m_proxies.push_back(std::move(pProxy));
-                }
-            }
-        }
-
         void update(Sender& sender, const Registration& registration )
         {
-            for( const auto& registrant : registration.m_registrants )
-            {
-                registerIfInterfaceIP< test::TestFactory,  test::TestFactory_InterProcess   >(sender, registrant);
-                registerIfInterfaceIP< test::Test,         test::Test_InterProcess          >(sender, registrant);
-                registerIfInterfaceIP< test::Connectivity, test::Connectivity_InterProcess  >(sender, registrant);
-            }
-        }
-
-        template< typename TInterface >
-        void conditionallyAddRTTI(Interface* pInterface, RTTI& rtti)
-        {
-            if(dynamic_cast< TInterface* >( pInterface ))
-            {
-                rtti.m_interfaces.push_back(getInterfaceTypeName< TInterface >());
-            }
-        }
-
-        template< typename TInterface, typename TProxy >
-        void registerIfInterface(Interface* pInterface, MPTFO mptfo, const RTTI& rtti)
-        {
-            if(auto p = dynamic_cast< TInterface* >( pInterface ))
-            {
-                auto pProxy = std::make_unique< TProxy >(p, LogicalThread::get(), mptfo, rtti);
-                const auto interfaceTypeName = getInterfaceTypeName< TInterface >();
-                m_interfaceMPTFOMap.insert(
-                    std::make_pair( InterfaceMPTFO{ interfaceTypeName, mptfo }, pProxy.get() ) );
-                m_proxies.push_back( std::move( pProxy ) );
-            }
+            service::update(sender, registration, m_proxies, m_interfaceMPTFOMap);
         }
 
         inline MPTFO createInProcessProxy(MPTF mptf, Interface& object)
@@ -139,18 +82,8 @@ namespace mega::service
                  "No remaining ObjectIDs available" );
 
             const ObjectID objectID{static_cast< ObjectID::ValueType >(m_objects.size())};
-
             const MPTFO mptfo(mptf, objectID);
-
-            RTTI rtti;
-            conditionallyAddRTTI< test::TestFactory  >( &object, rtti );
-            conditionallyAddRTTI< test::Test         >( &object, rtti );
-            conditionallyAddRTTI< test::Connectivity >( &object, rtti );
-
-            registerIfInterface< test::TestFactory,  test::TestFactory_InProcess   >( &object, mptfo, rtti );
-            registerIfInterface< test::Test,         test::Test_InProcess          >( &object, mptfo, rtti );
-            registerIfInterface< test::Connectivity, test::Connectivity_InProccess >( &object, mptfo, rtti );
-
+            registerInProcessProxy(object, mptfo, m_proxies, m_interfaceMPTFOMap);
             m_objects.insert(std::make_pair(mptfo, &object));
             return mptfo;
         }

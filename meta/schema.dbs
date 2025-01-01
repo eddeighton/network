@@ -61,11 +61,11 @@ namespace Service
 
     object Interface -> AnalysisStage::AnalysisFile
     {
+        value< std::string > include_path;
         value< std::string > type_name;
         value< std::string > full_type_name;
         array< value< std::string > > namespaces;
         array< ref< Function > > functions;
-
     }
 
     object Factory : Interface -> AnalysisStage::AnalysisFile
