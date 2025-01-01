@@ -38,7 +38,7 @@ namespace mega::service
         PacketBuffer m_buffer;
     };
 
-    struct Other //: public Common::DisableCopy
+    struct Other
     {
     };
 
@@ -54,14 +54,14 @@ namespace mega::service
     // Protocol for messages sent over the wire
     enum class MessageType : std::uint32_t
     {
-        eEnrole           = 0,
-        eRegistry         = 1,
-        eConnect          = 2,
-        eDisconnect       = 3,
-        eRoute            = 4,
-        eShutdown         = 5,
-        eRequest          = 6,
-        eResponse         = 7,
+        eEnrole     = 0,
+        eRegistry   = 1,
+        eConnect    = 2,
+        eDisconnect = 3,
+        eRoute      = 4,
+        eShutdown   = 5,
+        eRequest    = 6,
+        eResponse   = 7,
         TOTAL_MESSAGES
     };
 }

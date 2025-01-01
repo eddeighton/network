@@ -17,7 +17,5 @@ namespace mega::service
         boost::archive::no_xml_tag_checking |
         boost::archive::no_tracking;
 
-
-
 }
 
