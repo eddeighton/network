@@ -44,6 +44,16 @@ namespace mega::service
             }
         };
 
+        inline void filter(MP mp)
+        {
+            auto itEnd = std::remove_if(m_registrants.begin(), m_registrants.end(),
+                [mp](const Registrant& registrant) -> bool
+                {
+                    return registrant.m_mptfo.getMP() == mp;
+                });
+            m_registrants.erase(itEnd, m_registrants.end());
+        }
+
         template < class Archive >
         inline void serialize( Archive& archive, const unsigned int )
         {

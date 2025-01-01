@@ -153,6 +153,9 @@ int main( int argc, const char* argv[] )
                                     std::cout << "Got registration update" << std::endl;
                                     mega::service::Registration registration;
                                     ia >> registration;
+                                    // filter registration entries for THIS process
+                                    // since ONLY created inter-process proxies
+                                    registration.filter(enrolement.getMP());
                                     mega::service::Registry::getWriteAccess()->update(
                                         responseSender, registration);
                                     waitForRegistryPromise.set_value();

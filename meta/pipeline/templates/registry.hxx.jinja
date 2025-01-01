@@ -77,14 +77,10 @@ namespace mega::service
 
     inline void update(Sender& sender, const Registration& registration, ProxyVariantVector& proxies, InterfaceMPTFOMap& interfaceMPTFOMap)
     {
-        for( const auto& registrant : registration.m_registrants )
-        {
 {% for interface in interfaces %}
-            // registerInProcessProxy< {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}, {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}_ITC >(sender, registrant, proxies, interfaceMPTFOMap);
-            registerIfInterface< {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}, {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}_IPC >(sender, registrant, proxies, interfaceMPTFOMap);
+        registerIfInterface< {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}, {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}_IPC >(sender, registrant, proxies, interfaceMPTFOMap);
 
 {% endfor %}
-        }
     }
 }
 
