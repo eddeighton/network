@@ -51,7 +51,10 @@ add_subdirectory( report )
 ################################################################################
 ################################################################################
 # run system wide meta pipeline
-set(SERVICE_INTERFACES ${CMAKE_SOURCE_DIR}/service/interface/test.interface.hpp)
+set(SERVICE_INTERFACES 
+    ${CMAKE_SOURCE_DIR}/service/interface/test.interface.hpp
+    ${CMAKE_SOURCE_DIR}/service/interface/connectivity.interface.hpp
+)
 
 set(GENERATED_INTERFACE_FILES 
     ${CMAKE_SOURCE_DIR}/service/gen/proxy_itc.hxx
@@ -82,7 +85,7 @@ add_custom_command(
         --pipeline "$<TARGET_FILE:meta_pipeline>"
         --interfaces \"${SERVICE_INTERFACES}\"
  
-    DEPENDS ${SERVICE_INTERFACES} ${META_PIPELINE_TEMPLATES} meta_pipeline
+    DEPENDS ${SERVICE_INTERFACES} ${META_PIPELINE_TEMPLATES} meta_pipeline driver
     COMMENT "Running meta pipeline"
 )
 

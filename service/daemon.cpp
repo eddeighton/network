@@ -197,7 +197,7 @@ int main( int argc, const char* argv[] )
                     }
                 });
 
-            mega::test::OConnectivity connectivity(network);
+            mega::service::OConnectivity connectivity(network);
 
             // run this logical thread while network running
             mega::service::LogicalThread& thisLogicalThread

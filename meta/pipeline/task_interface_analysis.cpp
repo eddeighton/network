@@ -28,6 +28,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 
 namespace mega::meta
 {
@@ -296,20 +297,29 @@ void task_interface_analysis(TaskDependencies& dependencies)
 
                 if( !namespaces.empty() && namespaces.front() == "mega" )
                 {
-                    // ignore service base interfaces
-                    if( ( namespaces.size() == 2 ) && ( namespaces.back() == "service" ) )
-                    {
-                        return;
-                    }
-
                     // determine if interface or factory via inheritance
                     bool bIsInterface = false;
                     bool bIsFactory = false;
                     bool bIsDaemon = false;
                     if( const auto* pCXXRecordDecl = dyn_cast< CXXRecordDecl >( pRecordDecl ) )
                     {
+                        auto type = pRecordDecl->getASTContext().getTypeDeclType( pRecordDecl );
+                        const std::string strFullTypeName = fromName(type.getAsString());
                         if( pCXXRecordDecl->hasDefinition() )
                         {
+                            // ignore the virtual base classes themselves
+                            using namespace std::string_literals;
+                            static const std::set< std::string > baseClassTypes =
+                            {
+                                "mega::service::Interface"s,
+                                "mega::service::Factory"s,
+                                "mega::service::Daemon"s
+                            };
+                            if( baseClassTypes.contains( strFullTypeName ) )
+                            {
+                                return;
+                            }
+
                             for( const auto pBase : pCXXRecordDecl->bases() )
                             {
                                 const std::string strType = pBase.getType().getCanonicalType().getAsString();
@@ -327,10 +337,6 @@ void task_interface_analysis(TaskDependencies& dependencies)
                                     bIsInterface = true;
                                     bIsDaemon = true;
                                 }
-                                else
-                                {
-                                    //std::cout << "Unknown base type: " << strType << std::endl;
-                                }
                             }
                         }
                     }
@@ -338,8 +344,8 @@ void task_interface_analysis(TaskDependencies& dependencies)
                     if( bIsInterface )
                     {
                         auto type = pRecordDecl->getASTContext().getTypeDeclType( pRecordDecl );
-                        //std::cout << "Found RecordDecl: " << type.getAsString()  << std::endl;
                         const std::string strFullTypeName = fromName(type.getAsString());
+                        //std::cout << "Found RecordDecl: " << type.getAsString()  << std::endl;
                         const std::string strTypeName = typeNameFromFullName(strFullTypeName, namespaces);
  
                         Interface* pInterface = database.construct< Interface >(

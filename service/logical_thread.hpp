@@ -75,7 +75,6 @@ namespace mega::service
                 THROW_RTE("Failed to locate response callback for interprocess response: " <<
                     interProcessResponse.m_header );
             }
-
         }
 
         template< typename T >

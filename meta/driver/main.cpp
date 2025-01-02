@@ -78,6 +78,10 @@ int main( int argc, const char* argv[] )
                 = mega::utilities::pathListToFiles(
                         mega::utilities::parseCMakeStringList( interfaceFilePathsCMakeString, " " ) );
 
+            std::cout << "Got interface file paths of: ";
+            std::copy( interfaceFilePaths.begin(), interfaceFilePaths.end(),
+                    std::ostream_iterator< boost::filesystem::path >( std::cout, " " ) );
+
             mega::Version version;
      
             const mega::io::Directories directories{ srcDir, buildDir, buildDir, templatesDir };

@@ -2,14 +2,14 @@
 #pragma once
 // Sun Dec 29 13:34:52 UTC 2024
 
-#include "service/interface/test.interface.hpp"
+#include "service/interface/connectivity.interface.hpp"
 
 #include "service/registry.hpp"
 #include "service/network.hpp"
 
 #include <iostream>
 
-namespace mega::test
+namespace mega::service
 {
     class OConnectivity : public Connectivity
     {

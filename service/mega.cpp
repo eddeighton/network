@@ -23,6 +23,8 @@
 #include "service/client.hpp"
 #include "service/network.hpp"
 #include "service/enrole.hpp"
+#include "service/connect.hpp"
+#include "service/connectivity.hpp"
 
 #include "service/gen/cmd.hxx"
 
@@ -122,123 +124,25 @@ int main( int argc, const char* argv[] )
             {
                 std::cout << visibleOptions << "\n";
             }
-            else if( !strCommand.empty() )
-            {
-                std::cout << "Got command: " << std::endl;
-                std::cout << strCommand << std::endl;
-
-
-                pybind11::scoped_interpreter guard{};
-
-                pybind11::print( "Hello World from Python Embedded Interpreter" );
-                
-
-            }
             else
             {
-                mega::service::Network network;
+                mega::service::Connect connection( ipAddress, port ); 
 
-                mega::service::Enrole enrolement;
-
-                boost::fibers::promise<void> waitForRegistryPromise;
-                boost::fibers::future<void> registrationFuture =
-                    waitForRegistryPromise.get_future();
-     
-                mega::service::ReceiverCallback receiverCallback = 
-                    [ &waitForRegistryPromise, &enrolement ]( 
-                        mega::service::SocketSender& responseSender,
-                        const mega::service::PacketBuffer& buffer)
-                    {
-                        boost::interprocess::basic_vectorbuf
-                            < mega::service::PacketBuffer > vectorBuffer(buffer);
-                        boost::archive::binary_iarchive ia(vectorBuffer, 
-                                mega::service::boostArchiveFlags);
-
-                        mega::service::MessageType messageType;
-                        ia >> messageType;
-
-                        switch( messageType )
-                        {
-                            case mega::service::MessageType::eEnrole         :
-                                {                                   
-                                    ia >> enrolement;
-                                    std::cout << "Got enrolement from daemon: " 
-                                        << enrolement.getDaemon() << " with mp: "
-                                        << enrolement.getMP() << std::endl; 
-                                }
-                                break;
-                            case mega::service::MessageType::eRegistry        :
-                                {
-                                    std::cout << "Got registration update" << std::endl;
-                                    mega::service::Registration registration;
-                                    ia >> registration;
-                                    // filter registration entries for THIS process
-                                    // since ONLY created inter-process proxies
-                                    registration.filter(enrolement.getMP());
-                                    mega::service::Registry::getWriteAccess()->update(
-                                        responseSender, registration);
-                                    waitForRegistryPromise.set_value();
-                                }
-                                break;
-                            case mega::service::MessageType::eRequest        :
-                                {
-                                    mega::service::decodeInboundRequest(ia, responseSender);
-                                }
-                                break;
-                            case mega::service::MessageType::eResponse        :
-                                {
-                                    mega::service::Header header;
-                                    ia >> header;
-
-                                    mega::service::LogicalThread& logicalThread =
-                                        [&]() -> mega::service::LogicalThread&
-                                    {
-                                        auto reg = mega::service::Registry::getReadAccess();
-                                        return reg->getLogicalThread(header.m_requester);
-                                    }();
-
-                                    logicalThread.send(
-                                        mega::service::InterProcessResponse
-                                        {
-                                            header,
-                                            {}
-                                        }
-                                    );
-                                }
-                                break;
-                            case mega::service::MessageType::TOTAL_MESSAGES   :
-                            default:
-                                {
-                                    THROW_RTE(" Unepxcted message type recieved" );
-                                }
-                                break;
-                        }
-                    };
-
-                mega::service::Client client(network, std::move(receiverCallback));
+                mega::service::OConnectivity connectivity( connection.getNetwork() );
+                
+                if( !strCommand.empty() )
                 {
-                    auto pConnection = client.connect(ipAddress, port);
+                    std::cout << "Got command: " << std::endl;
+                    std::cout << strCommand << std::endl;
 
-                    // wait for enrolement and registration to complete
-                    registrationFuture.get();
+                    pybind11::scoped_interpreter guard{};
 
-                    mega::service::LogicalThread::registerFiber(enrolement.getMP());
-
-                    using namespace mega::service;
-                    using namespace mega::test;
-                    auto pDaemonConnectivity = 
-                        Registry::getReadAccess()->one< Connectivity >(
-                            enrolement.getDaemon()
-                        );
-
-                    // pDaemonConnectivity->shutdown();
-
-                    // pConnection->stop();
+                    pybind11::print( "Hello World from Python Embedded Interpreter" );
                 }
 
                 if( bRunAsServer )
                 {
-                    mega::service::LogicalThread::get().runMessageLoop();
+                    connection.run();
                 }
             }
         }
