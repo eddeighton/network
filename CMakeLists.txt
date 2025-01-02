@@ -61,7 +61,10 @@ set(GENERATED_INTERFACE_FILES
     ${CMAKE_SOURCE_DIR}/service/gen/proxy_ipc.hxx
     ${CMAKE_SOURCE_DIR}/service/gen/decoder.hxx
     ${CMAKE_SOURCE_DIR}/service/gen/registry.hxx
-    ${CMAKE_SOURCE_DIR}/service/gen/cmd.hxx
+)
+
+set(GENERATED_PYTHON_FILES
+    ${CMAKE_SOURCE_DIR}/python/module.cxx
 )
 
 set(META_PIPELINE_TEMPLATES
@@ -69,13 +72,14 @@ set(META_PIPELINE_TEMPLATES
     ${CMAKE_SOURCE_DIR}/meta/pipeline/templates/proxy_itc.hxx.jinja
     ${CMAKE_SOURCE_DIR}/meta/pipeline/templates/proxy_ipc.hxx.jinja
     ${CMAKE_SOURCE_DIR}/meta/pipeline/templates/registry.hxx.jinja
-    ${CMAKE_SOURCE_DIR}/meta/pipeline/templates/cmd.hxx.jinja
+    ${CMAKE_SOURCE_DIR}/meta/pipeline/templates/module.cxx.jinja
 )
 
 message( STATUS "Generated interface files: ${GENERATED_INTERFACE_FILES}" )
+message( STATUS "Generated python files: ${GENERATED_PYTHON_FILES}" )
 
 add_custom_command(
-    OUTPUT ${GENERATED_INTERFACE_FILES}
+    OUTPUT ${GENERATED_INTERFACE_FILES} ${GENERATED_PYTHON_FILES}
 
     COMMAND meta
         --src_dir ${CMAKE_SOURCE_DIR}

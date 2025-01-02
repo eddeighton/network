@@ -21,6 +21,9 @@ namespace mega::service
         ,   m_rtti(rtti)
         {
         }
+    public:
+        service::MPTFO getMPTFO() const { return m_mptfo; }
+        const RTTI& getRTTI() const { return m_rtti; }
     };
 }
 

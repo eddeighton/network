@@ -73,7 +73,7 @@ namespace mega::io
         }
         inline const boost::filesystem::path getServiceCodeGen_cmd() const
         {
-            return m_directories.srcDir / "service/gen/cmd.hxx";
+            return m_directories.srcDir / "python/module.cxx";
         }
 
         inline const boost::filesystem::path getServiceTemplate_registry() const
@@ -94,7 +94,7 @@ namespace mega::io
         }
         inline const boost::filesystem::path getServiceTemplate_cmd() const
         {
-            return "cmd.hxx.jinja";
+            return "module.cxx.jinja";
         }
 
         ////////////////////////////////////////////////////

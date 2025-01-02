@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "test/test_object.hpp"
 #include "service/interface/test.interface.hpp"
 
 #include "service/rtti.hpp"

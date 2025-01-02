@@ -26,8 +26,6 @@
 #include "service/connect.hpp"
 #include "service/connectivity.hpp"
 
-#include "service/gen/cmd.hxx"
-
 #include "service/protocol/message.hpp"
 #include "service/protocol/serialization.hpp"
 

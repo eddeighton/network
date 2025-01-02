@@ -21,6 +21,16 @@ namespace mega::service
         ProxyType* operator->() const { return p; }
         ProxyType& operator*() const { ASSERT(p); return *p; }
 
+        std::string str() const
+        {
+            std::ostringstream os;
+            if( p )
+            {
+                os << p->getMPTFO();
+            }
+            return os.str();
+        }
+
         template < class Archive >
         inline void serialize( Archive& archive, const unsigned int )
         {
