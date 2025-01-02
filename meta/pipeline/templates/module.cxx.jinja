@@ -62,9 +62,13 @@ namespace mega::service
                 mega::service::Registry::getReadAccess()->getRegistration();
 
             std::ostringstream os;
+            for( const auto& registrant : registration.m_registrants )
             {
-                boost::archive::xml_oarchive xml( os );
-                xml & boost::serialization::make_nvp( "registration", registration );
+                os << "MPTFO: " << registrant.m_mptfo << "\n";
+                for( const auto& interface : registrant.m_rtti.m_interfaces )
+                {
+                    os << "  Interface: " << interface << "\n";
+                }
             }
 
             return os.str();
