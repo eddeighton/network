@@ -53,7 +53,7 @@ namespace mega::service
             return m_pConnection->getDaemonMP();
         }
 
-        void printRegistration()
+        std::string printRegistration()
         {
             const auto registration = 
                 mega::service::Registry::getReadAccess()->getRegistration();
@@ -64,7 +64,7 @@ namespace mega::service
                 xml & boost::serialization::make_nvp( "registration", registration );
             }
 
-            std::cout << os.str() << std::endl;
+            return os.str();
         }
 
         template< typename T >
@@ -79,10 +79,6 @@ namespace mega::service
 PYBIND11_MODULE( megastructure, pythonModule )
 {
     pythonModule.doc() = "Python Module for Megastructure";
-
-    pythonModule.def(
-        "test", [](){ return "Hello World from Megastructure Python Module"; }, "Test"
-    );
 
     pybind11::class_< mega::service::MP >( pythonModule, "MP" )
         .def
@@ -100,10 +96,11 @@ PYBIND11_MODULE( megastructure, pythonModule )
                 }
             ) 
         )
-        .def( "MachineID", &mega::service::MP::getMachineID )
-        .def( "ProcessID", &mega::service::MP::getProcessID )
+        .def( "MachineID", [](const mega::service::MP& mp) { return mp.getMachineID().getValue(); } )
+        .def( "ProcessID", [](const mega::service::MP& mp) { return mp.getProcessID().getValue(); } )
         .def( "valid", &mega::service::MP::valid )
         .def( "__repr__", [](const mega::service::MP& mp) { std::ostringstream os; os << mp; return os.str(); })
+        .def( "__str__", [](const mega::service::MP& mp) { std::ostringstream os; os << mp; return os.str(); })
         ;
 
     pybind11::class_< mega::service::Ptr<mega::service::Connectivity> >( pythonModule, "Connectivity" )
@@ -115,7 +112,8 @@ PYBIND11_MODULE( megastructure, pythonModule )
         .def( pybind11::init( &mega::service::Connection::createDefault ))
         .def( "mp", &mega::service::Connection::getMP )
         .def( "daemon", &mega::service::Connection::getDaemonMP )
-        .def( "printRegistration", &mega::service::Connection::printRegistration )
+        .def( "__repr__", &mega::service::Connection::printRegistration )
+        .def( "__str__", &mega::service::Connection::printRegistration )
         .def( "Connectivity", &mega::service::Connection::get< mega::service::Connectivity > )
         ;
 
