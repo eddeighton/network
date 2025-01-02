@@ -33,6 +33,8 @@ find_package( Boost 1.86
     REQUIRED )
 find_package( nlohmann_json )
 find_package( inja )
+find_package( Python3 REQUIRED COMPONENTS Interpreter Development)
+find_package( pybind11 )
 
 include( clangeg.cmake )
 
@@ -56,6 +58,7 @@ set(GENERATED_INTERFACE_FILES
     ${CMAKE_SOURCE_DIR}/service/gen/proxy_ipc.hxx
     ${CMAKE_SOURCE_DIR}/service/gen/decoder.hxx
     ${CMAKE_SOURCE_DIR}/service/gen/registry.hxx
+    ${CMAKE_SOURCE_DIR}/service/gen/cmd.hxx
 )
 
 set(META_PIPELINE_TEMPLATES
@@ -63,6 +66,7 @@ set(META_PIPELINE_TEMPLATES
     ${CMAKE_SOURCE_DIR}/meta/pipeline/templates/proxy_itc.hxx.jinja
     ${CMAKE_SOURCE_DIR}/meta/pipeline/templates/proxy_ipc.hxx.jinja
     ${CMAKE_SOURCE_DIR}/meta/pipeline/templates/registry.hxx.jinja
+    ${CMAKE_SOURCE_DIR}/meta/pipeline/templates/cmd.hxx.jinja
 )
 
 message( STATUS "Generated interface files: ${GENERATED_INTERFACE_FILES}" )
@@ -90,6 +94,11 @@ add_custom_target( run_meta_pipeline
 ################################################################################
 # The service
 add_subdirectory( service )
+
+################################################################################
+################################################################################
+# Python support
+add_subdirectory( python )
 
 ################################################################################
 ################################################################################

@@ -158,6 +158,12 @@ void task_service_gen(TaskDependencies& dependencies)
         dependencies.m_environment.getServiceCodeGen_proxy_ipc(),
         dependencies.m_environment.getDirectories().templatesDir,
         data );
+
+    renderTemplate( 
+        dependencies.m_environment.getServiceTemplate_cmd(),
+        dependencies.m_environment.getServiceCodeGen_cmd(),
+        dependencies.m_environment.getDirectories().templatesDir,
+        data );
 }
 
 }

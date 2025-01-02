@@ -24,8 +24,12 @@
 #include "service/network.hpp"
 #include "service/enrole.hpp"
 
+#include "service/gen/cmd.hxx"
+
 #include "service/protocol/message.hpp"
 #include "service/protocol/serialization.hpp"
+
+#include <pybind11/embed.h>
 
 #include <boost/program_options.hpp>
 #include <boost/fiber/operations.hpp>
@@ -68,9 +72,12 @@ int main( int argc, const char* argv[] )
             // clang-format on
         }
 
+        std::string strCommand;
+
         po::options_description commandOptions( " Commands" );
         {
             commandOptions.add_options()
+            ( "cmd,c",      po::value< std::string >( &strCommand ),            "Python base command to execute" )
                 ;
         }
 
@@ -114,6 +121,18 @@ int main( int argc, const char* argv[] )
             if( bShowHelp )
             {
                 std::cout << visibleOptions << "\n";
+            }
+            else if( !strCommand.empty() )
+            {
+                std::cout << "Got command: " << std::endl;
+                std::cout << strCommand << std::endl;
+
+
+                pybind11::scoped_interpreter guard{};
+
+                pybind11::print( "Hello World from Python Embedded Interpreter" );
+                
+
             }
             else
             {

@@ -71,6 +71,10 @@ namespace mega::io
         {
             return m_directories.srcDir / "service/gen/proxy_ipc.hxx";
         }
+        inline const boost::filesystem::path getServiceCodeGen_cmd() const
+        {
+            return m_directories.srcDir / "service/gen/cmd.hxx";
+        }
 
         inline const boost::filesystem::path getServiceTemplate_registry() const
         {
@@ -87,6 +91,10 @@ namespace mega::io
         inline const boost::filesystem::path getServiceTemplate_proxy_ipc() const
         {
             return "proxy_ipc.hxx.jinja";
+        }
+        inline const boost::filesystem::path getServiceTemplate_cmd() const
+        {
+            return "cmd.hxx.jinja";
         }
 
         ////////////////////////////////////////////////////
