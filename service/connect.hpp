@@ -6,6 +6,8 @@
 #include "service/network.hpp"
 #include "service/enrole.hpp"
 
+#include "service/gen/decoder.hxx"
+
 #include "service/protocol/message.hpp"
 #include "service/protocol/serialization.hpp"
 
@@ -49,6 +51,8 @@ namespace mega::service
         }
 
         Network& getNetwork() { return m_network; }
+        MP getMP() const { return m_enrolement.getMP(); }
+        MP getDaemonMP() const { return m_enrolement.getDaemon(); }
 
         void run()
         {

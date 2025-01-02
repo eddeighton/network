@@ -21,7 +21,6 @@ namespace mega::service
         ProxyType* operator->() const { return p; }
         ProxyType& operator*() const { ASSERT(p); return *p; }
 
-
         template < class Archive >
         inline void serialize( Archive& archive, const unsigned int )
         {
