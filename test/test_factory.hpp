@@ -2,7 +2,6 @@
 #pragma once
 
 #include "service/interface/test.interface.hpp"
-#include "service/gen/testfactory.proxy.hxx"
 
 #include "service/rtti.hpp"
 #include "service/logical_thread.hpp"

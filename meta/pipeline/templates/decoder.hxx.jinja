@@ -1,0 +1,82 @@
+
+#pragma once
+
+#include "service/logical_thread.hpp"
+#include "service/protocol/serialization.hpp"
+#include "service/sender_socket.hpp"
+
+{% for include in includes %}
+#include "{{ include }}"
+{% endfor %}
+
+namespace mega::service
+{
+
+void decodeInboundRequest(boost::archive::binary_iarchive& ia,
+        mega::service::SocketSender& responseSender)
+{
+    using namespace std::string_literals;
+    mega::service::Header header;
+    ia >> header;
+    //  std::cout << "Got request: " << header << std::endl;
+ 
+    auto reg = mega::service::Registry::getReadAccess();
+
+    auto& logicalThread = reg->getLogicalThread(header.m_responder.getMPTF());
+    auto pObject = reg->getObject(header.m_responder);
+
+    // request or response
+    logicalThread.send(
+        mega::service::InterProcessRequest
+        {
+            [pObject, &responseSender, header]()
+            {
+                
+                if( header.m_interfaceName.empty() )
+                {
+                    THROW_RTE( "Missing interface name in request: " << header );
+                }
+{% for interface in interfaces %}
+                else if( header.m_interfaceName.str() == "{{ interface.full_type_name }}" )
+                {
+                    auto p = dynamic_cast<{{ interface.full_type_name }}*>(pObject);
+                    if( header.m_functionName.empty() )
+                    {
+                        THROW_RTE( "Missing function name in request: " << header );
+                    }
+{% for function in interface.functions %}
+                    else if( header.m_functionName.str() == "{{ function.name }}" )
+                    {
+{% if function.return_type != "void" %}
+                        {{function.return_type}} result =
+{% endif %}
+                        p->{{ function.name }}
+                        (
+{% for param in function.parameters %}
+                            {{ param.name }}{% if not loop.is_last %},{% endif %}
+{% endfor %}
+                        );
+
+                        {
+                            boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer;
+                            boost::archive::binary_oarchive oa(vectorBuffer, service::boostArchiveFlags);
+
+                            oa << mega::service::MessageType::eResponse;
+                            oa << header;
+
+{% if function.return_type != "void" %}
+                            oa << result;
+{% endif %}
+                            responseSender.send(vectorBuffer.vector());
+                            // std::cout << "Response to request sent" << std::endl;
+                        }
+                    }
+{% endfor %}
+                }
+{% endfor %}
+            }
+        }
+    );
+}
+}
+

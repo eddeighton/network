@@ -17,8 +17,6 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
-#include "service/gen/daemon.proxy.hxx"
-
 #include "test/test_object.hpp"
 #include "test/test_factory.hpp"
 
@@ -161,34 +159,15 @@ int main( int argc, const char* argv[] )
                                     waitForRegistryPromise.set_value();
                                 }
                                 break;
-                            case mega::service::MessageType::eConnect         :
-                                {
-                                }
-                                break;
-                            case mega::service::MessageType::eDisconnect      :
-                                {
-                                }
-                                break;
-                            case mega::service::MessageType::eRoute           :
-                                {
-                                }
-                                break;
-                            case mega::service::MessageType::eShutdown        :
-                                {
-                                }
-                                break;
                             case mega::service::MessageType::eRequest        :
                                 {
-                                    mega::service::Header header;
-                                    ia >> header;
-                                    // std::cout << "Got request: " << header << std::endl;
+                                    mega::service::decodeInboundRequest(ia, responseSender);
                                 }
                                 break;
                             case mega::service::MessageType::eResponse        :
                                 {
                                     mega::service::Header header;
                                     ia >> header;
-                                    // std::cout << "Got response: " << header << std::endl;
 
                                     mega::service::LogicalThread& logicalThread =
                                         [&]() -> mega::service::LogicalThread&

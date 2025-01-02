@@ -61,7 +61,7 @@ namespace mega::io
         }
         inline const boost::filesystem::path getServiceCodeGen_receiver() const
         {
-            return m_directories.srcDir / "service/gen/receiver.hxx";
+            return m_directories.srcDir / "service/gen/decoder.hxx";
         }
         inline const boost::filesystem::path getServiceCodeGen_proxy_itc() const
         {
@@ -78,7 +78,7 @@ namespace mega::io
         }
         inline const boost::filesystem::path getServiceTemplate_receiver() const
         {
-            return "receiver.hxx.jinja";
+            return "decoder.hxx.jinja";
         }
         inline const boost::filesystem::path getServiceTemplate_proxy_itc() const
         {

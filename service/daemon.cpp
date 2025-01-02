@@ -22,6 +22,7 @@
 #include "service/network.hpp"
 #include "service/logical_thread.hpp"
 #include "service/enrole.hpp"
+#include "service/protocol/serialization.hpp"
 
 #include <boost/program_options.hpp>
 
@@ -96,11 +97,8 @@ int main( int argc, const char* argv[] )
                 []( mega::service::SocketSender& responseSender,
                     const mega::service::PacketBuffer& buffer)
                 {
-                    static constexpr auto boostArchiveFlags = 
-                        boost::archive::no_header | boost::archive::no_codecvt
-                                      | boost::archive::no_xml_tag_checking | boost::archive::no_tracking;
                     boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer(buffer);
-                    boost::archive::binary_iarchive ia(vectorBuffer, boostArchiveFlags);
+                    boost::archive::binary_iarchive ia(vectorBuffer, mega::service::boostArchiveFlags);
 
                     mega::service::MessageType messageType;
                     ia >> messageType;
@@ -115,59 +113,30 @@ int main( int argc, const char* argv[] )
                             {
                             }
                             break;
-                        case mega::service::MessageType::eConnect         :
-                            {
-                            }
-                            break;
-                        case mega::service::MessageType::eDisconnect      :
-                            {
-                            }
-                            break;
-                        case mega::service::MessageType::eRoute           :
-                            {
-                            }
-                            break;
-                        case mega::service::MessageType::eShutdown        :
-                            {
-                            }
-                            break;
                         case mega::service::MessageType::eRequest        :
                             {
-                                mega::service::Header header;
-                                ia >> header;
-                                //  std::cout << "Got request: " << header << std::endl;
-                                   
-                                auto reg = mega::service::Registry::getReadAccess();
-
-                                auto& logicalThread = reg->getLogicalThread(header.m_responder.getMPTF());
-                                auto pObject = reg->getObject(header.m_responder);
-
-                                // request or response
-                                logicalThread.send(
-                                    mega::service::InterProcessRequest
-                                    {
-                                        [pObject, &responseSender, header]()
-                                        {
-                                            auto p = dynamic_cast<mega::test::Connectivity*>(pObject);
-                                            p->shutdown();
-
-                                            {
-                                                boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer;
-                                                boost::archive::binary_oarchive oa(vectorBuffer, boostArchiveFlags);
-
-                                                oa << mega::service::MessageType::eResponse;
-                                                oa << header;
-
-                                                responseSender.send(vectorBuffer.vector());
-                                                // std::cout << "Response to request sent" << std::endl;
-                                            }
-                                        }
-                                    }
-                                );
+                                mega::service::decodeInboundRequest(ia, responseSender);
                             }
                             break;
                         case mega::service::MessageType::eResponse        :
                             {
+                                mega::service::Header header;
+                                ia >> header;
+
+                                mega::service::LogicalThread& logicalThread =
+                                    [&]() -> mega::service::LogicalThread&
+                                {
+                                    auto reg = mega::service::Registry::getReadAccess();
+                                    return reg->getLogicalThread(header.m_requester);
+                                }();
+
+                                logicalThread.send(
+                                    mega::service::InterProcessResponse
+                                    {
+                                        header,
+                                        {}
+                                    }
+                                );
                             }
                             break;
                         case mega::service::MessageType::TOTAL_MESSAGES   :

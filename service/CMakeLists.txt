@@ -1,7 +1,4 @@
 
-
-add_subdirectory( protocol )
-
 set_source_files_properties( ${GENERATED_INTERFACE_FILES} PROPERTIES GENERATED TRUE )
 add_library( service ${GENERATED_INTERFACE_FILES}
     asio.cpp
@@ -20,5 +17,4 @@ add_executable( mega mega.cpp asio.cpp )
 target_link_libraries( mega service )
 target_link_libraries( mega Boost::program_options )
 target_link_libraries( mega Boost::fiber )
-
 

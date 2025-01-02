@@ -56,12 +56,8 @@ namespace mega::service
     {
         eEnrole     = 0,
         eRegistry   = 1,
-        eConnect    = 2,
-        eDisconnect = 3,
-        eRoute      = 4,
-        eShutdown   = 5,
-        eRequest    = 6,
-        eResponse   = 7,
+        eRequest    = 2,
+        eResponse   = 3,
         TOTAL_MESSAGES
     };
 }

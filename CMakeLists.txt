@@ -12,10 +12,8 @@ set(Boost_USE_STATIC_LIBS ON)
 
 # always enable some gcc diagnostic options
 add_compile_options(-fdiagnostics-color)
-# add_compile_options(-fdiagnostics-urls=always)
 
-
-# strict warnings cos why not!
+# TODO: fix warnings
 # add_compile_options(-Wall -Wextra -Wpedantic )
 
 enable_testing()
@@ -56,8 +54,15 @@ set(SERVICE_INTERFACES ${CMAKE_SOURCE_DIR}/service/interface/test.interface.hpp)
 set(GENERATED_INTERFACE_FILES 
     ${CMAKE_SOURCE_DIR}/service/gen/proxy_itc.hxx
     ${CMAKE_SOURCE_DIR}/service/gen/proxy_ipc.hxx
-    ${CMAKE_SOURCE_DIR}/service/gen/receiver.hxx
+    ${CMAKE_SOURCE_DIR}/service/gen/decoder.hxx
     ${CMAKE_SOURCE_DIR}/service/gen/registry.hxx
+)
+
+set(META_PIPELINE_TEMPLATES
+    ${CMAKE_SOURCE_DIR}/meta/pipeline/templates/decoder.hxx.jinja
+    ${CMAKE_SOURCE_DIR}/meta/pipeline/templates/proxy_itc.hxx.jinja
+    ${CMAKE_SOURCE_DIR}/meta/pipeline/templates/proxy_ipc.hxx.jinja
+    ${CMAKE_SOURCE_DIR}/meta/pipeline/templates/registry.hxx.jinja
 )
 
 message( STATUS "Generated interface files: ${GENERATED_INTERFACE_FILES}" )
@@ -73,7 +78,7 @@ add_custom_command(
         --pipeline "$<TARGET_FILE:meta_pipeline>"
         --interfaces \"${SERVICE_INTERFACES}\"
  
-    DEPENDS ${SERVICE_INTERFACES} meta_pipeline
+    DEPENDS ${SERVICE_INTERFACES} ${META_PIPELINE_TEMPLATES} meta_pipeline
     COMMENT "Running meta pipeline"
 )
 
