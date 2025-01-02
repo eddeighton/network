@@ -52,6 +52,7 @@ int main( int argc, const char* argv[] )
 
         mega::service::PortNumber port{1234};
         mega::service::IPAddress  ipAddress{"localhost"s};
+        bool                      bRunAsServer = false;
 
         std::vector<std::string> commandArgs;
 
@@ -62,7 +63,8 @@ int main( int argc, const char* argv[] )
             ( "help,?",                                                         "Produce general or command help message" )
             ( "log_dir",    po::value< std::filesystem::path >( &logDir ),      "Build log directory" )
             ( "wait",       po::bool_switch( &bGeneralWait ),                   "Wait at startup for attaching a debugger" )
-            ( "time",       po::bool_switch( &bTime ),                          "Measure time taken to perform command" );
+            ( "time",       po::bool_switch( &bTime ),                          "Measure time taken to perform command" )
+            ( "server,s",   po::bool_switch( &bRunAsServer ),                   "Run as server" );
             // clang-format on
         }
 
@@ -186,10 +188,9 @@ int main( int argc, const char* argv[] )
                                 }
                                 break;
                             case mega::service::MessageType::TOTAL_MESSAGES   :
+                            default:
                                 {
-                                    std::string strMsg;
-                                    ia >> strMsg;
-                                    std::cout << "Got packet: " << strMsg << std::endl;
+                                    THROW_RTE(" Unepxcted message type recieved" );
                                 }
                                 break;
                         }
@@ -197,7 +198,6 @@ int main( int argc, const char* argv[] )
 
                 mega::service::Client client(network, std::move(receiverCallback));
                 {
-
                     auto pConnection = client.connect(ipAddress, port);
 
                     // wait for enrolement and registration to complete
@@ -212,15 +212,15 @@ int main( int argc, const char* argv[] )
                             enrolement.getDaemon()
                         );
 
-                    pDaemonConnectivity->shutdown();
+                    // pDaemonConnectivity->shutdown();
 
-                    pConnection->stop();
+                    // pConnection->stop();
                 }
 
-                // if( runAsServer )
-                // {
-                //     mega::service::LogicalThread::get().runMessageLoop();
-                // }
+                if( bRunAsServer )
+                {
+                    mega::service::LogicalThread::get().runMessageLoop();
+                }
             }
         }
         catch(std::exception& ex)

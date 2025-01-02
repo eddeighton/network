@@ -107,6 +107,7 @@ int main( int argc, const char* argv[] )
                     {
                         case mega::service::MessageType::eEnrole         :
                             {
+                                THROW_RTE( "Unexpected enrole request received" );
                             }
                             break;
                         case mega::service::MessageType::eRegistry        :
@@ -140,11 +141,12 @@ int main( int argc, const char* argv[] )
                             }
                             break;
                         case mega::service::MessageType::TOTAL_MESSAGES   :
+                        default:
                             {
+                                THROW_RTE(" Unepxcted message type recieved" );
                             }
                             break;
                     }
-
                 };
 
             mega::service::Server server(network, port, std::move(receiverCallback),
