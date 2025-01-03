@@ -17,6 +17,7 @@
 
 #include "service/daemon.hpp"
 #include "service/connectivity.hpp"
+#include "test/test_factory.hpp"
 
 #include <boost/program_options.hpp>
 
@@ -86,6 +87,8 @@ int main( int argc, const char* argv[] )
 
             mega::service::Daemon daemon(mp, port);
             mega::service::OConnectivity connectivity(daemon);
+            mega::test::OTestFactory testFactory;
+
             daemon.run();
 
             std::cout << "main shutting down" << std::endl;

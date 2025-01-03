@@ -39,9 +39,9 @@ public:
         
         TestPtr pTest = std::make_unique< OTest >();
         auto reg = service::Registry::getWriteAccess();
-        const auto mpo = reg->createInProcessProxy(m_mptfo.getMPTF(), *pTest);
+        const service::MPTFO mptfo = reg->createInProcessProxy(m_mptfo.getMPTF(), *pTest);
         m_tests.push_back( std::move( pTest ) );
-        return reg->one< Test >( mpo );
+        return reg->one< Test >( mptfo );
     }
 };
 

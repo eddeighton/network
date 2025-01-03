@@ -63,11 +63,8 @@ namespace mega::service
                 mega::service::SocketSender& responseSender,
                 const mega::service::PacketBuffer& buffer)
         {
-            
-            boost::interprocess::basic_vectorbuf
-                < mega::service::PacketBuffer > vectorBuffer(buffer);
-            boost::archive::binary_iarchive ia(vectorBuffer, 
-                    mega::service::boostArchiveFlags);
+            boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer(buffer);
+            boost::archive::binary_iarchive ia(vectorBuffer, mega::service::boostArchiveFlags);
 
             mega::service::MessageType messageType;
             ia >> messageType;
@@ -106,17 +103,14 @@ namespace mega::service
                         ia >> header;
 
                         mega::service::LogicalThread& logicalThread =
-                            [&]() -> mega::service::LogicalThread&
-                        {
-                            auto reg = mega::service::Registry::getReadAccess();
-                            return reg->getLogicalThread(header.m_requester);
-                        }();
+                            mega::service::Registry::getReadAccess()->
+                                getLogicalThread(header.m_requester);
 
                         logicalThread.send(
                             mega::service::InterProcessResponse
                             {
                                 header,
-                                {}
+                                buffer
                             }
                         );
                     }

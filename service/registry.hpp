@@ -102,15 +102,7 @@ namespace mega::service
                 "Failed to locate logical thread straight away: " << mptf);
             // std::cout << "Registry registered logical thread: " << mptf << std::endl;
         }
-/*
-        Ptr< Interface > getObject(MPTFO mptfo) const
-        {
-            auto iFind = m_objects.find(mptfo);
-            VERIFY_RTE_MSG(iFind != m_objects.end(),
-                "Failed to locate object: " << mptfo);
-            return Ptr< Interface >( iFind->second );
-        }
-*/
+
         template< typename T >
         std::vector< std::shared_ptr< Proxy< T > > > get(MPTFO mptfo) const
         {
@@ -125,9 +117,10 @@ namespace mega::service
             std::vector< std::shared_ptr< Proxy< T > > > result;
             for( auto i = iLower; i != iUpper; ++i )
             {
-                auto p = std::dynamic_pointer_cast< Proxy<T> >( i->second );
-                VERIFY_RTE(p);
-                result.push_back( p );
+                if( auto p = std::dynamic_pointer_cast< Proxy<T> >( i->second ) )
+                {
+                    result.push_back( p );
+                }
             }
             return result;
         }
@@ -136,8 +129,11 @@ namespace mega::service
         std::shared_ptr< Proxy< T > > one(MPTFO mptfo) const
         {
             auto r = get<T>(mptfo);
+            VERIFY_RTE_MSG(r.size()!=0,
+                "Found no matches for mptfo: " << mptfo << " and interface: " <<
+                boost::typeindex::type_id<T>().pretty_name());
             VERIFY_RTE_MSG(r.size()==1,
-                "Non-singular result finding type: " <<
+                "Non-singular result for mptfo: " << mptfo  << " and interface: " <<
                 boost::typeindex::type_id<T>().pretty_name());
             return r.front();
         }
@@ -159,9 +155,10 @@ namespace mega::service
                 {
                     break;
                 }
-                auto p = std::dynamic_pointer_cast< Proxy<T> >( i->second );
-                VERIFY_RTE(p);
-                result.push_back( p );
+                if( auto p = std::dynamic_pointer_cast< Proxy<T> >( i->second ) )
+                {
+                    result.push_back( p );
+                }
             }
             return result;
         }

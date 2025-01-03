@@ -80,9 +80,13 @@
                 [&bResponse{%if function.return_type != "void" %}, &result{% endif %}](const service::InterProcessResponse& interProcessResponse)
                 {
 {% if function.return_type != "void" %}
+                    service::MessageType messageType;
+                    service::Header header;
                     boost::interprocess::basic_vectorbuf< service::PacketBuffer >
                         vectorBuffer( interProcessResponse.m_buffer );
                     boost::archive::binary_iarchive ia( vectorBuffer, service::boostArchiveFlags );
+                    ia >> messageType;
+                    ia >> header;
                     ia >> result;
 {% endif %}
                     bResponse = true;
