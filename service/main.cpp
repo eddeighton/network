@@ -24,7 +24,6 @@
 #include <filesystem>
 #include <memory>
 
-
 int main( int argc, const char* argv[] ) 
 {
     {
@@ -50,9 +49,9 @@ int main( int argc, const char* argv[] )
         {
             // clang-format off
             commandOptions.add_options()
-            ( "MachineID,m",  po::value< mega::service::MachineID >( &machineID ),
+            ( "machine,m",  po::value< mega::service::MachineID >( &machineID ),
               "Four byte machine ID by which this daemon will be know.  MUST be unique!" )
-            ( "Port,p",       po::value< mega::service::PortNumber >( &port ),
+            ( "port,p",       po::value< mega::service::PortNumber >( &port ),
               "Port number daemon should bind to on localhost" )
                 ;
             // clang-format on
@@ -85,13 +84,9 @@ int main( int argc, const char* argv[] )
                 mega::service::PROCESS_ZERO
             };
 
-            std::unique_ptr< mega::service::Daemon > g_pDaemon;
-
-            {
-                g_pDaemon = std::make_unique< mega::service::Daemon >(mp, port);
-                mega::service::OConnectivity connectivity(*g_pDaemon);
-                g_pDaemon->run();
-            }
+            mega::service::Daemon daemon(mp, port);
+            mega::service::OConnectivity connectivity(daemon);
+            daemon.run();
 
             std::cout << "main shutting down" << std::endl;
         }

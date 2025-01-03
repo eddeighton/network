@@ -16,5 +16,5 @@ target_include_directories( megastructure PRIVATE ${Python3_INCLUDE_DIRS} )
 
 pybind11_extension( megastructure )
 
-# add_dependencies( megastructure run_meta_pipeline )
+add_dependencies( megastructure run_meta_pipeline )
 

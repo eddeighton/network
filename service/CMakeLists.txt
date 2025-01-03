@@ -6,7 +6,7 @@ add_library( service ${GENERATED_INTERFACE_FILES}
 )
 
 target_link_libraries( service Boost::serialization )
-# add_dependencies( service run_meta_pipeline )
+add_dependencies( service run_meta_pipeline )
 
 add_executable( daemon main.cpp )
 target_link_libraries( daemon service )
