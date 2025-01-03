@@ -21,18 +21,7 @@ namespace mega::service
 {
     inline void onSocketError( const boost::system::error_code& ec )
     {
-        if( ec.value() == boost::asio::error::eof )
-        {
-            //  This is what happens when close socket normally
-        }
-        else if( ec.value() == boost::asio::error::operation_aborted )
-        {
-            //  This is what happens when close socket normally
-        }
-        else if( ec.value() == boost::asio::error::connection_reset )
-        {
-        }
-        else if( ec.failed() )
+        if( ec.failed() )
         {
             THROW_RTE( "Unexpected socket error: " << ec.what() );
         }

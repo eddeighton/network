@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <string>
 #include <sstream>
+#include <iomanip>
 
 namespace mega::service
 {

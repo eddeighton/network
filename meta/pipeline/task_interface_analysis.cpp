@@ -300,7 +300,6 @@ void task_interface_analysis(TaskDependencies& dependencies)
                     // determine if interface or factory via inheritance
                     bool bIsInterface = false;
                     bool bIsFactory = false;
-                    bool bIsDaemon = false;
                     if( const auto* pCXXRecordDecl = dyn_cast< CXXRecordDecl >( pRecordDecl ) )
                     {
                         auto type = pRecordDecl->getASTContext().getTypeDeclType( pRecordDecl );
@@ -312,8 +311,7 @@ void task_interface_analysis(TaskDependencies& dependencies)
                             static const std::set< std::string > baseClassTypes =
                             {
                                 "mega::service::Interface"s,
-                                "mega::service::Factory"s,
-                                "mega::service::Daemon"s
+                                "mega::service::Factory"s
                             };
                             if( baseClassTypes.contains( strFullTypeName ) )
                             {
@@ -331,11 +329,6 @@ void task_interface_analysis(TaskDependencies& dependencies)
                                 {
                                     bIsInterface = true;
                                     bIsFactory = true;
-                                }
-                                else if( strType == "struct mega::service::Daemon" )
-                                {
-                                    bIsInterface = true;
-                                    bIsDaemon = true;
                                 }
                             }
                         }
@@ -361,10 +354,6 @@ void task_interface_analysis(TaskDependencies& dependencies)
                         if( bIsFactory )
                         {
                             database.construct< Factory >(Factory::Args{ pInterface });
-                        }
-                        else if( bIsDaemon )
-                        {
-                            database.construct< Daemon >(Daemon::Args{ pInterface });
                         }
 
                         // determine functions

@@ -54,14 +54,14 @@ namespace mega::service
                 m_receiver.run();
 
                 m_socket_info = TCPSocketInfo::make( m_socket );
-                std::cout << "Client connection start " << m_socket_info << std::endl;
+                // std::cout << "Client connection start " << m_socket_info << std::endl;
             }
 
             Sender& getSender() { return m_sender; }
 
             void stop()
             {
-                std::cout << "Client connection stop from: " << m_socket_info << std::endl;
+                // std::cout << "Client connection stop from: " << m_socket_info << std::endl;
                 boost::system::error_code ec;
                 m_socket.shutdown( m_socket.shutdown_both, ec );
                 m_socket.close();
@@ -75,9 +75,9 @@ namespace mega::service
         private:
             void disconnected()
             {
-                std::cout << "Client connection disconnect from: " << m_socket_info << std::endl;
+                // std::cout << "Client connection disconnect from: " << m_socket_info << std::endl;
                 m_client.onDisconnect(shared_from_this());
-                std::cout << "Disconnected" << std::endl;
+                // std::cout << "Disconnected" << std::endl;
                 m_bDisconnected = true;
             }
 
@@ -96,11 +96,6 @@ namespace mega::service
         };
         using ConnectionPtrSet = std::set< Connection::Ptr >;
 
-        Client(Network& network, ReceiverCallback receiverCallback)
-        :   m_io_context(network.getIOContext())
-        ,   m_receiverCallback(std::move(receiverCallback))
-        {
-        }
         Client(boost::asio::io_context& io_context, ReceiverCallback receiverCallback)
         :   m_io_context(io_context)
         ,   m_receiverCallback(std::move(receiverCallback))

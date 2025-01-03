@@ -78,24 +78,24 @@ set(META_PIPELINE_TEMPLATES
 message( STATUS "Generated interface files: ${GENERATED_INTERFACE_FILES}" )
 message( STATUS "Generated python files: ${GENERATED_PYTHON_FILES}" )
 
-add_custom_command(
-    OUTPUT ${GENERATED_INTERFACE_FILES} ${GENERATED_PYTHON_FILES}
-
-    COMMAND meta
-        --src_dir ${CMAKE_SOURCE_DIR}
-        --build_dir ${CMAKE_BINARY_DIR}
-        --stash_dir ${CMAKE_CURRENT_BINARY_DIR}/stash
-        --templates ${CMAKE_SOURCE_DIR}/meta/pipeline/templates
-        --pipeline "$<TARGET_FILE:meta_pipeline>"
-        --interfaces \"${SERVICE_INTERFACES}\"
- 
-    DEPENDS ${SERVICE_INTERFACES} ${META_PIPELINE_TEMPLATES} meta_pipeline driver
-    COMMENT "Running meta pipeline"
-)
-
-add_custom_target( run_meta_pipeline
-    DEPENDS ${GENERATED_INTERFACE_FILES}
-)
+#  add_custom_command(
+#      OUTPUT ${GENERATED_INTERFACE_FILES} ${GENERATED_PYTHON_FILES}
+#  
+#      COMMAND meta
+#          --src_dir ${CMAKE_SOURCE_DIR}
+#          --build_dir ${CMAKE_BINARY_DIR}
+#          --stash_dir ${CMAKE_CURRENT_BINARY_DIR}/stash
+#          --templates ${CMAKE_SOURCE_DIR}/meta/pipeline/templates
+#          --pipeline "$<TARGET_FILE:meta_pipeline>"
+#          --interfaces \"${SERVICE_INTERFACES}\"
+#   
+#      DEPENDS ${SERVICE_INTERFACES} ${META_PIPELINE_TEMPLATES} meta_pipeline driver
+#      COMMENT "Running meta pipeline"
+#  )
+#  
+#  add_custom_target( run_meta_pipeline
+#      DEPENDS ${GENERATED_INTERFACE_FILES}
+#  )
 
 ################################################################################
 ################################################################################

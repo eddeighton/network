@@ -31,7 +31,7 @@ namespace mega::service
         Client::Connection::Ptr         m_pConnection;
     public:
         Connect(IPAddress ipAddress, PortNumber port)
-            :  m_client( m_network, std::bind( &Connect::receiverCallback,
+            :  m_client( m_network.getIOContext(), std::bind( &Connect::receiverCallback,
                             this, std::placeholders::_1, std::placeholders::_2 ) )
         {
             boost::fibers::future<void> registrationFuture =
@@ -77,14 +77,14 @@ namespace mega::service
                 case mega::service::MessageType::eEnrole:
                     {                                   
                         ia >> m_enrolement;
-                        std::cout << "Got enrolement from daemon: " 
-                            << m_enrolement.getDaemon() << " with mp: "
-                            << m_enrolement.getMP() << std::endl; 
+                        // std::cout << "Got enrolement from daemon: " 
+                        //   << m_enrolement.getDaemon() << " with mp: "
+                        //   << m_enrolement.getMP() << std::endl; 
                     }
                     break;
                 case mega::service::MessageType::eRegistry:
                     {
-                        std::cout << "Got registration update" << std::endl;
+                        // std::cout << "Got registration update" << std::endl;
                         mega::service::Registration registration;
                         ia >> registration;
                         // filter registration entries for THIS process

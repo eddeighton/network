@@ -100,7 +100,7 @@ namespace mega::service
             auto iFind = m_logicalThreads.find(mptf);
             VERIFY_RTE_MSG(iFind != m_logicalThreads.end(),
                 "Failed to locate logical thread straight away: " << mptf);
-            std::cout << "Registry registered logical thread: " << mptf << std::endl;
+            // std::cout << "Registry registered logical thread: " << mptf << std::endl;
         }
 
         Interface* getObject(MPTFO mptfo) const

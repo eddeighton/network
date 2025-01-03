@@ -13,7 +13,7 @@ namespace mega
 {
     namespace service
     {
-        struct Connectivity : public virtual mega::service::Daemon
+        struct Connectivity : public virtual mega::service::Interface
         {
             //virtual void connect() = 0;
             //virtual void disconnect() = 0;

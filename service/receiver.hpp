@@ -39,15 +39,37 @@ namespace mega::service
 
         void run()
         {
+            m_bStarted = true;
             boost::fibers::fiber( [this]
             {
+                std::cout << "Receiver started" << std::endl;
                 while( m_bContinue && m_socket.is_open() )
                 {
-                    auto error = receive( m_socket, m_packetBuffer );
-                    if( error.failed() )
+                    const auto error = receive( m_socket, m_packetBuffer );
+
+                    std::cout << "Received packet with error: " << error.what() << std::endl;
+
+                    if( error.value() == boost::asio::error::eof )
                     {
-                        onSocketError( error );
+                        //  This is what happens when close socket normally
                         m_bContinue = false;
+                        std::cout << "Socket returned eof" << std::endl;
+                    }
+                    else if( error.value() == boost::asio::error::operation_aborted )
+                    {
+                        //  This is what happens when close socket normally
+                        m_bContinue = false;
+                        std::cout << "Socket returned operation aborted" << std::endl;
+                    }
+                    else if( error.value() == boost::asio::error::connection_reset )
+                    {
+                        m_bContinue = false;
+                        std::cout << "Socket returned connection reset" << std::endl;
+                    }
+                    else if( error.failed() )
+                    {
+                        std::cout << "Critical socket failure: " << error.what() << std::endl;
+                        std::abort();
                     }
                     else
                     {
@@ -60,8 +82,10 @@ namespace mega::service
         }
 
         void stop() { m_bContinue = false; }
+        bool started() const { return m_bStarted; }
 
         bool                m_bContinue = true;
+        bool                m_bStarted = false;
         Socket&             m_socket; 
         SocketSender        m_sender;
         PacketBuffer        m_packetBuffer;

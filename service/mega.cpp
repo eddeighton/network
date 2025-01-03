@@ -125,8 +125,6 @@ int main( int argc, const char* argv[] )
             else
             {
                 mega::service::Connect connection( ipAddress, port ); 
-
-                mega::service::OConnectivity connectivity( connection.getNetwork() );
                 
                 if( !strCommand.empty() )
                 {

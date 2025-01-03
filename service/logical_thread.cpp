@@ -38,7 +38,7 @@ namespace mega::service
 
             Registry::getWriteAccess()->registerLogicalThread(mptf,
                 detail::fiber_local_storage.get());
-            std::cout << "Register fiber: " << mptf << std::endl;
+            // "std::cout << "Register fiber: " << mptf << std::endl;
         }
     }
 

@@ -50,8 +50,9 @@ public:
         std::unique_ptr< boost::asio::io_context::work >    work_;
 
         inline service( boost::asio::io_context & io_ctx) :
-            boost::asio::io_context::service( io_ctx),
-            work_{ new boost::asio::io_context::work( io_ctx) } {
+            boost::asio::io_context::service( io_ctx)
+        ,   work_{ new boost::asio::io_context::work( io_ctx) } 
+        {
         }
 
         inline virtual ~service() {}
@@ -60,7 +61,7 @@ public:
         inline service & operator=( service const&) = delete;
 
         inline void shutdown_service() override final {
-            work_.reset();
+             work_.reset();
         }
     };
 //]
@@ -92,6 +93,13 @@ public:
                         }
                     }
                }
+
+               //  while ( has_ready_fibers() ) {
+               //      // block this fiber till all pending (ready) fibers are processed
+               //      // == round_robin::suspend_until() has been called
+               //      std::unique_lock< boost::fibers::mutex > lk( mtx_);
+               //      cnd_.wait( lk);
+               //  }
 //]
             });
     }
