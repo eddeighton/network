@@ -14,14 +14,14 @@ namespace mega::service
     using ProxyVariant = std::variant
     <
 {% for interface in interfaces %}
-        std::unique_ptr< {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}_ITC >,
-        std::unique_ptr< {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}_IPC >{%if not loop.is_last%},{% endif %}
+        std::shared_ptr< {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}_ITC >,
+        std::shared_ptr< {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}_IPC >{%if not loop.is_last%},{% endif %}
 
 {% endfor %}
     >;
     using ProxyVariantVector = std::vector< ProxyVariant >;
-    using InterfaceMPTFO    = std::pair< InterfaceTypeName, MPTFO >;
-    using InterfaceMPTFOMap = std::map< InterfaceMPTFO, Interface* >;
+    using InterfaceMPTFO     = std::pair< InterfaceTypeName, MPTFO >;
+    using InterfaceMPTFOMap  = std::map< InterfaceMPTFO, std::shared_ptr<Interface> >;
 
     template< typename TInterface, typename TProxy >
     void registerIfInterface(Sender& sender, const Registration::Registrant& registrant,
@@ -33,8 +33,8 @@ namespace mega::service
             const auto key = InterfaceMPTFO{interfaceTypeName, registrant.m_mptfo};
             if(interfaceMPTFOMap.find(key) == interfaceMPTFOMap.end())
             {
-                auto pProxy = std::make_unique<TProxy>(sender, registrant.m_mptfo, registrant.m_rtti);
-                interfaceMPTFOMap.insert(std::make_pair(key, pProxy.get()));
+                auto pProxy = std::make_shared<TProxy>(sender, registrant.m_mptfo, registrant.m_rtti);
+                interfaceMPTFOMap.insert(std::make_pair(key, pProxy));
                 proxies.push_back(std::move(pProxy));
             }
         }
@@ -55,10 +55,10 @@ namespace mega::service
     {
         if(auto p = dynamic_cast< TInterface* >( pInterface ))
         {
-            auto pProxy = std::make_unique< TProxy >(p, LogicalThread::get(), mptfo, rtti);
+            auto pProxy = std::make_shared< TProxy >(p, LogicalThread::get(), mptfo, rtti);
             const auto interfaceTypeName = getInterfaceTypeName< TInterface >();
             interfaceMPTFOMap.insert(
-                std::make_pair( InterfaceMPTFO{ interfaceTypeName, mptfo }, pProxy.get() ) );
+                std::make_pair( InterfaceMPTFO{ interfaceTypeName, mptfo }, pProxy ) );
             proxies.push_back( std::move( pProxy ) );
         }
     }

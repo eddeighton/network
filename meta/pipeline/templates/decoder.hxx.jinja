@@ -20,19 +20,16 @@ void decodeInboundRequest(boost::archive::binary_iarchive& ia,
     mega::service::Header header;
     ia >> header;
     //  std::cout << "Got request: " << header << std::endl;
- 
-    auto reg = mega::service::Registry::getReadAccess();
 
+    auto reg = mega::service::Registry::getReadAccess();
     auto& logicalThread = reg->getLogicalThread(header.m_responder.getMPTF());
-    auto pObject = reg->getObject(header.m_responder);
 
     // request or response
     logicalThread.send(
         mega::service::InterProcessRequest
         {
-            [pObject, &responseSender, header]()
+            [&responseSender, header]()
             {
-                
                 if( header.m_interfaceName.empty() )
                 {
                     THROW_RTE( "Missing interface name in request: " << header );
@@ -40,7 +37,8 @@ void decodeInboundRequest(boost::archive::binary_iarchive& ia,
 {% for interface in interfaces %}
                 else if( header.m_interfaceName.str() == "{{ interface.full_type_name }}" )
                 {
-                    auto p = dynamic_cast<{{ interface.full_type_name }}*>(pObject);
+                    auto reg = mega::service::Registry::getReadAccess();
+                    auto p = reg->one<{{ interface.full_type_name }}>(header.m_responder);
                     if( header.m_functionName.empty() )
                     {
                         THROW_RTE( "Missing function name in request: " << header );

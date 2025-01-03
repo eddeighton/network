@@ -19,23 +19,24 @@ TEST( Service, Daemon )
     using namespace mega::service;
     using namespace mega::test;
 
+
     
-    namespace bp = boost::process;
+   //  namespace bp = boost::process;
 
-    std::future< std::string > daemonOutput, daemonError;
-    std::future< std::string > megaOutput,   megaError;
+   //  std::future< std::string > daemonOutput, daemonError;
+   //  std::future< std::string > megaOutput,   megaError;
 
-    boost::asio::io_service ios;
+   //  boost::asio::io_service ios;
 
-    bp::child procDaemon(   "/build/debug/bin/daemon",  bp::std_in.close(), bp::std_out > daemonOutput, bp::std_err > daemonError, ios );
-    bp::child procMega(     "/build/debug/bin/mega",    bp::std_in.close(), bp::std_out > megaOutput, bp::std_err > megaError, ios );
+   //  bp::child procDaemon(   "/build/debug/bin/daemon",  bp::std_in.close(), bp::std_out > daemonOutput, bp::std_err > daemonError, ios );
+   //  bp::child procMega(     "/build/debug/bin/mega",    bp::std_in.close(), bp::std_out > megaOutput, bp::std_err > megaError, ios );
 
-    ios.run();
+   //  ios.run();
 
-    auto strDaemonOut = daemonOutput.get();
-    auto strMegaOut  = megaOutput.get();
+   //  auto strDaemonOut = daemonOutput.get();
+   //  auto strMegaOut  = megaOutput.get();
 
-    std::cout << strDaemonOut << std::endl;
-    std::cout << strMegaOut << std::endl;
+   //  std::cout << strDaemonOut << std::endl;
+   //  std::cout << strMegaOut << std::endl;
 }
 

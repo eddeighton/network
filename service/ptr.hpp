@@ -6,43 +6,51 @@
 #include "common/assert_verify.hpp"
 #include "common/serialisation.hpp"
 
+#include <memory>
+
 namespace mega::service
 {
+    namespace detail
+    {
+        template< typename T, typename Archive >
+        void serialize( std::weak_ptr< Proxy< T > >& pointer, Archive& archive );
+    }
+
     template< typename T >
     class Ptr
     {
         using ProxyType = Proxy< T >;
-        ProxyType* p = nullptr;
+        using PointerType = std::weak_ptr< Proxy< T > >;
+        mutable PointerType m_ptr;
+
+        ProxyType* get() const { return m_ptr.lock().get(); }
     public:
         Ptr() = default;
-        Ptr(ProxyType* p) : p(p) {}
+        Ptr(std::shared_ptr< Proxy< T > > p) : m_ptr(p) {}
 
-        explicit operator bool() const { return p; }
-        ProxyType* operator->() const { return p; }
-        ProxyType& operator*() const { ASSERT(p); return *p; }
+        explicit operator bool() const { return get(); }
+        ProxyType* operator->() const { return get(); }
+        ProxyType& operator*() const { auto p = get(); ASSERT(p); return *p; }
 
         std::string str() const
         {
             std::ostringstream os;
-            if( p )
+            if( auto p = get() )
             {
                 os << p->getMPTFO();
+            }
+            else
+            {
+                os << "nullptr";
             }
             return os.str();
         }
 
         template < class Archive >
-        inline void serialize( Archive& archive, const unsigned int )
-        {
-            if constexpr( boost::serialization::IsXMLArchive< Archive >::value )
-            {
-                //archive& boost::serialization::make_nvp( "machine_id", value );
-            }
-            else
-            {
-                //archive& value;
-            }
+        void serialize( Archive& archive, const unsigned int )
+        {    
+            detail::serialize< T, Archive >( m_ptr, archive );
         }
-
     };
 }
+

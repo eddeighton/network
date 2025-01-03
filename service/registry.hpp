@@ -102,17 +102,17 @@ namespace mega::service
                 "Failed to locate logical thread straight away: " << mptf);
             // std::cout << "Registry registered logical thread: " << mptf << std::endl;
         }
-
-        Interface* getObject(MPTFO mptfo) const
+/*
+        Ptr< Interface > getObject(MPTFO mptfo) const
         {
             auto iFind = m_objects.find(mptfo);
             VERIFY_RTE_MSG(iFind != m_objects.end(),
                 "Failed to locate object: " << mptfo);
-            return iFind->second;
+            return Ptr< Interface >( iFind->second );
         }
-
+*/
         template< typename T >
-        std::vector< Ptr< T > > get(MPTFO mptfo) const
+        std::vector< std::shared_ptr< Proxy< T > > > get(MPTFO mptfo) const
         {
             const InterfaceTypeName interfaceTypeName
                 = getInterfaceTypeName< T >();
@@ -122,18 +122,18 @@ namespace mega::service
             const auto iLower = m_interfaceMPTFOMap.lower_bound( key );
             const auto iUpper = m_interfaceMPTFOMap.upper_bound( key );
 
-            std::vector< Ptr< T > > result;
+            std::vector< std::shared_ptr< Proxy< T > > > result;
             for( auto i = iLower; i != iUpper; ++i )
             {
-                auto p = dynamic_cast< Proxy<T>* >( i->second );
+                auto p = std::dynamic_pointer_cast< Proxy<T> >( i->second );
                 VERIFY_RTE(p);
-                result.push_back( Ptr< T >( p ) );
+                result.push_back( p );
             }
             return result;
         }
 
         template< typename T >
-        Ptr< T > one(MPTFO mptfo) const
+        std::shared_ptr< Proxy< T > > one(MPTFO mptfo) const
         {
             auto r = get<T>(mptfo);
             VERIFY_RTE_MSG(r.size()==1,
@@ -143,7 +143,7 @@ namespace mega::service
         }
 
         template< typename T >
-        std::vector< Ptr< T > > get(MP mp) const
+        std::vector< std::shared_ptr< Proxy< T > > > get(MP mp) const
         {
             const InterfaceTypeName interfaceTypeName
                 = getInterfaceTypeName< T >();
@@ -152,22 +152,22 @@ namespace mega::service
 
             const auto iLower = m_interfaceMPTFOMap.lower_bound( key );
 
-            std::vector< Ptr< T > > result;
+            std::vector< std::shared_ptr< Proxy< T > > > result;
             for( auto i = iLower; i != m_interfaceMPTFOMap.end(); ++i )
             {
                 if( i->first.second.getMP() != mp )
                 {
                     break;
                 }
-                auto p = dynamic_cast< Proxy<T>* >( i->second );
+                auto p = std::dynamic_pointer_cast< Proxy<T> >( i->second );
                 VERIFY_RTE(p);
-                result.push_back( Ptr< T >( p ) );
+                result.push_back( p );
             }
             return result;
         }
 
         template< typename T >
-        Ptr< T > one(MP mp) const
+        std::shared_ptr< Proxy< T > > one(MP mp) const
         {
             auto r = get<T>(mp);
             VERIFY_RTE_MSG(r.size()!=0,
@@ -224,5 +224,8 @@ namespace mega::service
         static RegistryReadAccess getReadAccess();
         static RegistryWriteAccess getWriteAccess();
     };
+
 }
+
+#include "service/ptr.ipp"
 
