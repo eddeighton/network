@@ -131,9 +131,29 @@ int main( int argc, const char* argv[] )
                     std::cout << "Got command: " << std::endl;
                     std::cout << strCommand << std::endl;
 
-                    pybind11::scoped_interpreter guard{};
+                    boost::fibers::fiber([&]()
+                        {
+                            pybind11::scoped_interpreter guard{};
+                           // pybind11::module_ megastructureModule =
+                           //     pybind11::module_::import("megastructure");
 
-                    pybind11::print( "Hello World from Python Embedded Interpreter" );
+                            using namespace pybind11::literals;
+
+                            std::ostringstream os;
+                            os << "import megastructure as mega\n";
+                            os << strCommand;
+
+                            auto locals = pybind11::dict(
+                                "name"_a = "Ed was here!"
+                            );
+
+                            pybind11::exec(
+                                os.str(),
+                                pybind11::globals(),
+                                locals
+                                );
+
+                        }).detach();
                 }
 
                 if( bRunAsServer )

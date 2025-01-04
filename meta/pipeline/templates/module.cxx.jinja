@@ -156,7 +156,7 @@ PYBIND11_MODULE( megastructure, pythonModule )
         ;
 {% endfor %}
 
-    pybind11::class_< mega::service::PythonConnection >( pythonModule, "PythonConnection" )
+    pybind11::class_< mega::service::PythonConnection >( pythonModule, "Connection" )
         .def( pybind11::init< std::string, short >() )
         .def( pybind11::init( &mega::service::PythonConnection::createDefault ))
         .def( "mp", &mega::service::PythonConnection::getMP )

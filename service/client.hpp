@@ -114,6 +114,15 @@ namespace mega::service
             m_connections.insert(pConnection);
             return pConnection;
         }
+
+        void stop()
+        {
+            auto con = m_connections;
+            for( auto c : con )
+            {
+                c->stop();
+            }
+        }
     private:
         void onDisconnect(Connection::Ptr pConnection)
         {

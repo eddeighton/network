@@ -18,6 +18,7 @@
 #pragma once
 
 #include "service/server.hpp"
+#include "service/client.hpp"
 #include "service/asio.hpp"
 #include "service/enrole.hpp"
 #include "service/protocol/serialization.hpp"
@@ -37,6 +38,7 @@ namespace mega::service
         std::atomic<bool>           m_bShutdown{false};
         std::atomic<bool>           m_bStopped{false};
         std::unique_ptr< Server >   m_pServer;
+        std::unique_ptr< Client >   m_pClient;
         std::thread                 m_thread;
     public:
         Daemon(MP mp, mega::service::PortNumber port )
@@ -67,6 +69,16 @@ namespace mega::service
                         }
                     );
 
+                    m_pClient = std::make_unique< Client >(
+                        *m_pIOContext,
+                        // receive callback
+                        [this](mega::service::SocketSender& responseSender,
+                                const mega::service::PacketBuffer& buffer)
+                        { 
+                            receive( responseSender, buffer ); 
+                        }
+                    );
+
                     mega::service::init_fiber_scheduler(m_pIOContext);
                     m_pIOContext->run();
                 }
@@ -82,14 +94,15 @@ namespace mega::service
             boost::fibers::future<void>     waitForServerShutdownFuture =
                 waitForServerShutdown.get_future();
             
-            m_pIOContext->post( [&pServer = m_pServer, &waitForServerShutdown]()
+            m_pIOContext->post( [&pClient = m_pClient, &pServer = m_pServer, &waitForServerShutdown]()
                 {
                     // must avoid blocking asio while
                     // shutting down the server since the
                     // sockets need to return for each
                     // connection to close
-                    boost::fibers::fiber( [&pServer, &waitForServerShutdown]()
+                    boost::fibers::fiber( [&pClient, &pServer, &waitForServerShutdown]()
                     {
+                        pClient->stop();
                         pServer->stop();
                         waitForServerShutdown.set_value();
                         std::cout << "Server stop complete" << std::endl;
