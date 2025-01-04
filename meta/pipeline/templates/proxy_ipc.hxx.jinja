@@ -52,9 +52,12 @@
 
             const auto thisMPTF = thisLogicalThread.getMPTF();
             const auto messageID = thisLogicalThread.getUniqueMessageID();
+            auto& stack = thisLogicalThread.getStack();
+            stack.push_back( thisMPTF );
 
             const service::Header header
             {
+                stack,
                 messageID,
                 thisMPTF,
                 m_mptfo,
@@ -77,7 +80,11 @@
 
             thisLogicalThread.setInterProcessResponseCallback(
                 messageID,
-                [&bResponse{%if function.return_type != "void" %}, &result{% endif %}](const service::InterProcessResponse& interProcessResponse)
+                [   &bResponse
+                   ,&stack
+                   {%if function.return_type != "void" %},&result{% endif %}
+                ]
+                (const service::InterProcessResponse& interProcessResponse)
                 {
 {% if function.return_type != "void" %}
                     service::MessageType messageType;
@@ -89,6 +96,7 @@
                     ia >> header;
                     ia >> result;
 {% endif %}
+                    stack.pop_back();
                     bResponse = true;
                 });
 

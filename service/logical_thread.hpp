@@ -2,6 +2,7 @@
 #pragma once
 
 #include "service/protocol/message.hpp"
+#include "service/protocol/stack.hpp"
 
 #include "vocab/service/mptf.hpp"
 #include "vocab/value.hpp"
@@ -27,13 +28,15 @@ namespace mega::service
         MPTF m_mptf;
         bool m_bContinue = true;
         MessageID m_interProcessMessageID;
+        Stack m_stack;
     public:
         LogicalThread()
-            : m_receiveChannel( 128 )
+            : m_receiveChannel( 16 )
         {
         }
 
         MPTF getMPTF() const { return m_mptf; }
+        Stack& getStack() { return m_stack; }
         
         auto getUniqueMessageID()
         {

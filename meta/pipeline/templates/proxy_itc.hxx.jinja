@@ -64,6 +64,7 @@
             else
             {
                 bool bResponse = false;
+                thisLogicalThread.getStack().push_back( thisLogicalThread.getMPTF() );
 {% if function.return_type != "void" %}
                 {{ function.return_type }} result{};
                 service::Functor call = 
@@ -87,7 +88,13 @@
                          thisLogicalThread.send
                          (
                             service::InProcessResponse
-                            { [&bResponse]() { bResponse = true; } }
+                            { 
+                                [&thisLogicalThread, &bResponse]() 
+                                { 
+                                    thisLogicalThread.getStack().pop_back();
+                                    bResponse = true;
+                                }
+                            }
                          );
                      }
                      catch(...)
