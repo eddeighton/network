@@ -232,26 +232,35 @@ Pipeline::~Pipeline() = default;
 
 DependencyProvider::~DependencyProvider() = default;
 
-Pipeline::Ptr Registry::getPipeline( const Configuration& configuration, std::ostream& osLog )
+Pipeline::Ptr Registry::getPipeline( const Configuration& configuration, bool bCreateTempSO, std::ostream& osLog )
 {
     try
     {
-        boost::filesystem::path tempDir = boost::filesystem::temp_directory_path() / "mega_registry";
-        boost::filesystem::ensureFoldersExist( tempDir / "test" );
-        VERIFY_RTE_MSG(
-            boost::filesystem::exists( tempDir ), "Failed to create temporary folder: " << tempDir.string() );
-
-        std::ostringstream osTempFileName;
+        boost::dll::fs::path pipelineLibrary;
+        
+        if( bCreateTempSO )
         {
-            const boost::filesystem::path actualFile = configuration.getPipelineID();
-            osTempFileName << common::uuid() << "_" << actualFile.filename().string();
+            boost::filesystem::path tempDir = boost::filesystem::temp_directory_path() / "mega_registry";
+            boost::filesystem::ensureFoldersExist( tempDir / "test" );
+            VERIFY_RTE_MSG(
+                boost::filesystem::exists( tempDir ), "Failed to create temporary folder: " << tempDir.string() );
+
+            std::ostringstream osTempFileName;
+            {
+                const boost::filesystem::path actualFile = configuration.getPipelineID();
+                osTempFileName << common::uuid() << "_" << actualFile.filename().string();
+            }
+
+            const boost::filesystem::path tempDllPath = tempDir / osTempFileName.str();
+            boost::filesystem::copy_file(
+                configuration.getPipelineID(), tempDllPath, boost::filesystem::copy_options::synchronize );
+       
+            pipelineLibrary = tempDllPath;
         }
-
-        const boost::filesystem::path tempDllPath = tempDir / osTempFileName.str();
-        boost::filesystem::copy_file(
-            configuration.getPipelineID(), tempDllPath, boost::filesystem::copy_options::synchronize );
-
-        boost::dll::fs::path pipelineLibrary( tempDllPath );
+        else
+        {
+            pipelineLibrary = configuration.getPipelineID();
+        }
 
         Pipeline::Ptr pPipeline
             = boost::dll::import_symbol< mega::pipeline::Pipeline >( pipelineLibrary, "mega_pipeline" );
@@ -275,6 +284,7 @@ PipelineResult runPipelineLocally( const boost::filesystem::path& stashDir,
                                    bool bForceNoStash,
                                    bool bExecuteUpTo,
                                    bool bInclusive,
+                                   bool bCreateTempSO,
                                    std::ostream& osLog )
 {
     VERIFY_RTE_MSG( !stashDir.empty(), "Local pipeline execution requires stash directry" );
@@ -300,7 +310,7 @@ PipelineResult runPipelineLocally( const boost::filesystem::path& stashDir,
     }
     osLog << "Initialising pipeline" << std::endl;
 
-    mega::pipeline::Pipeline::Ptr pPipeline = mega::pipeline::Registry::getPipeline( pipelineConfig, osLog );
+    mega::pipeline::Pipeline::Ptr pPipeline = mega::pipeline::Registry::getPipeline( pipelineConfig, bCreateTempSO, osLog );
 
     mega::pipeline::PipelineResult pipelineResult( true, "", buildHashCodes.get() );
 
@@ -329,12 +339,12 @@ PipelineResult runPipelineLocally( const boost::filesystem::path& stashDir,
         virtual void onProgress( const std::string& strMsg ) { m_osLog << strMsg << std::endl; }
         virtual void onFailed( const std::string& strMsg )
         {
-            m_osLog << common::printDuration( common::elapsed( m_stopWatch ) ) << " " << strMsg << std::endl;
+            m_osLog << strMsg << " time: " << common::printDuration( common::elapsed( m_stopWatch ) ) << std::endl;
             m_pipelineResult = mega::pipeline::PipelineResult( false, strMsg, m_buildHashCodes.get() );
         }
         virtual void onCompleted( const std::string& strMsg )
         {
-            m_osLog << common::printDuration( common::elapsed( m_stopWatch ) ) << " " << strMsg << std::endl;
+            m_osLog << strMsg << " time: " << common::printDuration( common::elapsed( m_stopWatch ) ) << std::endl;
         }
     } progressReporter( pipelineResult, stash, buildHashCodes, osLog );
 
@@ -460,9 +470,9 @@ PipelineResult runPipelineLocally( const boost::filesystem::path& stashDir,
                 if( !pipelineResult.getSuccess() )
                 {
                     osLog << "Pipeline task: " << task.getName() << " " << task.getSourceFile()
-                          << "failed: " << pipelineResult.getMessage() << std::endl;
+                          << " failed:\n" << pipelineResult.getMessage() << std::endl;
                     THROW_RTE( "Pipeline task: " << task.getName() << " " << task.getSourceFile()
-                                                 << "failed: " << pipelineResult.getMessage() );
+                                                 << " failed:\n" << pipelineResult.getMessage() );
                     break;
                 }
                 schedule.complete( task );
@@ -486,7 +496,7 @@ PipelineResult runPipelineLocally( const boost::filesystem::path&           stas
     std::string strTaskName, strSourceFile;
     boost::filesystem::path inputPipelineResultPath;
     return runPipelineLocally( stashDir, {}, nullptr, pipelineConfig, strTaskName, strSourceFile,
-        inputPipelineResultPath, false, false, true, osLog );
+        inputPipelineResultPath, false, false, true, false, osLog );
 }
 
 } // namespace mega::pipeline

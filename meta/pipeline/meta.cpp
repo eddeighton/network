@@ -20,6 +20,7 @@
 
 #include "meta/configuration.hpp"
 #include "meta/environment.hpp"
+#include "meta/pipeline/stash_environment.hpp"
 #include "meta/task.hpp"
 
 #include "pipeline/pipeline.hpp"
@@ -105,7 +106,7 @@ class MetaPipeline : public pipeline::Pipeline
 
         const Task task = decode( pipelineTask );
 
-        mega::io::MetaEnvironment environment( config.directories );
+        mega::io::MetaStashEnvironment environment( config.directories, stash );
 
         mega::meta::TaskDependencies task_dependencies
         {

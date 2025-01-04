@@ -25,6 +25,8 @@
 
 #include "pipeline/configuration.hpp"
 
+#include "common/hash.hpp"
+
 #include <boost/filesystem/path.hpp>
 
 #include <vector>
@@ -36,7 +38,7 @@ namespace mega::meta
 struct Configuration
 {
     pipeline::ConfigurationHeader          header;
-    std::string                            projectName;
+    common::Hash                           pipelineHash;
     std::vector< io::ComponentInfo >       componentInfos;
     io::Directories                        directories;
     io::ManifestData                       manifestData;
@@ -47,7 +49,7 @@ struct Configuration
     {
         // NOTE: header serialization handled seperately so can access in pipeline abstraction
         // archive& boost::serialization::make_nvp( "header", header );
-        archive& boost::serialization::make_nvp( "projectName", projectName );
+        archive& boost::serialization::make_nvp( "pipeline", pipelineHash );
         archive& boost::serialization::make_nvp( "componentInfos", componentInfos );
         archive& boost::serialization::make_nvp( "directories", directories );
         archive& boost::serialization::make_nvp( "manifestData", manifestData );

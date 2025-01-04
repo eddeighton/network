@@ -7,6 +7,7 @@
 #include "meta/db/database/directories.hpp"
 
 #include "common/string.hpp"
+#include "common/stash.hpp"
 
 namespace mega::io
 {
@@ -136,5 +137,4 @@ namespace mega::io
         }
     };
 }
-
 

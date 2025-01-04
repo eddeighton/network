@@ -160,32 +160,11 @@ std::string typeNameFromFullName(const std::string& strFullTypeName, const Names
 }
 
 using namespace AnalysisStage;
+using namespace std::string_literals;
+using namespace AnalysisStage::Service;
 
-void task_interface_analysis(TaskDependencies& dependencies)
+class InterfaceCallback : public MatchFinder::MatchCallback
 {
-    using namespace std::string_literals;
-    using namespace AnalysisStage::Service;
-
-    const mega::io::CompilationFilePath compilationFilePath =
-        dependencies.m_environment.AnalysisStage_AnalysisFile(
-            dependencies.m_environment.project_manifest() );
-
-    // start( taskProgress, "Task_InterfaceAnalysis" );
-    // TODO: implement determinant and stashing
-
-    // task::DeterminantHash determinant( 123 );
-
-    //        { m_toolChain.toolChainHash, m_environment.getBuildHashCode( ... ) } );
-
-    // if( m_environment.restore( compilationFilePath, determinant ) )
-    // {
-    //     m_environment.setBuildHashCode( compilationFilePath );
-    //     cached( taskProgress );
-    //     return;
-    // }
-
-    class InterfaceCallback : public MatchFinder::MatchCallback
-    {
         Database& database;
         boost::filesystem::path interfaceFilePath;
 
@@ -401,13 +380,35 @@ void task_interface_analysis(TaskDependencies& dependencies)
         }
     };
 
+void task_interface_analysis(TaskDependencies& dependencies)
+{
+
+    const mega::io::CompilationFilePath compilationFilePath =
+        dependencies.m_environment.AnalysisStage_AnalysisFile(
+            dependencies.m_environment.project_manifest() );
+
+    TASK_START("task_interface_analysis");
+
+    // has all input source files 
+    // NOTE: not worrying about include directives here
+    task::DeterminantHash determinant(
+        dependencies.m_configuration.pipelineHash,
+        dependencies.m_configuration.interfacePaths);
+
+    if( dependencies.m_environment.restore( compilationFilePath, determinant ) )
+    {
+        dependencies.m_environment.setBuildHashCode( compilationFilePath );
+        TASK_CACHED( "task_interface_analysis" );
+        return;
+    }
+
     Database database( dependencies.m_environment,
         dependencies.m_environment.project_manifest() );
 
     for( const auto& interfacePath : dependencies.m_configuration.interfacePaths)
     {
         VERIFY_RTE( boost::filesystem::exists(interfacePath) );
-        //std::cout << "Got interface path: " << interfacePath.string() << std::endl;
+        TASK_PROGRESS("task_interface_analysis", "Processing: " << interfacePath.string());
 
         ToolDB      db( interfacePath );
         ClangTool   tool( db, { interfacePath.string() } );
@@ -420,18 +421,15 @@ void task_interface_analysis(TaskDependencies& dependencies)
         tool.run( newFrontendActionFactory( &finder ).get() );
     }
 
-    //auto pFile = boost::filesystem::createNewFileStream("/src/test/service/test.cxx");
-    //*pFile << "// Hello World from meta pipeline\n\n";
-
     using namespace AnalysisStage::Service;
 
     auto compilationFileHash = database.save_AnalysisFile_to_temp();
 
     dependencies.m_environment.temp_to_real(compilationFilePath);
     // dependencies.m_environment.setBuildHashCode( compilationFilePath, compilationFileHash );
-    // dependencies.m_environment.stash( compilationFilePath, determinant );
-    // succeeded( taskProgress );
+    dependencies.m_environment.stash( compilationFilePath, determinant );
 
+    TASK_COMPLETE("task_interface_analysis");
 }
 
 }

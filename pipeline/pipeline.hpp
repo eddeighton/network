@@ -132,7 +132,7 @@ public:
 class Registry
 {
 public:
-    static Pipeline::Ptr getPipeline( const Configuration& configuration, std::ostream& osLog );
+    static Pipeline::Ptr getPipeline( const Configuration& configuration, bool bCreateTempSO, std::ostream& osLog );
 };
 
 
@@ -146,6 +146,7 @@ PipelineResult runPipelineLocally( const boost::filesystem::path& stashDir,
                                    bool bForceNoStash,
                                    bool bExecuteUpTo,
                                    bool bInclusive,
+                                   bool bCreateTempSO,
                                    std::ostream& osLog );
 
 PipelineResult runPipelineLocally( const boost::filesystem::path& stashDir,

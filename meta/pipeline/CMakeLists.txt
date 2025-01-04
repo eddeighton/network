@@ -7,6 +7,7 @@ add_library( meta_pipeline SHARED
     ${DATABASE_GENERATED_STAGE_FILES} 
 
     meta.cpp
+    stash_environment.cpp
     task_interface_analysis.cpp
     task_interface_analysis_report.cpp
     task_service_gen.cpp

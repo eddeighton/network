@@ -26,14 +26,8 @@
 
 #include <iostream>
 
-
-auto test = boost::filesystem::temp_directory_path();
-
-
 int main( int argc, const char* argv[] )
 {
-    std::cout << test.string()  << std::endl;
-
     namespace po = boost::program_options;
     try
     {
@@ -83,6 +77,8 @@ int main( int argc, const char* argv[] )
                     std::ostream_iterator< boost::filesystem::path >( std::cout, " " ) );
 
             mega::Version version;
+
+            const task::FileHash pipelineHash( metaPipelinePath );
      
             const mega::io::Directories directories{ srcDir, buildDir, buildDir, templatesDir };
 
@@ -105,7 +101,7 @@ int main( int argc, const char* argv[] )
                 metaPipelinePath.string(),
                 version,
 
-                "meta",
+                pipelineHash,
                 componentInfos,
 
                 directories,

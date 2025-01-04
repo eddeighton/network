@@ -3,6 +3,7 @@
 #define COMMON_HASH_UTILS_28_OCT_2020
 
 #include "assert_verify.hpp"
+#include "serialisation.hpp"
 
 #include "boost/filesystem/path.hpp"
 
@@ -166,19 +167,12 @@ public:
     {
     }
 
-    HashCodeType get() const { return m_data; }
-    void         set( HashCodeType hash ) { m_data = hash; }
+    inline HashCodeType get() const { return m_data; }
+    inline void         set( HashCodeType hash ) { m_data = hash; }
 
     inline bool operator==( const Hash& cmp ) const { return m_data == cmp.m_data; }
     inline bool operator!=( const Hash& cmp ) const { return m_data != cmp.m_data; }
     inline bool operator<( const Hash& cmp ) const { return m_data < cmp.m_data; }
-
-    template < class Archive >
-    inline void serialize( Archive& archive, const unsigned int )
-    {
-        archive& m_data;
-    }
-
     inline void operator^=( const Hash& code ) { m_data = internal::HashCombiner()( m_data, code.get() ); }
 
     template < typename... Args >
@@ -199,7 +193,7 @@ public:
         return os.str();
     }
 
-    static HashCodeType fromHexString( const std::string& str )
+    static inline HashCodeType fromHexString( const std::string& str )
     {
         if( str.size() > 2 )
         {
@@ -212,6 +206,29 @@ public:
             }
         }
         THROW_RTE( "Invalid hex string: " << str );
+    }
+
+    template < class Archive >
+    inline void serialize( Archive& archive, const unsigned int )
+    {
+        if constexpr( boost::serialization::IsXMLArchive< Archive >::value )
+        {
+            if constexpr( Archive::is_saving::value )
+            {
+                const std::string strHex = toHexString();
+                archive& boost::serialization::make_nvp( "hashcode", strHex );
+            }
+            else
+            {
+                std::string strHex;
+                archive& boost::serialization::make_nvp( "hashcode", strHex );
+                set( fromHexString( strHex ) );
+            }
+        }
+        else
+        {
+            archive& m_data;
+        }
     }
 };
 
