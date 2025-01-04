@@ -8,6 +8,7 @@
 #include "service/sender_socket.hpp"
 #include "service/socket_info.hpp"
 #include "service/network.hpp"
+#include "service/connection.hpp"
 
 #include <set>
 #include <iostream>
@@ -17,7 +18,7 @@ namespace mega::service
     class Client
     {
     public:        
-        class Connection : public std::enable_shared_from_this< Connection >
+        class Connection : public service::Connection
         {
             friend class Client;
 
@@ -57,9 +58,11 @@ namespace mega::service
                 // std::cout << "Client connection start " << m_socket_info << std::endl;
             }
 
-            Sender& getSender() { return m_sender; }
+            const TCPSocketInfo& getSocketInfo() const override { return m_socket_info; }
 
-            void stop()
+            Sender& getSender() override { return m_sender; }
+
+            void stop() override
             {
                 // std::cout << "Client connection stop from: " << m_socket_info << std::endl;
                 boost::system::error_code ec;
@@ -72,11 +75,13 @@ namespace mega::service
                 }
             }
 
+            ProcessID getProcessID() const override { return ProcessID{}; }
         private:
             void disconnected()
             {
                 // std::cout << "Client connection disconnect from: " << m_socket_info << std::endl;
-                m_client.onDisconnect(shared_from_this());
+                m_client.onDisconnect(
+                    std::dynamic_pointer_cast< Connection >( shared_from_this() ));
                 // std::cout << "Disconnected" << std::endl;
                 m_bDisconnected = true;
             }

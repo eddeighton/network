@@ -8,6 +8,7 @@
 #include "service/sender_socket.hpp"
 #include "service/socket_info.hpp"
 #include "service/network.hpp"
+#include "service/connection.hpp"
 
 #include <boost/circular_buffer.hpp>
 
@@ -16,11 +17,10 @@
 
 namespace mega::service
 {
-
     class Server
     {
     public:
-        class Connection : public std::enable_shared_from_this< Connection >
+        class Connection : public service::Connection
         {
             friend class Server;
             
@@ -31,6 +31,7 @@ namespace mega::service
 
         public:
             using Ptr = std::shared_ptr< Connection >;
+            using WeakPtr = std::weak_ptr< Connection >;
 
             Connection( Server& server, boost::asio::io_context& ioContext )
             : m_server( server )
@@ -48,7 +49,11 @@ namespace mega::service
                 stop();
             }
 
-            void stop()
+            const TCPSocketInfo& getSocketInfo() const override { return m_socket_info; }
+
+            Sender& getSender() override { return m_sender; }
+
+            void stop() override
             {
                 std::cout << "Server connection stoppping " << m_socket_info << std::endl;
                 if( m_receiver.started() && !m_bDisconnected )
@@ -65,9 +70,7 @@ namespace mega::service
                 std::cout << "Server connection stop complete " << m_socket_info << std::endl;
             }
 
-            Sender& getSender() { return m_sender; }
-            const TCPSocketInfo& getSocketInfo() const { return m_socket_info; }
-            ProcessID getProcessID() const { return m_processID; }
+            ProcessID getProcessID() const override { return m_processID; }
         private:
             void start(ProcessID processID)
             {
@@ -93,7 +96,8 @@ namespace mega::service
                     m_bDisconnected = true;
                     m_waitForDisconnect.set_value();
                     // NOTE: deleted on next line
-                    m_server.onDisconnect( shared_from_this() );
+                    m_server.onDisconnect( 
+                        std::dynamic_pointer_cast< Connection >( shared_from_this() ) );
                 }
 
                 std::cout << "Server connection disconnect complete" << std::endl;
@@ -112,17 +116,21 @@ namespace mega::service
         };
 
         using ConnectionPtrMap = std::map< ProcessID, Connection::Ptr >;
-        using ConnectionCallback = std::function< void(Connection::Ptr) >;
+        using ConnectionCallback = std::function< void(service::Connection::Ptr) >;
+        using DisconnectCallback = std::function< void(service::Connection::Ptr) >;
         using ProcessIDFreeList = boost::circular_buffer< ProcessID >;
 
         Server(boost::asio::io_context& ioContext,
                 PortNumber port_number,
                 ReceiverCallback receiverCallback,
-                ConnectionCallback connectionCallback)
+                ConnectionCallback connectionCallback,
+                DisconnectCallback disconnectCallback
+                )
         :   m_ioContext(ioContext)
         ,   m_port_number(port_number)
         ,   m_receiverCallback(std::move(receiverCallback))
         ,   m_connectionCallback(std::move(connectionCallback))
+        ,   m_disconnectCallback(std::move(disconnectCallback))
         ,   m_acceptor( m_ioContext,
                 boost::asio::ip::tcp::endpoint( boost::asio::ip::tcp::v4(), port_number.value ) )
         ,   m_processIDFreeList( std::numeric_limits< ProcessID::ValueType >::max() - 1 )
@@ -198,12 +206,14 @@ namespace mega::service
  
             m_connections.erase( iFind );
             m_processIDFreeList.push_back( processID );
+            m_disconnectCallback( pConnection );
         }
 
         boost::asio::io_context&        m_ioContext;
         PortNumber                      m_port_number;
         ReceiverCallback                m_receiverCallback;
         ConnectionCallback              m_connectionCallback;
+        DisconnectCallback              m_disconnectCallback;
         boost::asio::ip::tcp::acceptor  m_acceptor;
         ConnectionPtrMap                m_connections;
         ProcessIDFreeList               m_processIDFreeList;

@@ -29,31 +29,31 @@ using namespace std::string_literals;
 
 namespace mega::service
 {
-    class Connection
+    class PythonConnection
     {
     public:
-        std::unique_ptr< mega::service::Connect > m_pConnection;
+        std::unique_ptr< mega::service::Connect > m_pPythonConnection;
         std::unique_ptr< mega::test::OTestFactory > m_pTestFactory;
 
-        Connection( std::string strIPAddress = "localhost"s,
+        PythonConnection( std::string strIPAddress = "localhost"s,
                 short portNumber = 1234 )
-            :   m_pConnection( std::make_unique< mega::service::Connect >(
+            :   m_pPythonConnection( std::make_unique< mega::service::Connect >(
                     mega::service::IPAddress{ strIPAddress },
                     mega::service::PortNumber{ portNumber } ) )
             ,   m_pTestFactory( std::make_unique< mega::test::OTestFactory >() )
         {
         }
 
-        static Connection createDefault() { return Connection(); }
+        static PythonConnection createDefault() { return PythonConnection(); }
 
         MP getMP() const
         {
-            return m_pConnection->getMP();
+            return m_pPythonConnection->getMP();
         }
 
         MP getDaemonMP() const
         {
-            return m_pConnection->getDaemonMP();
+            return m_pPythonConnection->getDaemonMP();
         }
 
         std::string printRegistration()
@@ -156,15 +156,15 @@ PYBIND11_MODULE( megastructure, pythonModule )
         ;
 {% endfor %}
 
-    pybind11::class_< mega::service::Connection >( pythonModule, "Connection" )
+    pybind11::class_< mega::service::PythonConnection >( pythonModule, "PythonConnection" )
         .def( pybind11::init< std::string, short >() )
-        .def( pybind11::init( &mega::service::Connection::createDefault ))
-        .def( "mp", &mega::service::Connection::getMP )
-        .def( "daemon", &mega::service::Connection::getDaemonMP )
-        .def( "__repr__", &mega::service::Connection::printRegistration )
-        .def( "__str__", &mega::service::Connection::printRegistration )
+        .def( pybind11::init( &mega::service::PythonConnection::createDefault ))
+        .def( "mp", &mega::service::PythonConnection::getMP )
+        .def( "daemon", &mega::service::PythonConnection::getDaemonMP )
+        .def( "__repr__", &mega::service::PythonConnection::printRegistration )
+        .def( "__str__", &mega::service::PythonConnection::printRegistration )
 {% for interface in interfaces %}
-        .def( "{{ interface.type_name }}", &mega::service::Connection::get< {{ interface.full_type_name }} > )
+        .def( "{{ interface.type_name }}", &mega::service::PythonConnection::get< {{ interface.full_type_name }} > )
 {% endfor %}
         ;
 }

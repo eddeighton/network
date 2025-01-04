@@ -12,11 +12,6 @@
 #include <memory>
 #include <thread>
 
-
-
-
-
-
 int main( int argc, const char* argv[] )
 {
     using namespace mega::service;
@@ -43,10 +38,16 @@ int main( int argc, const char* argv[] )
                     // receive( responseSender, buffer ); 
                 },
                 // connection callback
-                [&](mega::service::Server::Connection::Ptr pConnection)
+                [&](mega::service::Connection::Ptr pConnection)
                 {
                     // connection( pConnection );
-                });
+                },
+                // disconnect callback
+                [&](mega::service::Connection::Ptr pConnection)
+                {
+                    // disconnect( pConnection );
+                }
+            );
 
             pIOContext->run();
         });
@@ -80,6 +81,5 @@ int main( int argc, const char* argv[] )
 
     std::cout << "main completing" << std::endl;
     return 0;
-
 }
 

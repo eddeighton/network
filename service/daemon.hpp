@@ -56,10 +56,16 @@ namespace mega::service
                             receive( responseSender, buffer ); 
                         },
                         // connection callback
-                        [this](mega::service::Server::Connection::Ptr pConnection)
+                        [this](Connection::Ptr pConnection)
                         {
                             connection( pConnection );
-                        });
+                        },
+                        // disconnect callback
+                        [this](Connection::Ptr pConnection)
+                        {
+                            disconnect( pConnection );
+                        }
+                    );
 
                     mega::service::init_fiber_scheduler(m_pIOContext);
                     m_pIOContext->run();
@@ -91,7 +97,7 @@ namespace mega::service
                 });
 
             waitForServerShutdownFuture.get();
-            
+ 
             m_pIOContext->stop();
 
             std::cout << "io service stopped" << std::endl;
@@ -180,7 +186,7 @@ namespace mega::service
             }
         }
 
-        void connection(mega::service::Server::Connection::Ptr pConnection)
+        void connection(Connection::Ptr pConnection)
         {
             // enrole connection
             // std::cout << "Connection callback called for: " <<
@@ -219,7 +225,11 @@ namespace mega::service
 
                 sender.send(vectorBuffer.vector());
             }
+        }
 
+        void disconnect(Connection::Ptr pConnection)
+        {
+            
         }
 
 
