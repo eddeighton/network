@@ -74,8 +74,9 @@ namespace mega::service
                     boost::this_fiber::yield();
                 }
             }
-
-            ProcessID getProcessID() const override { return ProcessID{}; }
+            
+            // connection is ALWAYS to a daemon so is always process ID zero.
+            ProcessID getProcessID() const override { return PROCESS_ZERO; }
         private:
             void disconnected()
             {
