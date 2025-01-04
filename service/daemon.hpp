@@ -140,7 +140,17 @@ namespace mega::service
                     break;
                 case mega::service::MessageType::eRequest        :
                     {
-                        mega::service::decodeInboundRequest(ia, responseSender);
+                        mega::service::Header header;
+                        ia >> header;
+                       
+                        if( header.m_responder.getMP() == m_mp )
+                        {
+                            mega::service::decodeInboundRequest(ia, header, responseSender);
+                        }
+                        else
+                        {
+                            // dispatch message to router...
+                        }
                     }
                     break;
                 case mega::service::MessageType::eResponse        :

@@ -13,13 +13,10 @@
 namespace mega::service
 {
 
-void decodeInboundRequest(boost::archive::binary_iarchive& ia,
+void decodeInboundRequest(boost::archive::binary_iarchive& ia, const Header& header,
         mega::service::SocketSender& responseSender)
 {
     using namespace std::string_literals;
-    mega::service::Header header;
-    ia >> header;
-    //  std::cout << "Got request: " << header << std::endl;
 
     auto& logicalThread = mega::service::Registry::getReadAccess()
         ->getLogicalThread(header.m_responder.getMPTF());

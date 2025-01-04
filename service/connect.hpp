@@ -94,7 +94,13 @@ namespace mega::service
                     break;
                 case mega::service::MessageType::eRequest:
                     {
-                        mega::service::decodeInboundRequest(ia, responseSender);
+                        mega::service::Header header;
+                        ia >> header;
+
+                        VERIFY_RTE_MSG(header.m_responder.getMP() == getMP(),
+                            "Received request intended for different responder: " << header <<
+                            " when enrolement: " << m_enrolement );
+                        mega::service::decodeInboundRequest(ia, header, responseSender);
                     }
                     break;
                 case mega::service::MessageType::eResponse:

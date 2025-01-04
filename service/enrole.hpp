@@ -5,6 +5,8 @@
 
 #include "common/serialisation.hpp"
 
+#include <ostream>
+
 namespace mega::service
 {
     class Enrole
@@ -42,5 +44,13 @@ namespace mega::service
         MP m_daemon{};
         MP m_mp{};
     };
+
+    inline std::ostream& operator<<( std::ostream& os, const Enrole& enrole )
+    {
+        return os << "daemon: " << enrole.getDaemon() << " mp: " << enrole.getMP();
+    }
+
 }
+
+
 
