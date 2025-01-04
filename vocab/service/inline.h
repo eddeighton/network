@@ -65,6 +65,13 @@ typedef struct _c_object_id
 
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
+typedef struct _c_stack_id
+{
+    c_u8 value;
+} c_stack_id;
+
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
 #pragma pack( 1 )
 typedef struct _c_machine_process_id
 {
@@ -285,6 +292,79 @@ constexpr
     //     ( c_u8 )( i >> 56 ) };
     
     return c_machine_process_thread_fiber_object_id{ 
+        ( c_u32 )( i >> 32 ), 
+        ( c_u8 )( i >> 24 ),
+        ( c_u8 )( i >> 16 ),
+        ( c_u8 )( i >> 8 ),
+        ( c_u8 )( i  ) };
+}
+
+/////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+// c_machine_process_thread_fiber_stack_id
+#pragma pack( 1 )
+typedef struct _c_machine_process_thread_fiber_stack_id
+{
+    c_machine_id m_machine_id;
+    c_process_id m_process_id;
+    c_thread_id  m_thread_id;
+    c_fiber_id   m_fiber_id;
+    c_stack_id  m_stack_id;
+} c_machine_process_thread_fiber_stack_id;
+#pragma pack()
+
+#ifndef MEGAJIT
+static_assert( sizeof( c_machine_process_thread_fiber_stack_id ) == 8U, "Invalid c_machine_process_thread_fiber_stack_id Size" );
+#endif
+
+#ifdef __cplusplus
+constexpr
+#endif
+    inline c_machine_process_thread_fiber_stack_id
+    c_machine_process_thread_fiber_stack_id_make( c_u32 machine_id, c_u8 process_id, c_u8 thread_id, c_u8 fiber_id, c_u8 stack_id )
+{
+    c_machine_process_thread_fiber_stack_id result;
+    result.m_machine_id.value = machine_id;
+    result.m_process_id.value = process_id;
+    result.m_thread_id.value  = thread_id;
+    result.m_fiber_id.value   = fiber_id;
+    result.m_stack_id.value  = stack_id;
+    return result;
+}
+
+#ifdef __cplusplus
+constexpr
+#endif
+    inline c_u64
+    c_machine_process_thread_fiber_stack_id_as_int( c_machine_process_thread_fiber_stack_id id )
+{
+   //  return     ( ( c_u64 )id.m_machine_id.value )
+   //         + ( ( ( c_u64 )id.m_process_id.value ) << 32 )
+   //         + ( ( ( c_u64 )id.m_thread_id.value  ) << 40 )
+   //         + ( ( ( c_u64 )id.m_fiber_id.value   ) << 48 )
+   //         + ( ( ( c_u64 )id.m_stack_id.value  ) << 56 );
+
+    return     ( ( c_u64 )id.m_stack_id.value )
+           + ( ( ( c_u64 )id.m_fiber_id.value ) << 8 )
+           + ( ( ( c_u64 )id.m_thread_id.value  ) << 16 )
+           + ( ( ( c_u64 )id.m_process_id.value   ) << 24 )
+           + ( ( ( c_u64 )id.m_machine_id.value  ) << 32 );
+}
+
+#ifdef __cplusplus
+constexpr
+#endif
+    inline c_machine_process_thread_fiber_stack_id
+    c_machine_process_thread_fiber_stack_id_from_int( c_u64 i )
+{
+    // return c_machine_process_thread_fiber_stack_id{ 
+    //     ( c_u32 )( i ), 
+    //     ( c_u8 )( i >> 32 ),
+    //     ( c_u8 )( i >> 40 ),
+    //     ( c_u8 )( i >> 48 ),
+    //     ( c_u8 )( i >> 56 ) };
+    
+    return c_machine_process_thread_fiber_stack_id{ 
         ( c_u32 )( i >> 32 ), 
         ( c_u8 )( i >> 24 ),
         ( c_u8 )( i >> 16 ),

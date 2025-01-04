@@ -215,14 +215,14 @@ public:
         {
             if constexpr( Archive::is_saving::value )
             {
-                const std::string strHex = toHexString();
-                archive& boost::serialization::make_nvp( "hashcode", strHex );
+                const std::string strhex = toHexString();
+                archive& boost::serialization::make_nvp( "hashcode", strhex );
             }
             else
             {
-                std::string strHex;
-                archive& boost::serialization::make_nvp( "hashcode", strHex );
-                set( fromHexString( strHex ) );
+                std::string strhex;
+                archive& boost::serialization::make_nvp( "hashcode", strhex );
+                set( fromHexString( strhex ) );
             }
         }
         else

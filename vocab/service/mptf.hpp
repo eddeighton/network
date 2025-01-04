@@ -105,10 +105,17 @@ public:
         }
         else
         {
-            archive& m_machine_id.value;
-            archive& m_process_id.value;
-            archive& m_thread_id.value;
-            archive& m_fiber_id.value;
+            if constexpr( Archive::is_saving::value )
+            {
+                const ValueType v = getValue();
+                archive << v;
+            }
+            else
+            {
+                ValueType v{};
+                archive >> v;
+                *this = MPTF{v};
+            }
         }
     }
 };

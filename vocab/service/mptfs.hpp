@@ -17,8 +17,8 @@
 //  NEGLIGENCE) OR STRICT LIABILITY, EVEN IF COPYRIGHT OWNERS ARE ADVISED
 //  OF THE POSSIBILITY OF SUCH DAMAGES.
 
-#ifndef GUARD_2025_January_07_mptfo
-#define GUARD_2025_January_07_mptfo
+#ifndef GUARD_2025_January_07_mptfs
+#define GUARD_2025_January_07_mptfs
 
 #include "vocab/service/inline.h"
 
@@ -29,7 +29,7 @@
 #include "vocab/service/process_id.hpp"
 #include "vocab/service/thread_id.hpp"
 #include "vocab/service/fiber_id.hpp"
-#include "vocab/service/object_id.hpp"
+#include "vocab/service/stack_id.hpp"
 #include "vocab/service/mptf.hpp"
 
 #include "common/serialisation.hpp"
@@ -41,67 +41,67 @@
 namespace mega::service
 {
 
-class MPTFO : public c_machine_process_thread_fiber_object_id
+class MPTFS : public c_machine_process_thread_fiber_stack_id
 {
 public:
     using ValueType = U64;
 
     struct Hash
     {
-        inline U64 operator()( const MPTFO& ref ) const noexcept { return ref.getValue(); }
+        inline U64 operator()( const MPTFS& ref ) const noexcept { return ref.getValue(); }
     };
 
-    constexpr inline MPTFO()
-        : c_machine_process_thread_fiber_object_id{ 0, 0, 0, 0, 0 }
+    constexpr inline MPTFS()
+        : c_machine_process_thread_fiber_stack_id{ 0, 0, 0, 0, 0 }
     {
     }
 
-    constexpr inline explicit MPTFO( c_machine_id machineID, c_process_id processID, c_thread_id threadID, c_fiber_id fiberID, c_object_id objectID )
-        : c_machine_process_thread_fiber_object_id(
-            c_machine_process_thread_fiber_object_id_make( machineID.value, processID.value, threadID.value, fiberID.value, objectID.value ) )
+    constexpr inline explicit MPTFS( c_machine_id machineID, c_process_id processID, c_thread_id threadID, c_fiber_id fiberID, c_stack_id stackID )
+        : c_machine_process_thread_fiber_stack_id(
+            c_machine_process_thread_fiber_stack_id_make( machineID.value, processID.value, threadID.value, fiberID.value, stackID.value ) )
     {
     }
 
-    constexpr inline explicit MPTFO( MachineID machineID, ProcessID processID, ThreadID threadID, FiberID fiberID, ObjectID objectID )
-        : c_machine_process_thread_fiber_object_id(
-            c_machine_process_thread_fiber_object_id_make( machineID.getValue(), processID.getValue(), threadID.getValue(), fiberID.getValue(), objectID.getValue() ) )
+    constexpr inline explicit MPTFS( MachineID machineID, ProcessID processID, ThreadID threadID, FiberID fiberID, StackID stackID )
+        : c_machine_process_thread_fiber_stack_id(
+            c_machine_process_thread_fiber_stack_id_make( machineID.getValue(), processID.getValue(), threadID.getValue(), fiberID.getValue(), stackID.getValue() ) )
     {
     }
 
-    constexpr inline explicit MPTFO( MPTF mptf, ObjectID objectID)
-        : c_machine_process_thread_fiber_object_id( c_machine_process_thread_fiber_object_id_make(
-            mptf.getMachineID().getValue(), mptf.getProcessID().getValue(), mptf.getThreadID().getValue(), mptf.getFiberID().getValue(), objectID.getValue() ) )
+    constexpr inline explicit MPTFS( MPTF mptf, StackID stackID)
+        : c_machine_process_thread_fiber_stack_id( c_machine_process_thread_fiber_stack_id_make(
+            mptf.getMachineID().getValue(), mptf.getProcessID().getValue(), mptf.getThreadID().getValue(), mptf.getFiberID().getValue(), stackID.getValue() ) )
     {
     }
 
-    constexpr inline explicit MPTFO( MP mp, ThreadID threadID, FiberID fiberID, ObjectID objectID)
-        : c_machine_process_thread_fiber_object_id( c_machine_process_thread_fiber_object_id_make(
-            mp.getMachineID().getValue(), mp.getProcessID().getValue(), threadID.getValue(), fiberID.getValue(), objectID.getValue() ) )
+    constexpr inline explicit MPTFS( MP mp, ThreadID threadID, FiberID fiberID, StackID stackID)
+        : c_machine_process_thread_fiber_stack_id( c_machine_process_thread_fiber_stack_id_make(
+            mp.getMachineID().getValue(), mp.getProcessID().getValue(), threadID.getValue(), fiberID.getValue(), stackID.getValue() ) )
     {
     }
 
-    constexpr inline explicit MPTFO( ValueType _value )
-        : c_machine_process_thread_fiber_object_id( c_machine_process_thread_fiber_object_id_from_int( _value ) )
+    constexpr inline explicit MPTFS( ValueType _value )
+        : c_machine_process_thread_fiber_stack_id( c_machine_process_thread_fiber_stack_id_from_int( _value ) )
     {
     }
 
-    constexpr inline MPTFO( const MPTFO& cpy ) = default;
+    constexpr inline MPTFS( const MPTFS& cpy ) = default;
 
-    constexpr inline ValueType getValue() const { return c_machine_process_thread_fiber_object_id_as_int( *this ); }
+    constexpr inline ValueType getValue() const { return c_machine_process_thread_fiber_stack_id_as_int( *this ); }
     constexpr inline MachineID getMachineID() const { return MachineID{ m_machine_id }; }
     constexpr inline ProcessID getProcessID() const { return ProcessID{ m_process_id }; }
     constexpr inline ThreadID  getThreadID() const { return ThreadID{ m_thread_id }; }
     constexpr inline FiberID   getFiberID() const { return FiberID{ m_fiber_id }; }
-    constexpr inline ObjectID  getObjectID() const { return ObjectID{ m_object_id }; }
+    constexpr inline StackID   getStackID() const { return StackID{ m_stack_id }; }
 
     constexpr inline MP   getMP()   const { return MP{ m_machine_id, m_process_id }; }
     constexpr inline MPTF getMPTF() const { return MPTF{ m_machine_id, m_process_id, m_thread_id, m_fiber_id }; }
 
     constexpr inline bool valid() const { return getValue() != 0; }
 
-    constexpr inline bool operator==( const MPTFO& cmp ) const { return getValue() == cmp.getValue(); }
-    constexpr inline bool operator!=( const MPTFO& cmp ) const { return !this->operator==( cmp ); }
-    constexpr inline bool operator<( const MPTFO& cmp ) const { return getValue() < cmp.getValue(); }
+    constexpr inline bool operator==( const MPTFS& cmp ) const { return getValue() == cmp.getValue(); }
+    constexpr inline bool operator!=( const MPTFS& cmp ) const { return !this->operator==( cmp ); }
+    constexpr inline bool operator<( const MPTFS& cmp ) const { return getValue() < cmp.getValue(); }
 
     template < class Archive >
     inline void serialize( Archive& archive, const unsigned int )
@@ -112,7 +112,7 @@ public:
             archive& boost::serialization::make_nvp( "process_id", m_process_id.value );
             archive& boost::serialization::make_nvp( "thread_id",  m_thread_id.value );
             archive& boost::serialization::make_nvp( "fiber_id",   m_fiber_id.value );
-            archive& boost::serialization::make_nvp( "object_id",  m_object_id.value );
+            archive& boost::serialization::make_nvp( "stack_id",   m_stack_id.value );
         }
         else
         {
@@ -125,37 +125,37 @@ public:
             {
                 ValueType v{};
                 archive >> v;
-                *this = MPTFO{v};
+                *this = MPTFS{v};
             }
         }
     }
 };
 
-static_assert( sizeof( MPTFO ) == sizeof( MPTFO::ValueType ), "Invalid MPTFO Size" );
+static_assert( sizeof( MPTFS ) == sizeof( MPTFS::ValueType ), "Invalid MPTFS Size" );
 
-inline std::ostream& operator<<( std::ostream& os, const MPTFO& value )
+inline std::ostream& operator<<( std::ostream& os, const MPTFS& value )
 {
     return os << value.getMachineID() 
         << '.' << value.getProcessID() 
         << '.' << value.getThreadID() 
         << '.' << value.getFiberID() 
-        << '.' << value.getObjectID();
+        << '.' << value.getStackID();
 }
 
-inline std::istream& operator>>( std::istream& is, MPTFO& mptfo )
+inline std::istream& operator>>( std::istream& is, MPTFS& mptfs )
 {
     MachineID machineID;
     ProcessID processID;
     ThreadID  threadID;
     FiberID   fiberID;
-    ObjectID  objectID;
+    StackID   stackID;
     char      c;
-    is >> machineID >> c >> processID >> c >> threadID >> c >> fiberID >> c >> objectID;
-    mptfo = MPTFO{ machineID, processID, threadID, fiberID, objectID };
+    is >> machineID >> c >> processID >> c >> threadID >> c >> fiberID >> c >> stackID;
+    mptfs = MPTFS{ machineID, processID, threadID, fiberID, stackID };
     return is;
 }
 
 } // namespace mega::service
 
-#endif // GUARD_2025_January_07_mptfo
+#endif // GUARD_2025_January_07_mptfs
 
