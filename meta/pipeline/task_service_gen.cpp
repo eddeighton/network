@@ -53,9 +53,26 @@ using namespace AnalysisStage;
 
 void task_service_gen(TaskDependencies& dependencies)
 {
+    TASK_START("task_service_gen");
+
     using namespace std::string_literals;
     using namespace AnalysisStage::Service;
 
+    const mega::io::CompilationFilePath compilationFilePath =
+        dependencies.m_environment.AnalysisStage_AnalysisFile(
+            dependencies.m_environment.project_manifest() );
+
+    task::DeterminantHash determinant(
+        dependencies.m_configuration.pipelineHash,
+        dependencies.m_environment.getBuildHashCode(compilationFilePath));
+
+    // if( dependencies.m_environment.restore( compilationFilePath, determinant ) )
+    // {
+    //     dependencies.m_environment.setBuildHashCode( compilationFilePath );
+    //     TASK_CACHED( "task_interface_analysis" );
+    //     return;
+    // }
+    
     auto src = dependencies.m_environment.project_manifest();
     Database database( dependencies.m_environment, src, true );
 
@@ -164,6 +181,8 @@ void task_service_gen(TaskDependencies& dependencies)
         dependencies.m_environment.getServiceCodeGen_cmd(),
         dependencies.m_environment.getDirectories().templatesDir,
         data );
+
+    TASK_COMPLETE("task_service_gen");
 }
 
 }

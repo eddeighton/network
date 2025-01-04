@@ -28,20 +28,24 @@ void task_interface_analysis_report(TaskDependencies& dependencies)
     using namespace std::string_literals;
     using namespace AnalysisStage::Service;
 
-    // start( taskProgress, "Task_InterfaceAnalysis" );
-    // TODO: implement determinant and stashing
+    TASK_START("task_interface_analysis_report");
 
-    // task::DeterminantHash determinant( 123 );
+    const mega::io::CompilationFilePath compilationFilePath =
+        dependencies.m_environment.AnalysisStage_AnalysisFile(
+            dependencies.m_environment.project_manifest() );
+   
+    boost::filesystem::path reportFilePath = "/src/meta/interface_report.html";
 
-    //        { m_toolChain.toolChainHash, m_environment.getBuildHashCode( ... ) } );
+    task::DeterminantHash determinant(
+        dependencies.m_configuration.pipelineHash,
+        dependencies.m_environment.getBuildHashCode(compilationFilePath));
 
-    // if( m_environment.restore( compilationFilePath, determinant ) )
+    // if( dependencies.m_environment.restore( compilationFilePath, determinant ) )
     // {
-    //     m_environment.setBuildHashCode( compilationFilePath );
-    //     cached( taskProgress );
+    //     dependencies.m_environment.setBuildHashCode( compilationFilePath );
+    //     TASK_CACHED( "task_interface_analysis" );
     //     return;
-    // 
-    //
+    // }
 
     auto src = dependencies.m_environment.project_manifest();
 
@@ -158,9 +162,10 @@ void task_interface_analysis_report(TaskDependencies& dependencies)
     std::ostringstream os;
     renderHTML( report, os );
 
-    auto pFile = boost::filesystem::createNewFileStream( "/src/meta/interface_report.html" );
+    auto pFile = boost::filesystem::createNewFileStream( reportFilePath);
     *pFile << os.str();
 
+    TASK_COMPLETE("task_interface_analysis_report");
 }
 
 }

@@ -426,7 +426,7 @@ void task_interface_analysis(TaskDependencies& dependencies)
     auto compilationFileHash = database.save_AnalysisFile_to_temp();
 
     dependencies.m_environment.temp_to_real(compilationFilePath);
-    // dependencies.m_environment.setBuildHashCode( compilationFilePath, compilationFileHash );
+    dependencies.m_environment.setBuildHashCode( compilationFilePath, compilationFileHash );
     dependencies.m_environment.stash( compilationFilePath, determinant );
 
     TASK_COMPLETE("task_interface_analysis");
