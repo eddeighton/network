@@ -64,34 +64,37 @@
             else
             {
                 bool bResponse = false;
-                thisLogicalThread.getStack().push_back( thisLogicalThread.getMPTF() );
+                auto stack = thisLogicalThread.top();
+                stack.push_back(thisLogicalThread.getMPTF());
 {% if function.return_type != "void" %}
                 {{ function.return_type }} result{};
                 service::Functor call = 
-                    [ ptr = m_ptr, &thisLogicalThread, &result, &bResponse ]() -> void
+                    [ ptr = m_ptr, &thisLogicalThread, &result, &bResponse, &stack]() -> void
 {% else %}
                 service::Functor call = 
-                    [ ptr = m_ptr, &thisLogicalThread, &bResponse ]() -> void
+                    [ ptr = m_ptr, &thisLogicalThread, &bResponse, &stack ]() -> void
 {% endif %}
                 {
                      try
                      {
+                         {
+                            service::LogicalThread::StackEntry s( service::LogicalThread::get(), stack );
 {% if function.return_type != "void" %}
-                         result =
+                            result =
 {% endif %}
-                         ptr->{{ function.name }}
-                         (
+                            ptr->{{ function.name }}
+                            (
 {% for param in function.parameters %}
-                            {{ param.name }}{% if not loop.is_last %},{% endif %}
+                                {{ param.name }}{% if not loop.is_last %},{% endif %}
 {% endfor %}
-                         );
+                            );
+                         }
                          thisLogicalThread.send
                          (
                             service::InProcessResponse
                             { 
                                 [&thisLogicalThread, &bResponse]() 
                                 { 
-                                    thisLogicalThread.getStack().pop_back();
                                     bResponse = true;
                                 }
                             }

@@ -28,7 +28,7 @@ namespace mega::service
         MPTF m_mptf;
         bool m_bContinue = true;
         MessageID m_interProcessMessageID;
-        Stack m_stack;
+        std::vector< Stack > m_stacks;
     public:
         LogicalThread()
             : m_receiveChannel( 16 )
@@ -36,7 +36,41 @@ namespace mega::service
         }
 
         MPTF getMPTF() const { return m_mptf; }
-        Stack& getStack() { return m_stack; }
+
+        void push( const Stack& stack )
+        {
+            m_stacks.push_back( stack );
+        }
+        void pop()
+        {
+            m_stacks.pop_back();
+        }
+        Stack top()
+        {
+            Stack top;
+            if( !m_stacks.empty() )
+            {
+                top = m_stacks.back();
+            }
+            return top;
+        }
+
+        struct StackEntry
+        {
+            LogicalThread& logicalThread;
+            const Stack& stack;
+
+            StackEntry( LogicalThread& logicalThread, const Stack& stack )
+                : logicalThread( logicalThread )
+                , stack( stack )
+            {
+                logicalThread.push( stack );
+            }
+            ~StackEntry()
+            {
+                logicalThread.pop();
+            }
+        };
         
         auto getUniqueMessageID()
         {
