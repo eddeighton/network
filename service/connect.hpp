@@ -50,11 +50,11 @@ namespace mega::service
             registrationFuture.get();
             m_waitForRegistryPromise.reset();
 
-            mega::service::LogicalThread::registerFiber(m_enrolement.getMP());
+            LogicalThread::registerFiber(m_enrolement.getMP());
 
             Connection::WeakPtr pWeak = m_pConnection;
             // setup registry creation callback
-            mega::service::Registry::getWriteAccess()->setCreationCallback(
+            Registry::getWriteAccess()->setCreationCallback(
                 [pWeak, mp = getMP()](Registration reg)
                 {
                     std::cout << "Generated reg update of: " << reg << std::endl;
@@ -80,22 +80,22 @@ namespace mega::service
 
         void run()
         {
-            mega::service::LogicalThread::get().runMessageLoop();
+            LogicalThread::get().runMessageLoop();
         }
 
         void receiverCallback(
                 Connection::WeakPtr pResponseConnection,
-                const mega::service::PacketBuffer& buffer)
+                const PacketBuffer& buffer)
         {
-            boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer(buffer);
-            boost::archive::binary_iarchive ia(vectorBuffer, mega::service::boostArchiveFlags);
+            boost::interprocess::basic_vectorbuf< PacketBuffer > vectorBuffer(buffer);
+            boost::archive::binary_iarchive ia(vectorBuffer, boostArchiveFlags);
 
-            mega::service::MessageType messageType;
+            MessageType messageType;
             ia >> messageType;
 
             switch( messageType )
             {
-                case mega::service::MessageType::eEnrole:
+                case MessageType::eEnrole:
                     {                                   
                         ia >> m_enrolement;
                         // std::cout << "Got enrolement from daemon: " 
@@ -103,16 +103,16 @@ namespace mega::service
                         //   << m_enrolement.getMP() << std::endl; 
                     }
                     break;
-                case mega::service::MessageType::eRegistry:
+                case MessageType::eRegistry:
                     {
                         std::vector< MP > mps;
-                        mega::service::Registration registration;
+                        Registration registration;
                         ia >> mps;
                         ia >> registration;
                         // filter registration entries for THIS process
                         // since ONLY created inter-process proxies
-                        registration.filter(m_enrolement.getMP());
-                        mega::service::Registry::getWriteAccess()->update(
+                        registration.remove(m_enrolement.getMP());
+                        Registry::getWriteAccess()->update(
                             pResponseConnection.lock()->getSender(), registration);
                         std::cout << "Got registration update: " << registration << std::endl;
                         if( m_waitForRegistryPromise.has_value() )
@@ -121,28 +121,39 @@ namespace mega::service
                         }
                     }
                     break;
-                case mega::service::MessageType::eRequest:
+                case MessageType::eDisconnect      :
                     {
-                        mega::service::Header header;
+                        std::set< MP > visited;
+                        MP shutdownMP;
+
+                        ia >> visited;
+                        ia >> shutdownMP;
+
+                        Registry::getWriteAccess()->disconnected(shutdownMP);
+                    }
+                    break;
+                case MessageType::eRequest:
+                    {
+                        Header header;
                         ia >> header;
 
                         VERIFY_RTE_MSG(header.m_responder.getMP() == getMP(),
                             "Received request intended for different responder: " << header <<
                             " when enrolement: " << m_enrolement );
-                        mega::service::decodeInboundRequest(ia, header, pResponseConnection);
+                        decodeInboundRequest(ia, header, pResponseConnection);
                     }
                     break;
-                case mega::service::MessageType::eResponse:
+                case MessageType::eResponse:
                     {
-                        mega::service::Header header;
+                        Header header;
                         ia >> header;
 
-                        mega::service::LogicalThread& logicalThread =
-                            mega::service::Registry::getReadAccess()->
+                        LogicalThread& logicalThread =
+                            Registry::getReadAccess()->
                                 getLogicalThread(header.m_requester);
 
                         logicalThread.send(
-                            mega::service::InterProcessResponse
+                            InterProcessResponse
                             {
                                 header,
                                 buffer
@@ -150,7 +161,7 @@ namespace mega::service
                         );
                     }
                     break;
-                case mega::service::MessageType::TOTAL_MESSAGES:
+                case MessageType::TOTAL_MESSAGES:
                 default:
                     {
                         THROW_RTE(" Unepxcted message type recieved" );

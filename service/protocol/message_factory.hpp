@@ -33,5 +33,17 @@ namespace mega::service
 
         sender.send(vectorBuffer.vector());
     }
+
+    inline void sendDisconnect( const MP& mp, std::set< MP > mps, Sender& sender )
+    {
+        boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer;
+        boost::archive::binary_oarchive oa(vectorBuffer, boostArchiveFlags);
+
+        oa << mega::service::MessageType::eDisconnect;
+        oa << mps;
+        oa << mp;
+
+        sender.send(vectorBuffer.vector());
+    }
 }
 

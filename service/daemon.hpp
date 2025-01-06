@@ -248,6 +248,30 @@ namespace mega::service
                         }
                     }
                     break;
+                case MessageType::eDisconnect      :
+                    {
+                        std::set< MP > visited;
+                        MP shutdownMP;
+
+                        ia >> visited;
+                        ia >> shutdownMP;
+
+                        Registry::getWriteAccess()->disconnected(shutdownMP);
+                        m_registration.remove(shutdownMP);
+
+                        for( auto& [ mp, pWeak ] : m_connectionsTable.m_direct )
+                        {
+                            if( !visited.contains( mp ) )
+                            {
+                                if( auto pCon = pWeak.lock() )
+                                {
+                                    std::cout << "Forwarding reg to: " << mp << std::endl;
+                                    sendDisconnect( shutdownMP, visited, pCon->getSender() );
+                                }
+                            }
+                        }
+                    }
+                    break;
                 case MessageType::eRequest        :
                     {
                         Header header;
@@ -316,7 +340,23 @@ namespace mega::service
         void disconnect(Connection::Ptr pConnection)
         {
             const MP mp{ m_mp.getMachineID(), pConnection->getProcessID() };
-            m_connectionsTable.m_direct.erase( mp );
+            m_connectionsTable.m_direct.erase(mp);
+
+            std::set< MP > visited{m_mp};
+
+            Registry::getWriteAccess()->disconnected(mp);
+            m_registration.remove(mp);
+
+            for( auto& [ mp, pWeak ] : m_connectionsTable.m_direct )
+            {
+                if( auto pCon = pWeak.lock() )
+                {
+                    std::cout << "Forwarding reg to: " << mp << std::endl;
+                    sendDisconnect( mp, visited, pCon->getSender() );
+                }
+            }
+
+
         }
     };
 }

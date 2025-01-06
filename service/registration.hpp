@@ -45,7 +45,7 @@ namespace mega::service
             }
         };
 
-        inline void filter(MP mp)
+        inline void remove(MP mp)
         {
             std::erase_if( m_registrants,
                 [mp](const Registrant& registrant) -> bool

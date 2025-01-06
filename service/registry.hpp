@@ -76,6 +76,34 @@ namespace mega::service
             service::update(sender, registration, m_proxies, m_interfaceMPTFOMap);
         }
 
+        void disconnected(MP mp)
+        {
+            std::erase_if( m_objects,
+                    [mp](const auto& p)
+                    {
+                        return p.first.getMP() == mp;
+                    });
+
+            std::erase_if( m_interfaceMPTFOMap,
+                    [mp](const auto& p)
+                    {
+                        return p.first.second.getMP() == mp;
+                    });
+
+            ProxyVariantVector temp;
+            std::swap( temp, m_proxies );
+            for(const auto& proxy : temp)
+            {
+                std::visit([&proxies = m_proxies, mp](auto& pProxyUniquePtr)
+                {
+                    if( pProxyUniquePtr->m_mptfo.getMP() != mp )
+                    {
+                        proxies.push_back( std::move(pProxyUniquePtr) );
+                    }
+                }, proxy);
+            }
+        }
+
         inline MPTFO createInProcessProxy(MPTF mptf, Interface& object)
         {
             VERIFY_RTE_MSG(

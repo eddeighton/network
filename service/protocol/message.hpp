@@ -54,10 +54,11 @@ namespace mega::service
     // Protocol for messages sent over the wire
     enum class MessageType : std::uint32_t
     {
-        eEnrole     = 0,
-        eRegistry   = 1,
-        eRequest    = 2,
-        eResponse   = 3,
+        eRegistry   = 0,
+        eDisconnect = 1,
+        eEnrole     = 2,
+        eRequest    = 3,
+        eResponse   = 4,
         TOTAL_MESSAGES
     };
 }
