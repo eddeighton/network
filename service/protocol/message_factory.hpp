@@ -7,6 +7,8 @@
 #include "service/protocol/message.hpp"
 #include "service/protocol/serialization.hpp"
 
+#include <vector>
+
 namespace mega::service
 {
     inline void sendEnrole( const Enrole& enrole, Sender& sender )
@@ -20,12 +22,13 @@ namespace mega::service
         sender.send(vectorBuffer.vector());
     }
 
-    inline void sendRegistration( const Registration& registration, Sender& sender )
+    inline void sendRegistration( const Registration& registration, std::vector< MP > mps, Sender& sender )
     {
         boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer;
         boost::archive::binary_oarchive oa(vectorBuffer, boostArchiveFlags);
 
         oa << mega::service::MessageType::eRegistry;
+        oa << mps;
         oa << registration;
 
         sender.send(vectorBuffer.vector());

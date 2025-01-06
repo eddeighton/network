@@ -138,6 +138,19 @@ namespace mega::service
             })
         {
             LogicalThread::registerFiber(m_mp);
+
+            mega::service::Registry::getWriteAccess()->setCreationCallback(
+                [&cons = m_connectionsTable, mp = m_mp]()
+                {
+                    const auto reg = Registry::getReadAccess()->getRegistration();
+                    for( auto& [ mp, pWeak ] : cons.m_direct )
+                    {
+                        if( auto pCon = pWeak.lock() )
+                        {
+                            sendRegistration( reg, { mp }, pCon->getSender() );
+                        }
+                    }
+                });
         }
 
         ~Daemon()
@@ -265,18 +278,18 @@ namespace mega::service
             // enrole connection
             // std::cout << "Connection callback called for: " <<
             //    pConnection->getSocketInfo() << std::endl;
-            m_connectionsTable.direct.insert( { mp, pConnection } );
+            m_connectionsTable.m_direct.insert( { mp, pConnection } );
 
             auto& sender = pConnection->getSender();
 
             sendEnrole( Enrole{ m_mp, mp }, sender );
-            sendRegistration( Registry::getReadAccess()->getRegistration(), sender );
+            sendRegistration( Registry::getReadAccess()->getRegistration(), { m_mp }, sender );
         }
 
         void disconnect(Connection::Ptr pConnection)
         {
             const MP mp{ m_mp.getMachineID(), pConnection->getProcessID() };
-            m_connectionsTable.direct.erase( mp );
+            m_connectionsTable.m_direct.erase( mp );
         }
     };
 }

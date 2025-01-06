@@ -53,11 +53,11 @@ namespace mega::service
             Connection::WeakPtr pWeak = m_pConnection;
             // setup registry creation callback
             mega::service::Registry::getWriteAccess()->setCreationCallback(
-                [pWeak]()
+                [pWeak, mp = getMP()]()
                 {
                     if( auto pCon = pWeak.lock() )
                     {
-                        sendRegistration( Registry::getReadAccess()->getRegistration(),
+                        sendRegistration( Registry::getReadAccess()->getRegistration(), { mp },
                             pCon->getSender() );
                     }
                     else
@@ -104,7 +104,9 @@ namespace mega::service
                 case mega::service::MessageType::eRegistry:
                     {
                         // std::cout << "Got registration update" << std::endl;
+                        std::vector< MP > mps;
                         mega::service::Registration registration;
+                        ia >> mps;
                         ia >> registration;
                         // filter registration entries for THIS process
                         // since ONLY created inter-process proxies

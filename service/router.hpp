@@ -50,9 +50,9 @@ namespace mega::service
         struct Table
         {
             // direct connections are maintained by daemon and always correct
-            DirectConnections direct;
+            DirectConnections m_direct;
             // indirect connections are an estimate and may be incorrect
-            IndirectConnections indirect;
+            IndirectConnections m_indirect;
         };
     private:
         inline Msg receive()
@@ -93,8 +93,8 @@ namespace mega::service
                         = pMsg->m_pResponseConnection;
                     bool bDirectSend = false;
                     auto iFind =
-                        m_table.direct.find( pMsg->m_header.m_responder.getMP() );
-                    if( iFind != m_table.direct.end() )
+                        m_table.m_direct.find( pMsg->m_header.m_responder.getMP() );
+                    if( iFind != m_table.m_direct.end() )
                     {
                         // route the message using direct connection which should always be correct
                         if( auto pCon = iFind->second.lock() )
