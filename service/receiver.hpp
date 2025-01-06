@@ -5,7 +5,7 @@
 #include "service/gen/decoder.hxx"
 
 #include "service/asio.hpp"
-#include "service/sender_socket.hpp"
+#include "service/connection.hpp"
 
 #include "service/protocol/header.hpp"
 #include "service/protocol/packet.hpp"
@@ -22,7 +22,7 @@
 
 namespace mega::service
 {
-    using ReceiverCallback = std::function< void( SocketSender& responseSender, const PacketBuffer& ) >;
+    using ReceiverCallback = std::function< void( Connection::WeakPtr, const PacketBuffer& ) >;
     
     template<typename Socket, typename DisconnectCallback >
     class Receiver
@@ -31,16 +31,15 @@ namespace mega::service
         template< typename Functor >
         Receiver(Socket& socket, ReceiverCallback receiverCallback, Functor disconnect_callback)
         :   m_socket(socket)
-        ,   m_sender(m_socket)
         ,   m_callback( std::move(receiverCallback) )
         ,   m_disconnect_callback( std::move( disconnect_callback ) )
         {
         }
 
-        void run()
+        void run(Connection::WeakPtr pConnection)
         {
             m_bStarted = true;
-            boost::fibers::fiber( [this]
+            boost::fibers::fiber( [this, pConnection]
             {
                 std::cout << "Receiver started" << std::endl;
                 while( m_bContinue && m_socket.is_open() )
@@ -73,7 +72,7 @@ namespace mega::service
                     }
                     else
                     {
-                        m_callback(m_sender, m_packetBuffer);
+                        m_callback(pConnection, m_packetBuffer);
                     }
                 }
                 m_disconnect_callback();
@@ -87,7 +86,6 @@ namespace mega::service
         bool                m_bContinue = true;
         bool                m_bStarted = false;
         Socket&             m_socket; 
-        SocketSender        m_sender;
         PacketBuffer        m_packetBuffer;
         ReceiverCallback    m_callback;
         DisconnectCallback  m_disconnect_callback;

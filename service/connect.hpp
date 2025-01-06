@@ -10,6 +10,7 @@
 
 #include "service/protocol/message.hpp"
 #include "service/protocol/serialization.hpp"
+#include "service/protocol/message_factory.hpp"
 
 #include <boost/fiber/operations.hpp>
 
@@ -48,6 +49,22 @@ namespace mega::service
             registrationFuture.get();
 
             mega::service::LogicalThread::registerFiber(m_enrolement.getMP());
+
+            Connection::WeakPtr pWeak = m_pConnection;
+            // setup registry creation callback
+            mega::service::Registry::getWriteAccess()->setCreationCallback(
+                [pWeak]()
+                {
+                    if( auto pCon = pWeak.lock() )
+                    {
+                        sendRegistration( Registry::getReadAccess()->getRegistration(),
+                            pCon->getSender() );
+                    }
+                    else
+                    {
+                        THROW_RTE( "Cannot use creation callback connection" );
+                    }
+                });
         }
 
         ~Connect()
@@ -65,7 +82,7 @@ namespace mega::service
         }
 
         void receiverCallback(
-                mega::service::SocketSender& responseSender,
+                Connection::WeakPtr pResponseConnection,
                 const mega::service::PacketBuffer& buffer)
         {
             boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer(buffer);
@@ -93,7 +110,7 @@ namespace mega::service
                         // since ONLY created inter-process proxies
                         registration.filter(m_enrolement.getMP());
                         mega::service::Registry::getWriteAccess()->update(
-                            responseSender, registration);
+                            pResponseConnection.lock()->getSender(), registration);
                         m_waitForRegistryPromise.set_value();
                     }
                     break;
@@ -105,7 +122,7 @@ namespace mega::service
                         VERIFY_RTE_MSG(header.m_responder.getMP() == getMP(),
                             "Received request intended for different responder: " << header <<
                             " when enrolement: " << m_enrolement );
-                        mega::service::decodeInboundRequest(ia, header, responseSender);
+                        mega::service::decodeInboundRequest(ia, header, pResponseConnection);
                     }
                     break;
                 case mega::service::MessageType::eResponse:

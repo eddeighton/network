@@ -5,6 +5,7 @@
 #include "service/protocol/serialization.hpp"
 #include "service/sender_socket.hpp"
 #include "service/registry.hpp"
+#include "service/connection.hpp"
 
 {% for include in includes %}
 #include "{{ include }}"
@@ -14,7 +15,7 @@ namespace mega::service
 {
 
 void decodeInboundRequest(boost::archive::binary_iarchive& ia, const Header& header,
-        mega::service::SocketSender& responseSender)
+        Connection::WeakPtr pResponseConnection)
 {
     using namespace std::string_literals;
 
@@ -25,7 +26,7 @@ void decodeInboundRequest(boost::archive::binary_iarchive& ia, const Header& hea
     logicalThread.send(
         mega::service::InterProcessRequest
         {
-            [&responseSender, header]()
+            [&pResponseConnection, header]()
             {
                 if( header.m_interfaceName.empty() )
                 {
@@ -65,7 +66,7 @@ void decodeInboundRequest(boost::archive::binary_iarchive& ia, const Header& hea
 {% if function.return_type != "void" %}
                                 oa << result;
 {% endif %}
-                                responseSender.send(vectorBuffer.vector());
+                                pResponseConnection.lock()->getSender().send(vectorBuffer.vector());
                                 // std::cout << "Response to request sent" << std::endl;
                             }
                         }

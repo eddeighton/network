@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <mutex>
 #include <shared_mutex>
+#include <functional>
 
 namespace mega::service
 {
@@ -33,14 +34,16 @@ namespace mega::service
             Interface* pObject;
             LogicalThread& logicalThread;
         };
+        using CreationCallback = std::function< void() >;
     private:
         using Objects        = std::unordered_map< MPTFO, Interface*,     MPTFO::Hash >;
         using LogicalThreads = std::unordered_map< MPTF,  LogicalThread*, MPTF::Hash >;
 
-        Objects             m_objects;
-        LogicalThreads      m_logicalThreads;
-        ProxyVariantVector  m_proxies;
-        InterfaceMPTFOMap   m_interfaceMPTFOMap;
+        Objects                           m_objects;
+        LogicalThreads                    m_logicalThreads;
+        ProxyVariantVector                m_proxies;
+        InterfaceMPTFOMap                 m_interfaceMPTFOMap;
+        std::optional< CreationCallback > m_creationCallback;
 
     public:
         inline Registration getRegistration() const
@@ -66,6 +69,11 @@ namespace mega::service
             return registration;
         }
 
+        void setCreationCallback( CreationCallback creationCallback )
+        {
+            m_creationCallback = creationCallback;
+        }
+
         void update(Sender& sender, const Registration& registration )
         {
             service::update(sender, registration, m_proxies, m_interfaceMPTFOMap);
@@ -81,6 +89,9 @@ namespace mega::service
             const MPTFO mptfo(mptf, objectID);
             registerInProcessProxy(object, mptfo, m_proxies, m_interfaceMPTFOMap);
             m_objects.insert(std::make_pair(mptfo, &object));
+            VERIFY_RTE_MSG( m_creationCallback.has_value(),
+                "No creation callback set" );
+            (*m_creationCallback)();
             return mptfo;
         }
 

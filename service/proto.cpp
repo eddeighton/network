@@ -32,7 +32,7 @@ int main( int argc, const char* argv[] )
                 *pIOContext,
                 PortNumber{1234},
                 // receive callback
-                [&](mega::service::SocketSender& responseSender,
+                [&](Connection::WeakPtr pResponseConnection,
                         const mega::service::PacketBuffer& buffer)
                 { 
                     // receive( responseSender, buffer ); 

@@ -77,7 +77,7 @@ namespace mega::service
                 m_processID = processID;
                 m_socket_info = TCPSocketInfo::make( m_socket );
                 std::cout << "Server connection start " << m_socket_info << std::endl;
-                m_receiver.run();
+                m_receiver.run(shared_from_this());
             }
 
             void disconnected()

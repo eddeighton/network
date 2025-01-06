@@ -16,8 +16,6 @@
 
 namespace mega::service
 {
-    class LogicalThread;
-
     class LogicalThread
     {
         friend class Registry;

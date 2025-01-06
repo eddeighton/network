@@ -22,19 +22,22 @@
 #include "service/client.hpp"
 #include "service/asio.hpp"
 #include "service/enrole.hpp"
+
 #include "service/protocol/serialization.hpp"
+#include "service/protocol/message_factory.hpp"
 
 #include "vocab/service/mp.hpp"
 
 #include <thread>
 #include <atomic>
+#include <tuple>
 
 namespace mega::service
 {
     class Daemon
     {
         MP                          m_mp;
-        mega::service::PortNumber   m_port;
+        PortNumber                  m_port;
         IOContextPtr                m_pIOContext;
         std::atomic<bool>           m_bShutdown{false};
         std::atomic<bool>           m_bStopped{false};
@@ -42,8 +45,45 @@ namespace mega::service
         std::unique_ptr< Client >   m_pClient;
         std::thread                 m_thread;
         Router::Table               m_connectionsTable;
+        Router::Map                 m_routers;
+
+    private:
+        void route(MessageType messageType,
+                   const Header& header, 
+                   const PacketBuffer& buffer,
+                   Connection::WeakPtr pResponseConnection ) 
+        {
+            auto iFind = m_routers.find( header.m_stack );
+            if( iFind == m_routers.end() )
+            {
+                bool bSuccess{};
+                std::tie( iFind, bSuccess ) = 
+                    m_routers.insert
+                    ( 
+                        {
+                            header.m_stack,
+                            std::make_unique< Router >
+                            (
+                                header.m_stack,
+                                m_connectionsTable
+                            )
+                        }
+                    );
+                VERIFY_RTE_MSG( bSuccess, "Failed to allocate router" );
+            }
+            iFind->second->send(
+                Router::ServiceMessage
+                {
+                    messageType,
+                    header,
+                    buffer,
+                    pResponseConnection
+                }
+            );
+        }
+
     public:
-        Daemon(MP mp, mega::service::PortNumber port )
+        Daemon(MP mp, PortNumber port )
         :   m_mp( mp )
         ,   m_port( port )
         ,   m_pIOContext(std::make_shared< boost::asio::io_context >())
@@ -54,10 +94,10 @@ namespace mega::service
                         *m_pIOContext,
                         port,
                         // receive callback
-                        [this](mega::service::SocketSender& responseSender,
-                                const mega::service::PacketBuffer& buffer)
+                        [this](Connection::WeakPtr pResponseConnection,
+                                const PacketBuffer& buffer)
                         { 
-                            receive( responseSender, buffer ); 
+                            receive( pResponseConnection, buffer ); 
                         },
                         // connection callback
                         [this](Connection::Ptr pConnection)
@@ -74,10 +114,10 @@ namespace mega::service
                     m_pClient = std::make_unique< Client >(
                         *m_pIOContext,
                         // receive callback
-                        [this](mega::service::SocketSender& responseSender,
-                                const mega::service::PacketBuffer& buffer)
+                        [this](Connection::WeakPtr pResponseConnection,
+                                const PacketBuffer& buffer)
                         { 
-                            receive( responseSender, buffer ); 
+                            receive( pResponseConnection, buffer ); 
                         },
                         // connection callback
                         [this](Connection::Ptr pConnection)
@@ -91,13 +131,13 @@ namespace mega::service
                         }
                     );
 
-                    mega::service::init_fiber_scheduler(m_pIOContext);
+                    init_fiber_scheduler(m_pIOContext);
                     m_pIOContext->run();
                 }
                 std::cout << "network thread shutting down" << std::endl;
             })
         {
-            mega::service::LogicalThread::registerFiber(m_mp);
+            LogicalThread::registerFiber(m_mp);
         }
 
         ~Daemon()
@@ -135,8 +175,8 @@ namespace mega::service
         void run()
         {
             // run this logical thread while network running
-            mega::service::LogicalThread& thisLogicalThread
-                = mega::service::LogicalThread::get();
+            LogicalThread& thisLogicalThread
+                = LogicalThread::get();
 
             while( m_bShutdown.load(std::memory_order_relaxed) == false )
             {
@@ -149,60 +189,67 @@ namespace mega::service
             m_bShutdown = true;
         }
 
-        void receive(mega::service::SocketSender& responseSender,
-                            const mega::service::PacketBuffer& buffer)
+        void receive(Connection::WeakPtr pResponseConnection,
+                            const PacketBuffer& buffer)
         {
-            boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer(buffer);
-            boost::archive::binary_iarchive ia(vectorBuffer, mega::service::boostArchiveFlags);
+            boost::interprocess::basic_vectorbuf< PacketBuffer > vectorBuffer(buffer);
+            boost::archive::binary_iarchive ia(vectorBuffer, boostArchiveFlags);
 
-            mega::service::MessageType messageType;
+            MessageType messageType;
             ia >> messageType;
 
             switch( messageType )
             {
-                case mega::service::MessageType::eEnrole         :
+                case MessageType::eEnrole         :
                     {
                         THROW_RTE( "Unexpected enrole request received" );
                     }
                     break;
-                case mega::service::MessageType::eRegistry        :
+                case MessageType::eRegistry        :
                     {
                     }
                     break;
-                case mega::service::MessageType::eRequest        :
+                case MessageType::eRequest        :
                     {
-                        mega::service::Header header;
+                        Header header;
                         ia >> header;
-                       
+                        
                         if( header.m_responder.getMP() == m_mp )
                         {
-                            mega::service::decodeInboundRequest(ia, header, responseSender);
+                            decodeInboundRequest(ia, header, pResponseConnection);
                         }
                         else
                         {
-                            // dispatch message to router...
+                            route(messageType, header, buffer, pResponseConnection);
                         }
                     }
                     break;
-                case mega::service::MessageType::eResponse        :
+                case MessageType::eResponse        :
                     {
-                        mega::service::Header header;
+                        Header header;
                         ia >> header;
 
-                        mega::service::LogicalThread& logicalThread =
-                            mega::service::Registry::getReadAccess()->
-                                getLogicalThread(header.m_requester);
+                        if( header.m_responder.getMP() == m_mp )
+                        {
+                            LogicalThread& logicalThread =
+                                Registry::getReadAccess()->
+                                    getLogicalThread(header.m_requester);
 
-                        logicalThread.send(
-                            mega::service::InterProcessResponse
-                            {
-                                header,
-                                buffer
-                            }
-                        );
+                            logicalThread.send(
+                                InterProcessResponse
+                                {
+                                    header,
+                                    buffer
+                                }
+                            );
+                        }
+                        else
+                        {
+                            route(messageType, header, buffer, pResponseConnection);
+                        }
                     }
                     break;
-                case mega::service::MessageType::TOTAL_MESSAGES   :
+                case MessageType::TOTAL_MESSAGES   :
                 default:
                     {
                         THROW_RTE(" Unepxcted message type recieved" );
@@ -222,33 +269,8 @@ namespace mega::service
 
             auto& sender = pConnection->getSender();
 
-            // send enrole message
-            {
-                boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer;
-                boost::archive::binary_oarchive oa(vectorBuffer, boostArchiveFlags);
-
-                oa << mega::service::MessageType::eEnrole;
-
-                mega::service::Enrole enrole{ m_mp, mp };
-
-                oa << enrole;
-
-                sender.send(vectorBuffer.vector());
-            }
-            {
-                // send registration
-                boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer;
-                boost::archive::binary_oarchive oa(vectorBuffer, boostArchiveFlags);
-
-                oa << mega::service::MessageType::eRegistry;
-
-                const auto registration = 
-                    mega::service::Registry::getReadAccess()->getRegistration();
-
-                oa << registration;
-
-                sender.send(vectorBuffer.vector());
-            }
+            sendEnrole( Enrole{ m_mp, mp }, sender );
+            sendRegistration( Registry::getReadAccess()->getRegistration(), sender );
         }
 
         void disconnect(Connection::Ptr pConnection)

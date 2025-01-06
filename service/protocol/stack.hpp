@@ -15,11 +15,21 @@ namespace mega::service
         using MPTFSVector = std::vector< MPTFS >;
         MPTFSVector m_stack;
 
-        void push_back( MPTFS mptfs )
+        inline bool operator<( const Stack& cmp ) const
+        {
+            return m_stack < cmp.m_stack;
+        }
+
+        inline bool operator==( const Stack& cmp ) const
+        {
+            return m_stack == cmp.m_stack;
+        }
+
+        inline void push_back( MPTFS mptfs )
         {
             m_stack.push_back( mptfs );
         }
-        void push_back( MPTF mptf )
+        inline void push_back( MPTF mptf )
         {
             if( m_stack.empty() )
             {
@@ -30,13 +40,13 @@ namespace mega::service
                 m_stack.push_back( MPTFS{ mptf, m_stack.back().getStackID() } );
             }
         }
-        void pop_back()
+        inline void pop_back()
         {
             m_stack.pop_back();
         }
 
         template < class Archive >
-        inline void serialize( Archive& archive, const unsigned int )
+        void serialize( Archive& archive, const unsigned int )
         {
             if constexpr( boost::serialization::IsXMLArchive< Archive >::value )
             {

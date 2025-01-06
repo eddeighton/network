@@ -143,14 +143,9 @@ int main( int argc, const char* argv[] )
                             os << "import megastructure as mega\n";
                             os << strCommand;
 
-                            auto locals = pybind11::dict(
-                                "name"_a = "Ed was here!"
-                            );
-
                             pybind11::exec(
                                 os.str(),
-                                pybind11::globals(),
-                                locals
+                                pybind11::globals()
                                 );
 
                         }).detach();

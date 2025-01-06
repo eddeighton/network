@@ -17,6 +17,8 @@ TEST( Service, Basic )
     using namespace mega::service;
     using namespace mega::test;
     
+    Registry::getWriteAccess()->setCreationCallback([](){});
+
     MP mp{};
 
     Network network;

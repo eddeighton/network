@@ -28,6 +28,7 @@ namespace mega::service
             using Resolver           = boost::asio::ip::tcp::resolver;
             using EndPoint           = boost::asio::ip::tcp::endpoint;
             using SocketReceiver     = Receiver< Socket, DisconnectCallback >;
+
         public:
             using Ptr = std::shared_ptr< Connection >;
 
@@ -52,12 +53,15 @@ namespace mega::service
                 }
 
                 m_endPoint = boost::asio::connect( m_socket, endpoints );
-                m_receiver.run();
-
                 m_socket_info = TCPSocketInfo::make( m_socket );
                 // std::cout << "Client connection start " << m_socket_info << std::endl;
             }
 
+            void run()
+            {
+                m_receiver.run(shared_from_this());
+            }
+        public:
             const TCPSocketInfo& getSocketInfo() const override { return m_socket_info; }
 
             Sender& getSender() override { return m_sender; }
@@ -118,6 +122,7 @@ namespace mega::service
         Connection::Ptr connect(IPAddress ip_address, PortNumber port_number)
         {
             auto pConnection = std::make_shared< Connection >(*this, ip_address, port_number );
+            pConnection->run();
             m_connections.insert(pConnection);
             m_connectionCallback(pConnection);
             return pConnection;
