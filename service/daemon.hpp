@@ -158,6 +158,8 @@ namespace mega::service
 
         ~Daemon()
         {
+            m_bShutdown = true;
+
             boost::fibers::promise<void>    waitForServerShutdown;
             boost::fibers::future<void>     waitForServerShutdownFuture =
                 waitForServerShutdown.get_future();
@@ -190,6 +192,7 @@ namespace mega::service
 
         void run()
         {
+            m_pServer->start();
             // run this logical thread while network running
             LogicalThread& thisLogicalThread
                 = LogicalThread::get();
@@ -355,8 +358,6 @@ namespace mega::service
                     sendDisconnect( mp, visited, pCon->getSender() );
                 }
             }
-
-
         }
     };
 }

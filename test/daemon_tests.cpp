@@ -1,6 +1,8 @@
+
 #include "test/test_object.hpp"
 #include "test/test_factory.hpp"
 
+#include "service/daemon.hpp"
 #include "service/logical_thread.hpp"
 #include "service/network.hpp"
 #include "service/registry.hpp"
@@ -14,11 +16,13 @@
 #include <utility>
 #include <iostream>
 
-TEST( Service, Daemon )
+TEST( Service, DaemonStartStop )
 {
     using namespace mega::service;
     using namespace mega::test;
 
+    Daemon daemon( {}, PortNumber{ 4321} );
+}
 
     
    //  namespace bp = boost::process;
@@ -38,5 +42,5 @@ TEST( Service, Daemon )
 
    //  std::cout << strDaemonOut << std::endl;
    //  std::cout << strMegaOut << std::endl;
-}
+// }
 

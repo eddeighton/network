@@ -141,12 +141,16 @@ namespace mega::service
                 m_processIDFreeList.push_back(
                     ProcessID{ static_cast< ProcessID::ValueType >(i) } );
             }
-            waitForConnection();
         }
 
         ~Server()
         {
             stop();
+        }
+
+        void start()
+        {
+            waitForConnection();
         }
 
         void stop()
@@ -165,15 +169,17 @@ namespace mega::service
             boost::fibers::fiber([this]
             {
                 std::cout << "Acceptor started" << std::endl;
-                Connection::Ptr pNewConnection =
-                    std::make_shared< Connection >( *this, m_ioContext );
-
-                boost::system::error_code ec;
-                m_acceptor.async_accept( pNewConnection->m_socket,
-                    boost::fibers::asio::yield[ ec ]);
-     
-                onConnect( pNewConnection, ec );
+                if( m_acceptor.is_open() )
+                {
+                    Connection::Ptr pNewConnection =
+                        std::make_shared< Connection >( *this, m_ioContext );
+                    boost::system::error_code ec;
+                    m_acceptor.async_accept( pNewConnection->m_socket,
+                        boost::fibers::asio::yield[ ec ]);
+                    onConnect( pNewConnection, ec );
+                }
                 std::cout << "Acceptor stopped" << std::endl;
+
             }).detach();
         }
 
