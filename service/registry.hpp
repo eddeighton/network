@@ -52,9 +52,9 @@ namespace mega::service
             std::set<Registration::Registrant> uniqueRegistrants;
             for(const auto& proxy : m_proxies)
             {
-                std::visit([&uniqueRegistrants](const auto& pProxyUniquePtr)
+                std::visit([&registration](const auto& pProxyUniquePtr)
                 {
-                    uniqueRegistrants.insert
+                    registration.m_registrants.insert
                     (
                         Registration::Registrant
                         {
@@ -64,8 +64,6 @@ namespace mega::service
                     );
                 }, proxy);
             }
-            std::copy(uniqueRegistrants.begin(), uniqueRegistrants.end(),
-                std::back_inserter(registration.m_registrants));
             return registration;
         }
 

@@ -7,7 +7,7 @@
 #include "service/protocol/message.hpp"
 #include "service/protocol/serialization.hpp"
 
-#include <vector>
+#include <set>
 
 namespace mega::service
 {
@@ -22,7 +22,7 @@ namespace mega::service
         sender.send(vectorBuffer.vector());
     }
 
-    inline void sendRegistration( const Registration& registration, std::vector< MP > mps, Sender& sender )
+    inline void sendRegistration( const Registration& registration, std::set< MP > mps, Sender& sender )
     {
         boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer;
         boost::archive::binary_oarchive oa(vectorBuffer, boostArchiveFlags);

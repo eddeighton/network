@@ -8,7 +8,7 @@
 
 #include "common/serialisation.hpp"
 
-#include <vector>
+#include <set>
 #include <tuple>
 
 namespace mega::service
@@ -21,7 +21,7 @@ namespace mega::service
             MPTFO m_mptfo;
             RTTI m_rtti;
 
-            using RegistrantVector = std::vector<Registrant>;
+            using RegistrantVector = std::set<Registrant>;
 
             inline bool operator<(const Registrant& cmp) const
             {
@@ -46,12 +46,16 @@ namespace mega::service
 
         inline void filter(MP mp)
         {
-            auto itEnd = std::remove_if(m_registrants.begin(), m_registrants.end(),
+            std::erase_if( m_registrants,
                 [mp](const Registrant& registrant) -> bool
                 {
                     return registrant.m_mptfo.getMP() == mp;
                 });
-            m_registrants.erase(itEnd, m_registrants.end());
+        }
+
+        inline void add( const Registration& addition )
+        {
+            m_registrants.insert( addition.m_registrants.begin(), addition.m_registrants.end() );
         }
 
         template < class Archive >

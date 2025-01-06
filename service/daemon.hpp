@@ -46,6 +46,7 @@ namespace mega::service
         std::thread                 m_thread;
         Router::Table               m_connectionsTable;
         Router::Map                 m_routers;
+        Registration                m_registration;
 
     private:
         void route(MessageType messageType,
@@ -140,14 +141,16 @@ namespace mega::service
             LogicalThread::registerFiber(m_mp);
 
             mega::service::Registry::getWriteAccess()->setCreationCallback(
-                [&cons = m_connectionsTable, mp = m_mp]()
+                [&cons = m_connectionsTable, mp = m_mp, &registration = m_registration]()
                 {
                     const auto reg = Registry::getReadAccess()->getRegistration();
+                    registration.add( reg );
+
                     for( auto& [ mp, pWeak ] : cons.m_direct )
                     {
                         if( auto pCon = pWeak.lock() )
                         {
-                            sendRegistration( reg, { mp }, pCon->getSender() );
+                            sendRegistration( registration, { mp }, pCon->getSender() );
                         }
                     }
                 });
@@ -220,6 +223,26 @@ namespace mega::service
                     break;
                 case MessageType::eRegistry        :
                     {
+                        std::set< MP > visited;
+                        Registration reg;
+
+                        ia >> visited;
+                        ia >> reg;
+
+                        visited.insert(m_mp);
+                        m_registration.add(reg);
+                        reg.add(m_registration);
+
+                        for( auto& [ mp, pWeak ] : m_connectionsTable.m_direct )
+                        {
+                            if( !visited.contains( mp ) )
+                            {
+                                if( auto pCon = pWeak.lock() )
+                                {
+                                    sendRegistration( reg, visited, pCon->getSender() );
+                                }
+                            }
+                        }
                     }
                     break;
                 case MessageType::eRequest        :
