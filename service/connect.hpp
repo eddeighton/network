@@ -20,6 +20,7 @@
 #include <iostream>
 #include <chrono>
 #include <functional>
+#include <optional>
 
 namespace mega::service
 {
@@ -27,7 +28,7 @@ namespace mega::service
     {
         Network                         m_network;
         Enrole                          m_enrolement;
-        boost::fibers::promise<void>    m_waitForRegistryPromise;
+        std::optional< boost::fibers::promise<void> > m_waitForRegistryPromise;
         Client                          m_client;
         Client::Connection::Ptr         m_pConnection;
     public:
@@ -40,25 +41,26 @@ namespace mega::service
                     [this]( Connection::Ptr pConnection ){}
                )
         {
-            boost::fibers::future<void> registrationFuture =
-                m_waitForRegistryPromise.get_future();
+            m_waitForRegistryPromise = boost::fibers::promise<void>{};
+            auto registrationFuture = m_waitForRegistryPromise->get_future();
 
             m_pConnection = m_client.connect(ipAddress, port);
 
             // wait for enrolement and registration to complete
             registrationFuture.get();
+            m_waitForRegistryPromise.reset();
 
             mega::service::LogicalThread::registerFiber(m_enrolement.getMP());
 
             Connection::WeakPtr pWeak = m_pConnection;
             // setup registry creation callback
             mega::service::Registry::getWriteAccess()->setCreationCallback(
-                [pWeak, mp = getMP()]()
+                [pWeak, mp = getMP()](Registration reg)
                 {
+                    std::cout << "Generated reg update of: " << reg << std::endl;
                     if( auto pCon = pWeak.lock() )
                     {
-                        sendRegistration( Registry::getReadAccess()->getRegistration(), { mp },
-                            pCon->getSender() );
+                        sendRegistration( reg, { mp }, pCon->getSender() );
                     }
                     else
                     {
@@ -103,7 +105,6 @@ namespace mega::service
                     break;
                 case mega::service::MessageType::eRegistry:
                     {
-                        // std::cout << "Got registration update" << std::endl;
                         std::vector< MP > mps;
                         mega::service::Registration registration;
                         ia >> mps;
@@ -113,7 +114,11 @@ namespace mega::service
                         registration.filter(m_enrolement.getMP());
                         mega::service::Registry::getWriteAccess()->update(
                             pResponseConnection.lock()->getSender(), registration);
-                        m_waitForRegistryPromise.set_value();
+                        std::cout << "Got registration update: " << registration << std::endl;
+                        if( m_waitForRegistryPromise.has_value() )
+                        {
+                            m_waitForRegistryPromise->set_value();
+                        }
                     }
                     break;
                 case mega::service::MessageType::eRequest:

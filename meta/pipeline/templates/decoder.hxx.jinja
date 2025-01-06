@@ -26,7 +26,7 @@ void decodeInboundRequest(boost::archive::binary_iarchive& ia, const Header& hea
     logicalThread.send(
         mega::service::InterProcessRequest
         {
-            [&pResponseConnection, header]()
+            [pResponseConnection, header]()
             {
                 if( header.m_interfaceName.empty() )
                 {

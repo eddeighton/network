@@ -10,6 +10,7 @@
 
 #include <set>
 #include <tuple>
+#include <ostream>
 
 namespace mega::service
 {
@@ -73,5 +74,18 @@ namespace mega::service
 
         Registrant::RegistrantVector m_registrants;
     };
+
+    inline std::ostream& operator<<( std::ostream& os, const Registration& reg )
+    {
+        for( const auto& registrant : reg.m_registrants )
+        {
+            os << "MPTFO: " << registrant.m_mptfo << "\n";
+            for( const auto& interface : registrant.m_rtti.m_interfaces )
+            {
+                os << "  Interface: " << interface << "\n";
+            }
+        }
+        return os;
+    }
 }
 

@@ -126,6 +126,8 @@ int main( int argc, const char* argv[] )
             {
                 mega::service::Connect connection( ipAddress, port ); 
                 
+                mega::test::OTestFactory testFactory;
+                
                 if( !strCommand.empty() )
                 {
                     std::cout << "Got command: " << std::endl;

@@ -141,15 +141,15 @@ namespace mega::service
             LogicalThread::registerFiber(m_mp);
 
             mega::service::Registry::getWriteAccess()->setCreationCallback(
-                [&cons = m_connectionsTable, mp = m_mp, &registration = m_registration]()
+                [&cons = m_connectionsTable, mp = m_mp, &registration = m_registration](Registration reg)
                 {
-                    const auto reg = Registry::getReadAccess()->getRegistration();
                     registration.add( reg );
-
+                    std::cout << "Generated reg update of: " << registration << std::endl;
                     for( auto& [ mp, pWeak ] : cons.m_direct )
                     {
                         if( auto pCon = pWeak.lock() )
                         {
+                            std::cout << "Sending reg update to: " << mp << std::endl;
                             sendRegistration( registration, { mp }, pCon->getSender() );
                         }
                     }
@@ -233,12 +233,15 @@ namespace mega::service
                         m_registration.add(reg);
                         reg.add(m_registration);
 
+                        std::cout << "Got reg update: " << reg << std::endl;
+
                         for( auto& [ mp, pWeak ] : m_connectionsTable.m_direct )
                         {
                             if( !visited.contains( mp ) )
                             {
                                 if( auto pCon = pWeak.lock() )
                                 {
+                                    std::cout << "Forwarding reg to: " << mp << std::endl;
                                     sendRegistration( reg, visited, pCon->getSender() );
                                 }
                             }
@@ -306,7 +309,8 @@ namespace mega::service
             auto& sender = pConnection->getSender();
 
             sendEnrole( Enrole{ m_mp, mp }, sender );
-            sendRegistration( Registry::getReadAccess()->getRegistration(), { m_mp }, sender );
+            std::cout << "Sending registration: " << m_registration << std::endl;
+            sendRegistration( m_registration, { m_mp }, sender );
         }
 
         void disconnect(Connection::Ptr pConnection)

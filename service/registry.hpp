@@ -34,7 +34,7 @@ namespace mega::service
             Interface* pObject;
             LogicalThread& logicalThread;
         };
-        using CreationCallback = std::function< void() >;
+        using CreationCallback = std::function< void(Registration) >;
     private:
         using Objects        = std::unordered_map< MPTFO, Interface*,     MPTFO::Hash >;
         using LogicalThreads = std::unordered_map< MPTF,  LogicalThread*, MPTF::Hash >;
@@ -49,7 +49,6 @@ namespace mega::service
         inline Registration getRegistration() const
         {
             Registration registration;
-            std::set<Registration::Registrant> uniqueRegistrants;
             for(const auto& proxy : m_proxies)
             {
                 std::visit([&registration](const auto& pProxyUniquePtr)
@@ -89,7 +88,7 @@ namespace mega::service
             m_objects.insert(std::make_pair(mptfo, &object));
             VERIFY_RTE_MSG( m_creationCallback.has_value(),
                 "No creation callback set" );
-            (*m_creationCallback)();
+            (*m_creationCallback)(getRegistration());
             return mptfo;
         }
 
