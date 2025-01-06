@@ -31,8 +31,13 @@ namespace mega::service
         Client::Connection::Ptr         m_pConnection;
     public:
         Connect(IPAddress ipAddress, PortNumber port)
-            :  m_client( m_network.getIOContext(), std::bind( &Connect::receiverCallback,
-                            this, std::placeholders::_1, std::placeholders::_2 ) )
+            :  m_client
+               (
+                    m_network.getIOContext(),
+                    std::bind( &Connect::receiverCallback, this, std::placeholders::_1, std::placeholders::_2 ),
+                    [this]( Connection::Ptr pConnection ){},
+                    [this]( Connection::Ptr pConnection ){}
+               )
         {
             boost::fibers::future<void> registrationFuture =
                 m_waitForRegistryPromise.get_future();

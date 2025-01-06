@@ -101,10 +101,17 @@ namespace mega::service
             bool            m_bDisconnected = false;
         };
         using ConnectionPtrSet = std::set< Connection::Ptr >;
+        using ConnectionCallback = std::function< void(service::Connection::Ptr) >;
+        using DisconnectCallback = std::function< void(service::Connection::Ptr) >;
 
-        Client(boost::asio::io_context& io_context, ReceiverCallback receiverCallback)
+        Client(boost::asio::io_context& io_context,
+                ReceiverCallback receiverCallback,
+                ConnectionCallback connectionCallback,
+                DisconnectCallback disconnectCallback)
         :   m_io_context(io_context)
         ,   m_receiverCallback(std::move(receiverCallback))
+        ,   m_connectionCallback(std::move(connectionCallback))
+        ,   m_disconnectCallback(std::move(disconnectCallback))
         {
         }
 
@@ -112,6 +119,7 @@ namespace mega::service
         {
             auto pConnection = std::make_shared< Connection >(*this, ip_address, port_number );
             m_connections.insert(pConnection);
+            m_connectionCallback(pConnection);
             return pConnection;
         }
 
@@ -127,11 +135,14 @@ namespace mega::service
         void onDisconnect(Connection::Ptr pConnection)
         {
             m_connections.erase(pConnection);
+            m_disconnectCallback(pConnection);
         }
 
     private:
         boost::asio::io_context&  m_io_context;
         ReceiverCallback          m_receiverCallback;
+        ConnectionCallback        m_connectionCallback;
+        DisconnectCallback        m_disconnectCallback;
         ConnectionPtrSet          m_connections;
 
     };

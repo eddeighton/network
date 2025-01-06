@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "service/router.hpp"
 #include "service/server.hpp"
 #include "service/client.hpp"
 #include "service/asio.hpp"
@@ -40,6 +41,7 @@ namespace mega::service
         std::unique_ptr< Server >   m_pServer;
         std::unique_ptr< Client >   m_pClient;
         std::thread                 m_thread;
+        Router::Table               m_connectionsTable;
     public:
         Daemon(MP mp, mega::service::PortNumber port )
         :   m_mp( mp )
@@ -76,6 +78,16 @@ namespace mega::service
                                 const mega::service::PacketBuffer& buffer)
                         { 
                             receive( responseSender, buffer ); 
+                        },
+                        // connection callback
+                        [this](Connection::Ptr pConnection)
+                        {
+                            connection( pConnection );
+                        },
+                        // disconnect callback
+                        [this](Connection::Ptr pConnection)
+                        {
+                            disconnect( pConnection );
                         }
                     );
 
@@ -201,9 +213,12 @@ namespace mega::service
 
         void connection(Connection::Ptr pConnection)
         {
+            const MP mp{ m_mp.getMachineID(), pConnection->getProcessID() };
+
             // enrole connection
             // std::cout << "Connection callback called for: " <<
             //    pConnection->getSocketInfo() << std::endl;
+            m_connectionsTable.direct.insert( { mp, pConnection } );
 
             auto& sender = pConnection->getSender();
 
@@ -214,11 +229,7 @@ namespace mega::service
 
                 oa << mega::service::MessageType::eEnrole;
 
-                mega::service::Enrole enrole
-                {
-                    m_mp,
-                    MP{ m_mp.getMachineID(), pConnection->getProcessID() }
-                };
+                mega::service::Enrole enrole{ m_mp, mp };
 
                 oa << enrole;
 
@@ -242,10 +253,9 @@ namespace mega::service
 
         void disconnect(Connection::Ptr pConnection)
         {
-            
+            const MP mp{ m_mp.getMachineID(), pConnection->getProcessID() };
+            m_connectionsTable.direct.erase( mp );
         }
-
-
     };
 }
 

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "service/socket_info.hpp"
+#include "service/sender.hpp"
 
 #include <memory>
 
