@@ -10,6 +10,8 @@
 
 #include "vocab/service/mp.hpp"
 
+#include "common/log.hpp"
+
 #include <vector>
 #include <unordered_map>
 #include <variant>
@@ -97,9 +99,9 @@ namespace mega::service
         ,   m_channel( 16 )
         ,   m_fiber([this]()
             {
-                std::cout << "Router start" << std::endl;
+                LOG( "Router start" ) ;
                 run(); 
-                std::cout << "Router stop" << std::endl;
+                LOG( "Router stop" ) ;
             })
         {
         }

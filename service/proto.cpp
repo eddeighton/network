@@ -5,6 +5,8 @@
 #include "service/daemon.hpp"
 #include "service/connectivity.hpp"
 
+#include "common/log.hpp"
+
 #include <boost/program_options.hpp>
 
 #include <iostream>
@@ -62,7 +64,7 @@ int main( int argc, const char* argv[] )
             {
                 pServer->stop();
                 bStopped = true;
-                std::cout << "Server stop complete" << std::endl;
+                LOG( "Server stop complete" ) ;
             }).detach();
         });
   
@@ -74,12 +76,12 @@ int main( int argc, const char* argv[] )
     mega::service::LogicalThread::registerFiber(mp);
 
     pIOContext->stop();
-    std::cout << "io context stopped" << std::endl;
+    LOG( "io context stopped" ) ;
 
     t.join();
-    std::cout <<  "thread stopped" << std::endl;
+    LOG(  "thread stopped" ) ;
 
-    std::cout << "main completing" << std::endl;
+    LOG( "main completing" ) ;
     return 0;
 }
 

@@ -10,6 +10,8 @@
 #include "service/network.hpp"
 #include "service/connection.hpp"
 
+#include "common/log.hpp"
+
 #include <set>
 #include <iostream>
 
@@ -42,7 +44,7 @@ namespace mega::service
             ,   m_receiver( m_socket, client.m_receiverCallback, [ this ] { disconnected(); } )
             ,   m_sender( m_socket )
             {
-                std::cout << "Client Connection ctor start" << std::endl;
+                LOG( "Client Connection ctor start" ) ;
                 Resolver::query        query( m_ip_address.value, m_port_number.str() );
                 Resolver::results_type endpoints = m_resolver.resolve( query );
 
@@ -50,14 +52,14 @@ namespace mega::service
                 {
                     //SPDLOG_ERROR( "Failed to resolve ip: {} port: {}", strServiceIP, portNumber );
                     //THROW_RTE( "Failed to resolve ip: " << strServiceIP << " port: " << portNumber );
-                    std::cout << "Client Connection no endpoints" << std::endl;
+                    LOG( "Client Connection no endpoints" ) ;
                     throw std::runtime_error("Failed to locate ip address");
                 }
 
                 m_endPoint = boost::asio::connect( m_socket, endpoints );
                 m_socket_info = TCPSocketInfo::make( m_socket );
-                // std::cout << "Client connection start " << m_socket_info << std::endl;
-                std::cout << "Client Connection ctor end" << std::endl;
+                // LOG( "Client connection start " << m_socket_info ) ;
+                LOG( "Client Connection ctor end" ) ;
             }
 
             void run()
@@ -71,7 +73,7 @@ namespace mega::service
 
             void stop() override
             {
-                // std::cout << "Client connection stop from: " << m_socket_info << std::endl;
+                // LOG( "Client connection stop from: " << m_socket_info ) ;
                 boost::system::error_code ec;
                 m_socket.shutdown( m_socket.shutdown_both, ec );
                 m_socket.close();
@@ -87,10 +89,10 @@ namespace mega::service
         private:
             void disconnected()
             {
-                // std::cout << "Client connection disconnect from: " << m_socket_info << std::endl;
+                // LOG( "Client connection disconnect from: " << m_socket_info ) ;
                 m_client.onDisconnect(
                     std::dynamic_pointer_cast< Connection >( shared_from_this() ));
-                // std::cout << "Disconnected" << std::endl;
+                // LOG( "Disconnected" ) ;
                 m_bDisconnected = true;
             }
 

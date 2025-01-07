@@ -10,6 +10,8 @@
 #include "service/protocol/header.hpp"
 #include "service/protocol/packet.hpp"
 
+#include "common/log.hpp"
+
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/streams/vectorstream.hpp>
 
@@ -47,34 +49,34 @@ namespace mega::service
             m_bStarted = true;
             boost::fibers::fiber( [this, pConnection]
             {
-                //std::cout << "Receiver started" << std::endl;
+                //LOG( "Receiver started" ) ;
                 while( m_bContinue && m_socket.is_open() )
                 {
                     const auto error = receive( m_socket, m_packetBuffer );
 
-                    //std::cout << "Received packet with error: " << error.what() << std::endl;
+                    //LOG( "Received packet with error: " << error.what() ) ;
 
                     if( error.value() == boost::asio::error::eof )
                     {
                         //  This is what happens when close socket normally
                         m_bContinue = false;
-                        //std::cout << "Socket returned eof" << std::endl;
+                        //LOG( "Socket returned eof" ) ;
                     }
                     else if( error.value() == boost::asio::error::operation_aborted )
                     {
                         //  This is what happens when close socket normally
                         m_bContinue = false;
-                        //std::cout << "Socket returned operation aborted" << std::endl;
+                        //LOG( "Socket returned operation aborted" ) ;
                     }
                     else if( error.value() == boost::asio::error::connection_reset )
                     {
                         m_bContinue = false;
-                        //std::cout << "Socket returned connection reset" << std::endl;
+                        //LOG( "Socket returned connection reset" ) ;
                     }
                     else if( error.failed() )
                     {
                         m_bContinue = false;
-                        //std::cout << "Critical socket failure: " << error.what() << std::endl;
+                        //LOG( "Critical socket failure: " << error.what() ) ;
                         // std::abort();
                     }
                     else
@@ -84,7 +86,7 @@ namespace mega::service
                 }
                 m_disconnect_callback();
                 //m_waitForServerShutdown.set_value();
-                std::cout << "Receiver shutdown" << std::endl;
+                LOG( "Receiver shutdown" ) ;
             }).detach();
         }
 

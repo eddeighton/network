@@ -29,6 +29,8 @@
 
 #include "vocab/service/mp.hpp"
 
+#include "common/log.hpp"
+
 #include <thread>
 #include <atomic>
 #include <tuple>
@@ -136,7 +138,7 @@ namespace mega::service
                     init_fiber_scheduler(m_pIOContext);
                     m_pIOContext->run();
                 }
-                //std::cout << "network thread shutting down" << std::endl;
+                //LOG( "network thread shutting down" ) ;
             })
         {
             LogicalThread::registerFiber(m_mp);
@@ -145,12 +147,12 @@ namespace mega::service
                 [&cons = m_connectionsTable, mp = m_mp, &registration = m_registration](Registration reg)
                 {
                     registration.add( reg );
-                    //std::cout << "Generated reg update of: " << registration << std::endl;
+                    //LOG( "Generated reg update of: " << registration ) ;
                     for( auto& [ mp, pWeak ] : cons.getDirect() )
                     {
                         if( auto pCon = pWeak.lock() )
                         {
-                            //std::cout << "Sending reg update to: " << mp << std::endl;
+                            //LOG( "Sending reg update to: " << mp ) ;
                             sendRegistration( registration, { mp }, pCon->getSender() );
                         }
                     }
@@ -195,13 +197,13 @@ namespace mega::service
                             routers = std::move( routers )
                         ]() mutable
                     {
-                        std::cout << "Daemon shutdown fiber start" << std::endl;
+                        LOG( "Daemon shutdown fiber start" ) ;
                         pClient->stop();
                         pServer->stop();
                         routers.clear();
                         waitForServerShutdown.set_value();
-                        //std::cout << "Server stop complete" << std::endl;
-                        std::cout << "Daemon shutdown fiber stop" << std::endl;
+                        //LOG( "Server stop complete" ) ;
+                        LOG( "Daemon shutdown fiber stop" ) ;
                     }).detach();
                 });
 
@@ -209,11 +211,11 @@ namespace mega::service
  
             m_pIOContext->stop();
 
-            //std::cout << "io service stopped" << std::endl;
+            //LOG( "io service stopped" ) ;
 
             m_thread.join();
 
-            //std::cout << "Daemon shut down" << std::endl;
+            //LOG( "Daemon shut down" ) ;
         }
 
         void run()
@@ -261,7 +263,7 @@ namespace mega::service
                         m_registration.add(reg);
                         reg.add(m_registration);
 
-                        //std::cout << "Got reg update: " << reg << std::endl;
+                        //LOG( "Got reg update: " << reg ) ;
 
                         for( auto& [ mp, pWeak ] : m_connectionsTable.getDirect() )
                         {
@@ -269,7 +271,7 @@ namespace mega::service
                             {
                                 if( auto pCon = pWeak.lock() )
                                 {
-                                    //std::cout << "Forwarding reg to: " << mp << std::endl;
+                                    //LOG( "Forwarding reg to: " << mp ) ;
                                     sendRegistration( reg, visited, pCon->getSender() );
                                 }
                             }
@@ -293,7 +295,7 @@ namespace mega::service
                             {
                                 if( auto pCon = pWeak.lock() )
                                 {
-                                    //std::cout << "Forwarding reg to: " << mp << std::endl;
+                                    //LOG( "Forwarding reg to: " << mp ) ;
                                     sendDisconnect( shutdownMP, visited, pCon->getSender() );
                                 }
                             }
@@ -350,14 +352,14 @@ namespace mega::service
             const MP mp{ m_mp.getMachineID(), pConnection->getProcessID() };
 
             // enrole connection
-            // std::cout << "Connection callback called for: " <<
-            //    pConnection->getSocketInfo() << std::endl;
+            // LOG( "Connection callback called for: " <<
+            //    pConnection->getSocketInfo() ) ;
             m_connectionsTable.addDirect( mp, pConnection );
 
             auto& sender = pConnection->getSender();
 
             sendEnrole( Enrole{ m_mp, mp }, sender );
-            //std::cout << "Sending registration: " << m_registration << std::endl;
+            //LOG( "Sending registration: " << m_registration ) ;
             sendRegistration( m_registration, { m_mp }, sender );
         }
 
@@ -375,7 +377,7 @@ namespace mega::service
             {
                 if( auto pCon = pWeak.lock() )
                 {
-                    //std::cout << "Forwarding reg to: " << mp << std::endl;
+                    //LOG( "Forwarding reg to: " << mp ) ;
                     sendDisconnect( mp, visited, pCon->getSender() );
                 }
             }

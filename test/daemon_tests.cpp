@@ -53,13 +53,13 @@ TEST( Service, DaemonConnect )
 
     {
         waitForDaemonStartFut.get();
-        std::cout << "Client started" << std::endl;
+        LOG( "Client started" );
         Connect con( {}, PortNumber{ 1234 } );
 
-        std::cout << "Client started 2" << std::endl;
+        LOG( "Client started 2" );
         auto pConnectivity = con.readRegistry()->one< Connectivity >( MP{} );
         pConnectivity->shutdown();
-        std::cout << "Client complete" << std::endl;
+        LOG( "Client complete" );
     }
 
     daemonThread.join();

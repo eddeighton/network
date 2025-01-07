@@ -9,6 +9,7 @@
 
 #include <boost/fiber/all.hpp>
 
+#include "common/log.hpp"
 #include "common/assert_verify.hpp"
 
 #include <iostream>
@@ -145,7 +146,7 @@ namespace mega::service
             {
                 receive();
             }
-            std::cout << "runMessageLoop complete" << std::endl;
+            LOG( "runMessageLoop complete" ) ;
         }
 
         inline void stop()

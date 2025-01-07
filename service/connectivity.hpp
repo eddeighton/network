@@ -7,6 +7,8 @@
 #include "service/registry.hpp"
 #include "service/daemon.hpp"
 
+#include "common/log.hpp"
+
 #include <iostream>
 
 namespace mega::service
@@ -26,7 +28,7 @@ namespace mega::service
         }
         void shutdown() override
         {
-            std::cout << "shutdown received" << std::endl;
+            LOG( "shutdown received" ) ;
             m_daemon.shutdown();
         }
     };

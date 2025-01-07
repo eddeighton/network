@@ -70,6 +70,12 @@ namespace common
     UNUSED_VARIABLE static const char* COLOUR_WHITE_BEGIN       = "\033[37m";
     UNUSED_VARIABLE static const char* COLOUR_END               = "\033[0m";
 
+    UNUSED_VARIABLE static const char* URL_BEGIN                = "\e]8;;";
+    UNUSED_VARIABLE static const char* URL_MIDDLE               = "\e\\";
+    UNUSED_VARIABLE static const char* URL_END                  = "\e]8;;\e\\";
+
+    // printf '\e]8;;http://example.com\e\\This is a link\e]8;;\e\\\n'
+
 }
 
 #endif //TERMINAL_COLOURS_08_DEC_2020

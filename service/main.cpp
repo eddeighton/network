@@ -19,6 +19,8 @@
 #include "service/connectivity.hpp"
 #include "test/test_factory.hpp"
 
+#include "common/log.hpp"
+
 #include <boost/program_options.hpp>
 
 #include <iostream>
@@ -30,14 +32,13 @@ int main( int argc, const char* argv[] )
     {
         namespace po = boost::program_options;
         po::variables_map vm;
-        bool              bGeneralWait = false;
 
         po::options_description genericOptions( " General" );
         {
             // clang-format off
             genericOptions.add_options()
             ( "help,?",                                          "Produce general or command help message" )
-            ( "wait",       po::bool_switch( &bGeneralWait ),    "Wait at startup for attaching a debugger" );
+            ;
             // clang-format on
         }
 
@@ -71,13 +72,6 @@ int main( int argc, const char* argv[] )
         }
         try
         {
-            if( bGeneralWait )
-            {
-                std::cout << "Waiting for input..." << std::endl;
-                char c;
-                std::cin >> c;
-            }
-     
             const mega::service::MP mp
             { 
                 machineID, 
@@ -90,16 +84,16 @@ int main( int argc, const char* argv[] )
 
             daemon.run();
 
-            std::cout << "main shutting down" << std::endl;
+            LOG( "main shutting down" ) ;
         }
         catch( std::exception& e )
         {
-            std::cout << "Exception: " << e.what() << std::endl;
+            LOG( "Exception: " << e.what() ) ;
             return 1;
         }
         catch( ... )
         {
-            std::cout << "Unknown error" << std::endl;
+            LOG( "Unknown error" ) ;
             return 1;
         }
     }

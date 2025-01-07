@@ -29,6 +29,8 @@
 #include "service/protocol/message.hpp"
 #include "service/protocol/serialization.hpp"
 
+#include "common/log.hpp"
+
 #include <pybind11/embed.h>
 
 #include <boost/program_options.hpp>
@@ -51,7 +53,6 @@ int main( int argc, const char* argv[] )
         po::variables_map vm;
 
         std::filesystem::path logDir = std::filesystem::current_path();
-        bool                  bGeneralWait = false;
         bool                  bTime = false;
 
         mega::service::PortNumber port{1234};
@@ -66,7 +67,6 @@ int main( int argc, const char* argv[] )
             genericOptions.add_options()
             ( "help,?",                                                         "Produce general or command help message" )
             ( "log_dir",    po::value< std::filesystem::path >( &logDir ),      "Build log directory" )
-            ( "wait",       po::bool_switch( &bGeneralWait ),                   "Wait at startup for attaching a debugger" )
             ( "time",       po::bool_switch( &bTime ),                          "Measure time taken to perform command" )
             ( "server,s",   po::bool_switch( &bRunAsServer ),                   "Run as server" );
             // clang-format on
@@ -104,13 +104,6 @@ int main( int argc, const char* argv[] )
 
         try
         {
-            if( bGeneralWait )
-            {
-                std::cout << "Waiting for input..." << std::endl;
-                char c;
-                std::cin >> c;
-            }
-
             if( bTime )
             {
                 startTimeOpt = std::chrono::steady_clock::now();
@@ -130,8 +123,7 @@ int main( int argc, const char* argv[] )
                 
                 if( !strCommand.empty() )
                 {
-                    std::cout << "Got command: " << std::endl;
-                    std::cout << strCommand << std::endl;
+                    LOG( "Got command: " << strCommand ) ;
 
                     boost::fibers::fiber([&]()
                         {
@@ -161,7 +153,7 @@ int main( int argc, const char* argv[] )
         }
         catch(std::exception& ex)
         {
-            std::cout << "Exception: " << ex.what() << std::endl;
+            LOG( "Exception: " << ex.what() ) ;
             return 1;
         }
     }

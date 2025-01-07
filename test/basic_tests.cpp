@@ -31,9 +31,9 @@ TEST( Service, Basic )
     OTestFactory testFactory( access );
 
     Ptr< TestFactory > pFactory = testFactory.getPtr();
-    std::cout << "Created TestFactory: " << testFactory.getMPTFO() << std::endl;
+    LOG( "Created TestFactory: " << testFactory.getMPTFO() );
     Ptr< mega::test::Test > pTest2 = pFactory->create_test();
-    std::cout << "Test returned: " << pTest2->test1() << std::endl;
+    LOG( "Test returned: " << pTest2->test1() );
 
     boost::fibers::fiber test( [&]()
     {
@@ -41,12 +41,12 @@ TEST( Service, Basic )
         try
         {
             Ptr< mega::test::Test > pTest = pFactory->create_test();
-            std::cout << "Test returned: " << pTest->test1() << std::endl;
+            LOG( "Test returned: " << pTest->test1() );
         }
         catch(std::exception& ex)
         {
-            std::cout << "Caught exception: " << ex.what() <<
-                " In: " << LogicalThread::get().getMPTF() << std::endl;
+            LOG( "Caught exception: " << ex.what() <<
+                " In: " << LogicalThread::get().getMPTF() );
         }
         thread.stop();
     });
