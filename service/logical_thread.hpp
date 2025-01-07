@@ -13,6 +13,7 @@
 
 #include <iostream>
 #include <map>
+#include <atomic>
 
 namespace mega::service
 {
@@ -24,7 +25,7 @@ namespace mega::service
 
         Channel m_receiveChannel;
         MPTF m_mptf;
-        bool m_bContinue = true;
+        std::atomic< bool > m_bContinue = true;
         MessageID m_interProcessMessageID;
         std::vector< Stack > m_stacks;
     public:
@@ -139,6 +140,7 @@ namespace mega::service
 
         inline void runMessageLoop()
         {
+            // while(m_bContinue.load(std::memory_order_relaxed) == true)
             while(m_bContinue)
             {
                 receive();

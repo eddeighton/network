@@ -146,7 +146,7 @@ namespace mega::service
                 {
                     registration.add( reg );
                     //std::cout << "Generated reg update of: " << registration << std::endl;
-                    for( auto& [ mp, pWeak ] : cons.m_direct )
+                    for( auto& [ mp, pWeak ] : cons.getDirect() )
                     {
                         if( auto pCon = pWeak.lock() )
                         {
@@ -243,7 +243,7 @@ namespace mega::service
 
                         //std::cout << "Got reg update: " << reg << std::endl;
 
-                        for( auto& [ mp, pWeak ] : m_connectionsTable.m_direct )
+                        for( auto& [ mp, pWeak ] : m_connectionsTable.getDirect() )
                         {
                             if( !visited.contains( mp ) )
                             {
@@ -267,7 +267,7 @@ namespace mega::service
                         writeRegistry()->disconnected(shutdownMP);
                         m_registration.remove(shutdownMP);
 
-                        for( auto& [ mp, pWeak ] : m_connectionsTable.m_direct )
+                        for( auto& [ mp, pWeak ] : m_connectionsTable.getDirect() )
                         {
                             if( !visited.contains( mp ) )
                             {
@@ -332,7 +332,7 @@ namespace mega::service
             // enrole connection
             // std::cout << "Connection callback called for: " <<
             //    pConnection->getSocketInfo() << std::endl;
-            m_connectionsTable.m_direct.insert( { mp, pConnection } );
+            m_connectionsTable.addDirect( mp, pConnection );
 
             auto& sender = pConnection->getSender();
 
@@ -344,14 +344,14 @@ namespace mega::service
         void disconnect(Connection::Ptr pConnection)
         {
             const MP mp{ m_mp.getMachineID(), pConnection->getProcessID() };
-            m_connectionsTable.m_direct.erase(mp);
+            m_connectionsTable.removeDirect(mp);
 
             std::set< MP > visited{m_mp};
 
             writeRegistry()->disconnected(mp);
             m_registration.remove(mp);
 
-            for( auto& [ mp, pWeak ] : m_connectionsTable.m_direct )
+            for( auto& [ mp, pWeak ] : m_connectionsTable.getDirect() )
             {
                 if( auto pCon = pWeak.lock() )
                 {

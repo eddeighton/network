@@ -15,6 +15,7 @@
 #include <variant>
 #include <map>
 #include <memory>
+#include <mutex>
 
 namespace mega::service
 {
@@ -47,12 +48,33 @@ namespace mega::service
         using Ptr = std::unique_ptr< Router >;
         using Map = std::map< Stack, Ptr >;
 
-        struct Table
+        class Table
         {
             // direct connections are maintained by daemon and always correct
             DirectConnections m_direct;
             // indirect connections are an estimate and may be incorrect
             IndirectConnections m_indirect;
+            mutable std::mutex m_mutex;
+        public:
+            inline DirectConnections getDirect() const
+            {
+                std::lock_guard< std::mutex > g( m_mutex );
+                return m_direct;
+            }
+            inline void addDirect( MP mp, Connection::Ptr pConnection )
+            {
+                std::lock_guard< std::mutex > g( m_mutex );
+                m_direct.insert( { mp, pConnection } );
+            }
+            inline void removeDirect( MP mp )
+            {
+                std::lock_guard< std::mutex > g( m_mutex );
+                m_direct.erase( mp );
+            }
+            inline IndirectConnections& getIndirect()
+            {
+                return m_indirect;
+            }
         };
     private:
         inline Msg receive()
@@ -92,9 +114,9 @@ namespace mega::service
                     Connection::WeakPtr pOriginalRequestResponseConnection
                         = pMsg->m_pResponseConnection;
                     bool bDirectSend = false;
-                    auto iFind =
-                        m_table.m_direct.find( pMsg->m_header.m_responder.getMP() );
-                    if( iFind != m_table.m_direct.end() )
+                    auto direct = m_table.getDirect();
+                    auto iFind = direct.find( pMsg->m_header.m_responder.getMP() );
+                    if( iFind != direct.end() )
                     {
                         // route the message using direct connection which should always be correct
                         if( auto pCon = iFind->second.lock() )

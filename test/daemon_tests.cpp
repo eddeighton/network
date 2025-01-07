@@ -81,6 +81,7 @@ TEST( Service, CreateTest )
         ASSERT_EQ( pTest->test1(), "Hello World"s );
         ASSERT_EQ( pTest->test2( 123 ), 123 );
         ASSERT_EQ( pTest->test3( "This"s ), "This"s );
+        ASSERT_EQ( pTest->test3( ""s ), ""s );
 
         auto pConnectivity = con.readRegistry()->one< Connectivity >( MP{} );
         pConnectivity->shutdown();
@@ -89,3 +90,45 @@ TEST( Service, CreateTest )
     daemon.join();
 }
 
+
+TEST( Service, InterConnect )
+{
+    using namespace mega::service;
+    using namespace mega::test;
+
+    LogicalThread::registerThread();
+
+    std::thread daemon(
+        []
+        {
+            LogicalThread::registerThread();
+            Daemon daemon( {}, PortNumber{ 1234 } );
+            OConnectivity connectivity(daemon);
+            OTestFactory testFactory( daemon );
+            daemon.run();
+        });
+
+    std::promise< LogicalThread* > p;
+    auto f = p.get_future();
+    std::thread client1(
+        [&p]
+        {
+            LogicalThread::registerThread();
+            Connect con( {}, PortNumber{ 1234 } );
+            p.set_value( &LogicalThread::get() );
+            con.run();
+        });
+
+    {
+        Connect con( {}, PortNumber{ 1234 } );
+        auto pConnectivity = con.readRegistry()->one< Connectivity >( MP{} );
+        pConnectivity->shutdown();
+    }
+
+    // boost::this_fiber::yield();
+
+    f.get()->stop();
+
+    client1.join();
+    daemon.join();
+}

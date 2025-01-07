@@ -84,6 +84,7 @@ namespace mega::service
             LogicalThread::get().runMessageLoop();
         }
 
+    private:
         void receiverCallback(
                 Connection::WeakPtr pResponseConnection,
                 const PacketBuffer& buffer)
