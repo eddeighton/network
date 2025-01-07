@@ -50,8 +50,8 @@ namespace mega::service::detail
                     MPTFO mptfo{};
                     archive >> mptfo;
 
-                    OArchive& megaOArchive = dynamic_cast< OArchive& >( archive );
-                    pointer = megaOArchive.access().readRegistry()->template one<T>(mptfo);
+                    IArchive& megaArchive = dynamic_cast< IArchive& >( archive );
+                    pointer = megaArchive.access().readRegistry()->template one<T>(mptfo);
                 }
             }
         }

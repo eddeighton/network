@@ -70,10 +70,27 @@
 {% if function.return_type != "void" %}
                 {{ function.return_type }} result{};
                 service::Functor call = 
-                    [ ptr = m_ptr, &thisLogicalThread, &result, &bResponse, &stack]() -> void
+                    [ 
+                        ptr = m_ptr,
+                        &thisLogicalThread,
+{% for param in function.parameters %}
+                        &{{ param.name }},
+{% endfor %}
+                        &result,
+                        &bResponse,
+                        &stack
+                    ]() -> void
 {% else %}
                 service::Functor call = 
-                    [ ptr = m_ptr, &thisLogicalThread, &bResponse, &stack ]() -> void
+                    [ 
+                        ptr = m_ptr,
+                        &thisLogicalThread,
+{% for param in function.parameters %}
+                        &{{ param.name }},
+{% endfor %}
+                        &bResponse,
+                        &stack
+                    ]() -> void
 {% endif %}
                 {
                      try

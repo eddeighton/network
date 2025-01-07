@@ -41,33 +41,33 @@ namespace mega::service
             m_bStarted = true;
             boost::fibers::fiber( [this, pConnection]
             {
-                std::cout << "Receiver started" << std::endl;
+                //std::cout << "Receiver started" << std::endl;
                 while( m_bContinue && m_socket.is_open() )
                 {
                     const auto error = receive( m_socket, m_packetBuffer );
 
-                    std::cout << "Received packet with error: " << error.what() << std::endl;
+                    //std::cout << "Received packet with error: " << error.what() << std::endl;
 
                     if( error.value() == boost::asio::error::eof )
                     {
                         //  This is what happens when close socket normally
                         m_bContinue = false;
-                        std::cout << "Socket returned eof" << std::endl;
+                        //std::cout << "Socket returned eof" << std::endl;
                     }
                     else if( error.value() == boost::asio::error::operation_aborted )
                     {
                         //  This is what happens when close socket normally
                         m_bContinue = false;
-                        std::cout << "Socket returned operation aborted" << std::endl;
+                        //std::cout << "Socket returned operation aborted" << std::endl;
                     }
                     else if( error.value() == boost::asio::error::connection_reset )
                     {
                         m_bContinue = false;
-                        std::cout << "Socket returned connection reset" << std::endl;
+                        //std::cout << "Socket returned connection reset" << std::endl;
                     }
                     else if( error.failed() )
                     {
-                        std::cout << "Critical socket failure: " << error.what() << std::endl;
+                        //std::cout << "Critical socket failure: " << error.what() << std::endl;
                         std::abort();
                     }
                     else
@@ -76,7 +76,7 @@ namespace mega::service
                     }
                 }
                 m_disconnect_callback();
-                std::cout << "Receiver shutdown" << std::endl;
+                //std::cout << "Receiver shutdown" << std::endl;
             }).detach();
         }
 

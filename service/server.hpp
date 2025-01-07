@@ -55,7 +55,7 @@ namespace mega::service
 
             void stop() override
             {
-                std::cout << "Server connection stoppping " << m_socket_info << std::endl;
+                //std::cout << "Server connection stoppping " << m_socket_info << std::endl;
                 if( m_receiver.started() && !m_bDisconnected )
                 {
                     if( m_socket.is_open() )
@@ -67,7 +67,7 @@ namespace mega::service
                     m_receiver.stop();
                     m_waitForDisconnectFuture.get();
                 }
-                std::cout << "Server connection stop complete " << m_socket_info << std::endl;
+                //std::cout << "Server connection stop complete " << m_socket_info << std::endl;
             }
 
             ProcessID getProcessID() const override { return m_processID; }
@@ -76,13 +76,13 @@ namespace mega::service
             {
                 m_processID = processID;
                 m_socket_info = TCPSocketInfo::make( m_socket );
-                std::cout << "Server connection start " << m_socket_info << std::endl;
+                //std::cout << "Server connection start " << m_socket_info << std::endl;
                 m_receiver.run(shared_from_this());
             }
 
             void disconnected()
             {
-                std::cout << "Server connection disconnecting " << m_socket_info << std::endl;
+                //std::cout << "Server connection disconnecting " << m_socket_info << std::endl;
                 if( m_socket.is_open() )
                 {
                     boost::system::error_code ec;
@@ -100,7 +100,7 @@ namespace mega::service
                         std::dynamic_pointer_cast< Connection >( shared_from_this() ) );
                 }
 
-                std::cout << "Server connection disconnect complete" << std::endl;
+                //std::cout << "Server connection disconnect complete" << std::endl;
             }
         private:
             boost::fibers::promise<void>    m_waitForDisconnect;
@@ -168,7 +168,7 @@ namespace mega::service
         {
             boost::fibers::fiber([this]
             {
-                std::cout << "Acceptor started" << std::endl;
+                //std::cout << "Acceptor started" << std::endl;
                 if( m_acceptor.is_open() )
                 {
                     Connection::Ptr pNewConnection =
@@ -178,7 +178,7 @@ namespace mega::service
                         boost::fibers::asio::yield[ ec ]);
                     onConnect( pNewConnection, ec );
                 }
-                std::cout << "Acceptor stopped" << std::endl;
+                //std::cout << "Acceptor stopped" << std::endl;
 
             }).detach();
         }

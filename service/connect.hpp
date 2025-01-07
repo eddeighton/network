@@ -58,7 +58,7 @@ namespace mega::service
             writeRegistry()->setCreationCallback(
                 [pWeak, mp = getMP()](Registration reg)
                 {
-                    std::cout << "Generated reg update of: " << reg << std::endl;
+                    //std::cout << "Generated reg update of: " << reg << std::endl;
                     if( auto pCon = pWeak.lock() )
                     {
                         sendRegistration( reg, { mp }, pCon->getSender() );
@@ -114,7 +114,7 @@ namespace mega::service
                         registration.remove(m_enrolement.getMP());
                         writeRegistry()->update(
                             pResponseConnection.lock()->getSender(), registration);
-                        std::cout << "Got registration update: " << registration << std::endl;
+                        //std::cout << "Got registration update: " << registration << std::endl;
                         if( m_waitForRegistryPromise.has_value() )
                         {
                             m_waitForRegistryPromise->set_value();

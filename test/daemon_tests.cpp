@@ -17,6 +17,9 @@
 
 #include <utility>
 #include <iostream>
+#include <string>
+
+using namespace std::string_literals;
 
 TEST( Service, DaemonStartStop )
 {
@@ -43,7 +46,7 @@ TEST( Service, DaemonConnect )
         });
 
     {
-        Connect con( {},  PortNumber{ 1234 }  );
+        Connect con( {}, PortNumber{ 1234 } );
 
         auto pConnectivity = con.readRegistry()->one< Connectivity >( MP{} );
         pConnectivity->shutdown();
@@ -52,24 +55,37 @@ TEST( Service, DaemonConnect )
     daemon.join();
 }
 
+TEST( Service, CreateTest )
+{
+    using namespace mega::service;
+    using namespace mega::test;
 
-    
-   //  namespace bp = boost::process;
+    LogicalThread::registerThread();
 
-   //  std::future< std::string > daemonOutput, daemonError;
-   //  std::future< std::string > megaOutput,   megaError;
+    std::thread daemon(
+        []
+        {
+            LogicalThread::registerThread();
+            Daemon daemon( {}, PortNumber{ 1234 } );
+            OConnectivity connectivity(daemon);
+            OTestFactory testFactory( daemon );
+            daemon.run();
+        });
 
-   //  boost::asio::io_service ios;
+    {
+        Connect con( {}, PortNumber{ 1234 } );
 
-   //  bp::child procDaemon(   "/build/debug/bin/daemon",  bp::std_in.close(), bp::std_out > daemonOutput, bp::std_err > daemonError, ios );
-   //  bp::child procMega(     "/build/debug/bin/mega",    bp::std_in.close(), bp::std_out > megaOutput, bp::std_err > megaError, ios );
+        auto pTestFactory = con.readRegistry()->one< TestFactory >( MP{} );
+        auto pTest = pTestFactory->create_test();
+        ASSERT_TRUE(pTest);
+        ASSERT_EQ( pTest->test1(), "Hello World"s );
+        ASSERT_EQ( pTest->test2( 123 ), 123 );
+        ASSERT_EQ( pTest->test3( "This"s ), "This"s );
 
-   //  ios.run();
+        auto pConnectivity = con.readRegistry()->one< Connectivity >( MP{} );
+        pConnectivity->shutdown();
+    }
 
-   //  auto strDaemonOut = daemonOutput.get();
-   //  auto strMegaOut  = megaOutput.get();
-
-   //  std::cout << strDaemonOut << std::endl;
-   //  std::cout << strMegaOut << std::endl;
-// }
+    daemon.join();
+}
 

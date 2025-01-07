@@ -50,21 +50,29 @@ void decodeInboundRequest(Access& access,
                         {
 {% if length(function.parameters) > 0 %}
                             IArchive ia(access, buffer);
+                            {
+                                service::MessageType messageType_;
+                                service::Header header_;
+                                ia >> messageType_;
+                                ia >> header_;
+                            }
+
 {% endif %}
 {% for param in function.parameters %}
                             {{ param.type }} {{ param.name }};
-                            ia >> {{ param.type }};
+                            ia >> {{ param.name }};
 {% endfor %}
                             {
                                 service::LogicalThread::StackEntry s( service::LogicalThread::get(), header.m_stack );
 {% if function.return_type != "void" %}
-                                {{function.return_type}} result =
+                                const {{function.return_type}} result =
 {% endif %}
                                 p->{{ function.name }}
                                 (
 {% for param in function.parameters %}
                                     {{ param.name }}{% if not loop.is_last %},{% endif %}
 {% endfor %}
+
                                 );
 
                                 OArchive oa( access );
@@ -75,7 +83,6 @@ void decodeInboundRequest(Access& access,
                                 oa << result;
 {% endif %}
                                 pResponseConnection.lock()->getSender().send(oa.vector());
-                                // std::cout << "Response to request sent" << std::endl;
                             }
                         }
                         catch(...)

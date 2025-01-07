@@ -136,7 +136,7 @@ namespace mega::service
                     init_fiber_scheduler(m_pIOContext);
                     m_pIOContext->run();
                 }
-                std::cout << "network thread shutting down" << std::endl;
+                //std::cout << "network thread shutting down" << std::endl;
             })
         {
             LogicalThread::registerFiber(m_mp);
@@ -145,12 +145,12 @@ namespace mega::service
                 [&cons = m_connectionsTable, mp = m_mp, &registration = m_registration](Registration reg)
                 {
                     registration.add( reg );
-                    std::cout << "Generated reg update of: " << registration << std::endl;
+                    //std::cout << "Generated reg update of: " << registration << std::endl;
                     for( auto& [ mp, pWeak ] : cons.m_direct )
                     {
                         if( auto pCon = pWeak.lock() )
                         {
-                            std::cout << "Sending reg update to: " << mp << std::endl;
+                            //std::cout << "Sending reg update to: " << mp << std::endl;
                             sendRegistration( registration, { mp }, pCon->getSender() );
                         }
                     }
@@ -176,7 +176,7 @@ namespace mega::service
                         pClient->stop();
                         pServer->stop();
                         waitForServerShutdown.set_value();
-                        std::cout << "Server stop complete" << std::endl;
+                        //std::cout << "Server stop complete" << std::endl;
                     }).detach();
                 });
 
@@ -184,11 +184,11 @@ namespace mega::service
  
             m_pIOContext->stop();
 
-            std::cout << "io service stopped" << std::endl;
+            //std::cout << "io service stopped" << std::endl;
 
             m_thread.join();
 
-            std::cout << "Daemon shut down" << std::endl;
+            //std::cout << "Daemon shut down" << std::endl;
         }
 
         void run()
@@ -241,7 +241,7 @@ namespace mega::service
                         m_registration.add(reg);
                         reg.add(m_registration);
 
-                        std::cout << "Got reg update: " << reg << std::endl;
+                        //std::cout << "Got reg update: " << reg << std::endl;
 
                         for( auto& [ mp, pWeak ] : m_connectionsTable.m_direct )
                         {
@@ -249,7 +249,7 @@ namespace mega::service
                             {
                                 if( auto pCon = pWeak.lock() )
                                 {
-                                    std::cout << "Forwarding reg to: " << mp << std::endl;
+                                    //std::cout << "Forwarding reg to: " << mp << std::endl;
                                     sendRegistration( reg, visited, pCon->getSender() );
                                 }
                             }
@@ -273,7 +273,7 @@ namespace mega::service
                             {
                                 if( auto pCon = pWeak.lock() )
                                 {
-                                    std::cout << "Forwarding reg to: " << mp << std::endl;
+                                    //std::cout << "Forwarding reg to: " << mp << std::endl;
                                     sendDisconnect( shutdownMP, visited, pCon->getSender() );
                                 }
                             }
@@ -337,7 +337,7 @@ namespace mega::service
             auto& sender = pConnection->getSender();
 
             sendEnrole( Enrole{ m_mp, mp }, sender );
-            std::cout << "Sending registration: " << m_registration << std::endl;
+            //std::cout << "Sending registration: " << m_registration << std::endl;
             sendRegistration( m_registration, { m_mp }, sender );
         }
 
@@ -355,7 +355,7 @@ namespace mega::service
             {
                 if( auto pCon = pWeak.lock() )
                 {
-                    std::cout << "Forwarding reg to: " << mp << std::endl;
+                    //std::cout << "Forwarding reg to: " << mp << std::endl;
                     sendDisconnect( mp, visited, pCon->getSender() );
                 }
             }
