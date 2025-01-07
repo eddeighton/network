@@ -2,6 +2,7 @@
 #pragma once
 
 #include "service/client.hpp"
+#include "service/access.hpp"
 #include "service/registry.hpp"
 #include "service/network.hpp"
 #include "service/enrole.hpp"
@@ -24,7 +25,7 @@
 
 namespace mega::service
 {
-    class Connect
+    class Connect : public Access
     {
         Network                         m_network;
         Enrole                          m_enrolement;
@@ -54,7 +55,7 @@ namespace mega::service
 
             Connection::WeakPtr pWeak = m_pConnection;
             // setup registry creation callback
-            Registry::getWriteAccess()->setCreationCallback(
+            writeRegistry()->setCreationCallback(
                 [pWeak, mp = getMP()](Registration reg)
                 {
                     std::cout << "Generated reg update of: " << reg << std::endl;
@@ -87,8 +88,7 @@ namespace mega::service
                 Connection::WeakPtr pResponseConnection,
                 const PacketBuffer& buffer)
         {
-            boost::interprocess::basic_vectorbuf< PacketBuffer > vectorBuffer(buffer);
-            boost::archive::binary_iarchive ia(vectorBuffer, boostArchiveFlags);
+            IArchive ia(*this, buffer);
 
             MessageType messageType;
             ia >> messageType;
@@ -112,7 +112,7 @@ namespace mega::service
                         // filter registration entries for THIS process
                         // since ONLY created inter-process proxies
                         registration.remove(m_enrolement.getMP());
-                        Registry::getWriteAccess()->update(
+                        writeRegistry()->update(
                             pResponseConnection.lock()->getSender(), registration);
                         std::cout << "Got registration update: " << registration << std::endl;
                         if( m_waitForRegistryPromise.has_value() )
@@ -129,7 +129,7 @@ namespace mega::service
                         ia >> visited;
                         ia >> shutdownMP;
 
-                        Registry::getWriteAccess()->disconnected(shutdownMP);
+                        writeRegistry()->disconnected(shutdownMP);
                     }
                     break;
                 case MessageType::eRequest:
@@ -140,7 +140,7 @@ namespace mega::service
                         VERIFY_RTE_MSG(header.m_responder.getMP() == getMP(),
                             "Received request intended for different responder: " << header <<
                             " when enrolement: " << m_enrolement );
-                        decodeInboundRequest(ia, header, pResponseConnection);
+                        decodeInboundRequest(*this, header, buffer, pResponseConnection);
                     }
                     break;
                 case MessageType::eResponse:
@@ -148,11 +148,7 @@ namespace mega::service
                         Header header;
                         ia >> header;
 
-                        LogicalThread& logicalThread =
-                            Registry::getReadAccess()->
-                                getLogicalThread(header.m_requester);
-
-                        logicalThread.send(
+                        LogicalThread::get(header.m_requester).send(
                             InterProcessResponse
                             {
                                 header,

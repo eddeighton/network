@@ -20,7 +20,7 @@ namespace mega::service
         OConnectivity(service::Daemon& daemon)
         :   m_daemon(daemon)
         {
-            auto reg = service::Registry::getWriteAccess();
+            auto reg = m_daemon.writeRegistry();
             m_mptfo = reg->createInProcessProxy(service::LogicalThread::get().getMPTF(), *this);
             m_pProxy = reg->one< Connectivity >(m_mptfo);
         }

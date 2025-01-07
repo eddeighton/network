@@ -3,6 +3,8 @@
 #include "service/registry.hpp"
 
 #include <limits>
+#include <unordered_map>
+#include <shared_mutex>
 
 namespace mega::service
 {
@@ -10,17 +12,26 @@ namespace mega::service
     {
         // Global registry singleton with reader writer lock
         static std::shared_mutex g_mutex;
-        static Registry g_registry;
         static boost::fibers::fiber_specific_ptr< LogicalThread > fiber_local_storage;
+        using LogicalThreads = std::unordered_map< MPTF, LogicalThread*, MPTF::Hash >;
+        static LogicalThreads g_logicalThreads;
     }
 
-    Registry::RegistryReadAccess Registry::getReadAccess()
+    LogicalThread& LogicalThread::get(MPTF mptf)
     {
-        return {detail::g_mutex, detail::g_registry};
+        std::shared_lock< std::shared_mutex > lock( detail::g_mutex );
+        auto iFind = detail::g_logicalThreads.find(mptf);
+        VERIFY_RTE_MSG(iFind != detail::g_logicalThreads.end(),
+            "Failed to locate logical thread: " << mptf);
+        return *iFind->second;
     }
-    Registry::RegistryWriteAccess Registry::getWriteAccess()
+
+    void LogicalThread::registerLogicalThread(MPTF mptf, LogicalThread* pLogicalThread)
     {
-        return {detail::g_mutex, detail::g_registry};
+        std::lock_guard< std::shared_mutex > lock( detail::g_mutex );
+        auto ib = detail::g_logicalThreads.insert(std::make_pair(mptf, pLogicalThread));
+        VERIFY_RTE_MSG( ib.second,
+            "Failed to register logical thread.  Duplicate mptf found: " << mptf );
     }
 
     void LogicalThread::registerFiber( MP mp )
@@ -36,12 +47,10 @@ namespace mega::service
             detail::fiber_local_storage.reset( new LogicalThread );
             detail::fiber_local_storage->m_mptf = mptf;
 
-            Registry::getWriteAccess()->registerLogicalThread(mptf,
-                detail::fiber_local_storage.get());
-            // "std::cout << "Register fiber: " << mptf << std::endl;
+            registerLogicalThread(mptf, detail::fiber_local_storage.get());
         }
     }
-
+            
     LogicalThread& LogicalThread::get()
     {
         VERIFY_RTE_MSG( detail::fiber_local_storage.get() != nullptr,

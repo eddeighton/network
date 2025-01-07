@@ -40,7 +40,7 @@ namespace mega::service
             :   m_pPythonConnection( std::make_unique< mega::service::Connect >(
                     mega::service::IPAddress{ strIPAddress },
                     mega::service::PortNumber{ portNumber } ) )
-            ,   m_pTestFactory( std::make_unique< mega::test::OTestFactory >() )
+            ,   m_pTestFactory( std::make_unique< mega::test::OTestFactory >( *m_pPythonConnection.get() ))
         {
         }
 
@@ -58,27 +58,15 @@ namespace mega::service
 
         std::string printRegistration()
         {
-            const auto registration = 
-                mega::service::Registry::getReadAccess()->getRegistration();
-
             std::ostringstream os;
-            for( const auto& registrant : registration.m_registrants )
-            {
-                os << "MPTFO: " << registrant.m_mptfo << "\n";
-                for( const auto& interface : registrant.m_rtti.m_interfaces )
-                {
-                    os << "  Interface: " << interface << "\n";
-                }
-            }
-
+            os << m_pPythonConnection->readRegistry()->getRegistration();
             return os.str();
         }
 
         template< typename T >
         Ptr< T > get( MP mp )
         {
-            auto reg = mega::service::Registry::getReadAccess();
-            return reg->one< T >( mp );
+            return m_pPythonConnection->readRegistry()->one< T >( mp );
         }
     };
 }

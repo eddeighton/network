@@ -5,6 +5,7 @@
 #include "service/protocol/serialization.hpp"
 #include "service/sender_socket.hpp"
 #include "service/registry.hpp"
+#include "service/access.hpp"
 #include "service/connection.hpp"
 
 {% for include in includes %}
@@ -14,38 +15,46 @@
 namespace mega::service
 {
 
-void decodeInboundRequest(boost::archive::binary_iarchive& ia, const Header& header,
+void decodeInboundRequest(Access& access,
+        const Header& header,
+        const PacketBuffer& buffer,
         Connection::WeakPtr pResponseConnection)
 {
     using namespace std::string_literals;
 
-    auto& logicalThread = mega::service::Registry::getReadAccess()
-        ->getLogicalThread(header.m_responder.getMPTF());
+    auto& logicalThread = LogicalThread::get(header.m_responder.getMPTF());
 
     // request or response
     logicalThread.send(
         mega::service::InterProcessRequest
         {
-            [pResponseConnection, header]()
+            [&access = access, header, buffer = buffer, pResponseConnection]()
             {
                 if( header.m_interfaceName.empty() )
                 {
                     THROW_RTE( "Missing interface name in request: " << header );
                 }
 {% for interface in interfaces %}
-                else if( header.m_interfaceName.str() == "{{ interface.full_type_name }}" )
+                else if( header.m_interfaceName.str() == "{{ interface.full_type_name }}"s )
                 {
-                    auto p = mega::service::Registry::getReadAccess()
+                    auto p = access.readRegistry()
                         ->one<{{ interface.full_type_name }}>(header.m_responder);
                     if( header.m_functionName.empty() )
                     {
                         THROW_RTE( "Missing function name in request: " << header );
                     }
 {% for function in interface.functions %}
-                    else if( header.m_functionName.str() == "{{ function.name }}" )
+                    else if( header.m_functionName.str() == "{{ function.name }}"s )
                     {
                         try
                         {
+{% if length(function.parameters) > 0 %}
+                            IArchive ia(access, buffer);
+{% endif %}
+{% for param in function.parameters %}
+                            {{ param.type }} {{ param.name }};
+                            ia >> {{ param.type }};
+{% endfor %}
                             {
                                 service::LogicalThread::StackEntry s( service::LogicalThread::get(), header.m_stack );
 {% if function.return_type != "void" %}
@@ -58,15 +67,14 @@ void decodeInboundRequest(boost::archive::binary_iarchive& ia, const Header& hea
 {% endfor %}
                                 );
 
-                                boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer;
-                                boost::archive::binary_oarchive oa(vectorBuffer, service::boostArchiveFlags);
+                                OArchive oa( access );
 
                                 oa << mega::service::MessageType::eResponse;
                                 oa << header;
 {% if function.return_type != "void" %}
                                 oa << result;
 {% endif %}
-                                pResponseConnection.lock()->getSender().send(vectorBuffer.vector());
+                                pResponseConnection.lock()->getSender().send(oa.vector());
                                 // std::cout << "Response to request sent" << std::endl;
                             }
                         }

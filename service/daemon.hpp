@@ -20,6 +20,7 @@
 #include "service/router.hpp"
 #include "service/server.hpp"
 #include "service/client.hpp"
+#include "service/access.hpp"
 #include "service/asio.hpp"
 #include "service/enrole.hpp"
 
@@ -34,7 +35,7 @@
 
 namespace mega::service
 {
-    class Daemon
+    class Daemon : public Access
     {
         MP                          m_mp;
         PortNumber                  m_port;
@@ -140,7 +141,7 @@ namespace mega::service
         {
             LogicalThread::registerFiber(m_mp);
 
-            mega::service::Registry::getWriteAccess()->setCreationCallback(
+            writeRegistry()->setCreationCallback(
                 [&cons = m_connectionsTable, mp = m_mp, &registration = m_registration](Registration reg)
                 {
                     registration.add( reg );
@@ -211,8 +212,7 @@ namespace mega::service
         void receive(Connection::WeakPtr pResponseConnection,
                             const PacketBuffer& buffer)
         {
-            boost::interprocess::basic_vectorbuf< PacketBuffer > vectorBuffer(buffer);
-            boost::archive::binary_iarchive ia(vectorBuffer, boostArchiveFlags);
+            IArchive ia(*this, buffer);
 
             MessageType messageType;
             ia >> messageType;
@@ -259,7 +259,7 @@ namespace mega::service
                         ia >> visited;
                         ia >> shutdownMP;
 
-                        Registry::getWriteAccess()->disconnected(shutdownMP);
+                        writeRegistry()->disconnected(shutdownMP);
                         m_registration.remove(shutdownMP);
 
                         for( auto& [ mp, pWeak ] : m_connectionsTable.m_direct )
@@ -282,7 +282,7 @@ namespace mega::service
                         
                         if( header.m_responder.getMP() == m_mp )
                         {
-                            decodeInboundRequest(ia, header, pResponseConnection);
+                            decodeInboundRequest(*this, header, buffer, pResponseConnection);
                         }
                         else
                         {
@@ -297,11 +297,7 @@ namespace mega::service
 
                         if( header.m_responder.getMP() == m_mp )
                         {
-                            LogicalThread& logicalThread =
-                                Registry::getReadAccess()->
-                                    getLogicalThread(header.m_requester);
-
-                            logicalThread.send(
+                            LogicalThread::get(header.m_requester).send(
                                 InterProcessResponse
                                 {
                                     header,
@@ -347,7 +343,7 @@ namespace mega::service
 
             std::set< MP > visited{m_mp};
 
-            Registry::getWriteAccess()->disconnected(mp);
+            writeRegistry()->disconnected(mp);
             m_registration.remove(mp);
 
             for( auto& [ mp, pWeak ] : m_connectionsTable.m_direct )

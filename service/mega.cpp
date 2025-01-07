@@ -126,7 +126,7 @@ int main( int argc, const char* argv[] )
             {
                 mega::service::Connect connection( ipAddress, port ); 
                 
-                mega::test::OTestFactory testFactory;
+                mega::test::OTestFactory testFactory( connection );
                 
                 if( !strCommand.empty() )
                 {

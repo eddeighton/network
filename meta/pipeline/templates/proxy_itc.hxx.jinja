@@ -33,10 +33,11 @@
         {{ interface.type_name }}* m_ptr;
         service::LogicalThread& m_logicalThread;
     public:
-        inline {{ interface.type_name }}_ITC({{ interface.type_name }}* ptr,
+        inline {{ interface.type_name }}_ITC(service::Access& access,
+                {{ interface.type_name }}* ptr,
                 service::LogicalThread& logicalThread,
                 service::MPTFO mptfo, const service::RTTI& rtti )
-        :   service::Proxy< {{ interface.type_name }} >( mptfo, rtti )
+        :   service::Proxy< {{ interface.type_name }} >( access, mptfo, rtti )
         ,   m_ptr(ptr)
         ,   m_logicalThread(logicalThread)
         {

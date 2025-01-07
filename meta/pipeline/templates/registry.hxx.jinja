@@ -11,6 +11,8 @@
 
 namespace mega::service
 {
+    class Access;
+
     using ProxyVariant = std::variant
     <
 {% for interface in interfaces %}
@@ -24,7 +26,7 @@ namespace mega::service
     using InterfaceMPTFOMap  = std::map< InterfaceMPTFO, std::shared_ptr<Interface> >;
 
     template< typename TInterface, typename TProxy >
-    void registerIfInterface(Sender& sender, const Registration::Registrant& registrant,
+    void registerIfInterface(Access& access, Sender& sender, const Registration::Registrant& registrant,
             ProxyVariantVector& proxies, InterfaceMPTFOMap& interfaceMPTFOMap)
     {
         const auto interfaceTypeName = getInterfaceTypeName< TInterface >();
@@ -33,7 +35,7 @@ namespace mega::service
             const auto key = InterfaceMPTFO{interfaceTypeName, registrant.m_mptfo};
             if(interfaceMPTFOMap.find(key) == interfaceMPTFOMap.end())
             {
-                auto pProxy = std::make_shared<TProxy>(sender, registrant.m_mptfo, registrant.m_rtti);
+                auto pProxy = std::make_shared<TProxy>(access, sender, registrant.m_mptfo, registrant.m_rtti);
                 interfaceMPTFOMap.insert(std::make_pair(key, pProxy));
                 proxies.push_back(std::move(pProxy));
             }
@@ -50,12 +52,12 @@ namespace mega::service
     }
 
     template< typename TInterface, typename TProxy >
-    void registerIfInterface(Interface* pInterface, MPTFO mptfo, const RTTI& rtti,
+    void registerIfInterface(Access& access, Interface* pInterface, MPTFO mptfo, const RTTI& rtti,
             ProxyVariantVector& proxies, InterfaceMPTFOMap& interfaceMPTFOMap)
     {
         if(auto p = dynamic_cast< TInterface* >( pInterface ))
         {
-            auto pProxy = std::make_shared< TProxy >(p, LogicalThread::get(), mptfo, rtti);
+            auto pProxy = std::make_shared< TProxy >(access, p, LogicalThread::get(), mptfo, rtti);
             const auto interfaceTypeName = getInterfaceTypeName< TInterface >();
             interfaceMPTFOMap.insert(
                 std::make_pair( InterfaceMPTFO{ interfaceTypeName, mptfo }, pProxy ) );
@@ -63,24 +65,24 @@ namespace mega::service
         }
     }
 
-    inline void registerInProcessProxy(Interface& object, const MPTFO mptfo,
+    inline void registerInProcessProxy(Access& access, Interface& object, const MPTFO mptfo,
             ProxyVariantVector& proxies, InterfaceMPTFOMap& interfaceMPTFOMap )
     {
         RTTI rtti;
 
 {% for interface in interfaces %}
         conditionallyAddRTTI< {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }} >( &object, rtti );
-        registerIfInterface< {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}, {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}_ITC >( &object, mptfo, rtti, proxies, interfaceMPTFOMap );
+        registerIfInterface< {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}, {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}_ITC >( access, &object, mptfo, rtti, proxies, interfaceMPTFOMap );
 
 {% endfor %}
     }
 
-    inline void update(Sender& sender, const Registration& registration, ProxyVariantVector& proxies, InterfaceMPTFOMap& interfaceMPTFOMap)
+    inline void update(Access& access, Sender& sender, const Registration& registration, ProxyVariantVector& proxies, InterfaceMPTFOMap& interfaceMPTFOMap)
     {
         for( const auto& registrant : registration.m_registrants )
         {
 {% for interface in interfaces %}
-        registerIfInterface< {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}, {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}_IPC >(sender, registrant, proxies, interfaceMPTFOMap);
+        registerIfInterface< {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}, {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}_IPC >(access, sender, registrant, proxies, interfaceMPTFOMap);
          
 {% endfor %}
         }

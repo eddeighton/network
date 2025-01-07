@@ -20,32 +20,37 @@
 #include <memory>
 #include <variant>
 #include <unordered_map>
-#include <mutex>
-#include <shared_mutex>
 #include <functional>
 
 namespace mega::service
 {
+    class Access;
+
     class Registry : public Common::DisableCopy, Common::DisableMove
     {
     public:
-        struct ObjectInfo
-        {
-            Interface* pObject;
-            LogicalThread& logicalThread;
-        };
+        // struct ObjectInfo
+        // {
+        //     Interface* pObject;
+        //     LogicalThread& logicalThread;
+        // };
         using CreationCallback = std::function< void(Registration) >;
     private:
         using Objects        = std::unordered_map< MPTFO, Interface*,     MPTFO::Hash >;
-        using LogicalThreads = std::unordered_map< MPTF,  LogicalThread*, MPTF::Hash >;
 
+        Access&                           m_access;
         Objects                           m_objects;
-        LogicalThreads                    m_logicalThreads;
         ProxyVariantVector                m_proxies;
         InterfaceMPTFOMap                 m_interfaceMPTFOMap;
         std::optional< CreationCallback > m_creationCallback;
 
     public:
+        Registry( Access& access )
+        :   m_access( access )
+        {
+
+        }
+
         inline Registration getRegistration() const
         {
             Registration registration;
@@ -66,17 +71,17 @@ namespace mega::service
             return registration;
         }
 
-        void setCreationCallback( CreationCallback creationCallback )
+        inline void setCreationCallback( CreationCallback creationCallback )
         {
             m_creationCallback = creationCallback;
         }
 
-        void update(Sender& sender, const Registration& registration )
+        inline void update(Sender& sender, const Registration& registration )
         {
-            service::update(sender, registration, m_proxies, m_interfaceMPTFOMap);
+            service::update(m_access, sender, registration, m_proxies, m_interfaceMPTFOMap);
         }
 
-        void disconnected(MP mp)
+        inline void disconnected(MP mp)
         {
             std::erase_if( m_objects,
                     [mp](const auto& p)
@@ -112,31 +117,12 @@ namespace mega::service
 
             const ObjectID objectID{static_cast< ObjectID::ValueType >(m_objects.size())};
             const MPTFO mptfo(mptf, objectID);
-            registerInProcessProxy(object, mptfo, m_proxies, m_interfaceMPTFOMap);
+            registerInProcessProxy(m_access, object, mptfo, m_proxies, m_interfaceMPTFOMap);
             m_objects.insert(std::make_pair(mptfo, &object));
             VERIFY_RTE_MSG( m_creationCallback.has_value(),
                 "No creation callback set" );
             (*m_creationCallback)(getRegistration());
             return mptfo;
-        }
-
-        LogicalThread& getLogicalThread(MPTF mptf) const
-        {
-            auto iFind = m_logicalThreads.find(mptf);
-            VERIFY_RTE_MSG(iFind != m_logicalThreads.end(),
-                "Failed to locate logical thread: " << mptf);
-            return *iFind->second;
-        }
-
-        void registerLogicalThread(MPTF mptf, LogicalThread* pLogicalThread)
-        {
-            auto ib = m_logicalThreads.insert(std::make_pair(mptf, pLogicalThread));
-            VERIFY_RTE_MSG( ib.second,
-                "Failed to register logical thread.  Duplicate mptf found: " << mptf );
-            auto iFind = m_logicalThreads.find(mptf);
-            VERIFY_RTE_MSG(iFind != m_logicalThreads.end(),
-                "Failed to locate logical thread straight away: " << mptf);
-            // std::cout << "Registry registered logical thread: " << mptf << std::endl;
         }
 
         template< typename T >
@@ -211,54 +197,8 @@ namespace mega::service
                 boost::typeindex::type_id<T>().pretty_name());
             return r.front();
         }
-
-        class RegistryReadAccess
-        {
-            std::shared_mutex& m_mutex;
-            std::shared_lock< std::shared_mutex > m_shared_lock;
-            Registry& m_registry;
-        public:
-            RegistryReadAccess(std::shared_mutex& mut, Registry& reg)
-                : m_mutex( mut )
-                , m_shared_lock( m_mutex )
-                , m_registry( reg )
-            {
-            }
-
-            RegistryReadAccess(const RegistryReadAccess&)=delete;
-            RegistryReadAccess(RegistryReadAccess&&)=default;
-            RegistryReadAccess& operator=(const RegistryReadAccess&)=delete;
-            RegistryReadAccess& operator=(RegistryReadAccess&&)=default;
-
-            const Registry* operator->() { return &m_registry; }
-        };
-
-        class RegistryWriteAccess
-        {
-            std::shared_mutex& m_mutex;
-            std::lock_guard< std::shared_mutex > m_lock_guard;
-            Registry& m_registry;
-        public:
-            RegistryWriteAccess(std::shared_mutex& mut, Registry& reg)
-                : m_mutex( mut )
-                , m_lock_guard( m_mutex )
-                , m_registry( reg )
-            {
-            }
-
-            RegistryWriteAccess(const RegistryWriteAccess&)=delete;
-            RegistryWriteAccess(RegistryWriteAccess&&)=default;
-            RegistryWriteAccess& operator=(const RegistryWriteAccess&)=delete;
-            RegistryWriteAccess& operator=(RegistryWriteAccess&&)=default;
-            
-            Registry* operator->() { return &m_registry; }
-        };
-
-        static RegistryReadAccess getReadAccess();
-        static RegistryWriteAccess getWriteAccess();
     };
 
 }
 
-#include "service/ptr.ipp"
 

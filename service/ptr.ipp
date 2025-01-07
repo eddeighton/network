@@ -1,7 +1,10 @@
 
 #pragma once
 
+#include "service/access.hpp"
+#include "service/registry.hpp"
 #include "service/ptr.hpp"
+#include "service/protocol/serialization.hpp"
 
 namespace mega::service::detail
 {
@@ -46,8 +49,9 @@ namespace mega::service::detail
                 {
                     MPTFO mptfo{};
                     archive >> mptfo;
-                    auto reg = mega::service::Registry::getReadAccess();
-                    pointer = reg->one<T>(mptfo);
+
+                    OArchive& megaOArchive = dynamic_cast< OArchive& >( archive );
+                    pointer = megaOArchive.access().readRegistry()->template one<T>(mptfo);
                 }
             }
         }

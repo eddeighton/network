@@ -42,7 +42,6 @@ int main( int argc, const char* argv[] )
         }
 
         mega::service::PortNumber port{1234};
-
         mega::service::MachineID machineID{};
 
         namespace po = boost::program_options;
@@ -87,7 +86,7 @@ int main( int argc, const char* argv[] )
 
             mega::service::Daemon daemon(mp, port);
             mega::service::OConnectivity connectivity(daemon);
-            mega::test::OTestFactory testFactory;
+            mega::test::OTestFactory testFactory(daemon);
 
             daemon.run();
 

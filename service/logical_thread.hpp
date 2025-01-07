@@ -163,6 +163,8 @@ namespace mega::service
     
         static void registerFiber(MP mp);
         static LogicalThread& get();
+        static LogicalThread& get(MPTF mptf);
+        static void registerLogicalThread(MPTF mptf, LogicalThread* pLogicalThread);
     };
 }
 

@@ -16,8 +16,10 @@ TEST( Service, Basic )
 {
     using namespace mega::service;
     using namespace mega::test;
+
+    Access access;
     
-    Registry::getWriteAccess()->setCreationCallback([](Registration){});
+    access.writeRegistry()->setCreationCallback([](Registration){});
 
     MP mp{};
 
@@ -26,7 +28,7 @@ TEST( Service, Basic )
     LogicalThread::registerFiber(mp);
     LogicalThread& thread = LogicalThread::get();
 
-    OTestFactory testFactory;
+    OTestFactory testFactory( access );
 
     Ptr< TestFactory > pFactory = testFactory.getPtr();
     std::cout << "Created TestFactory: " << testFactory.getMPTFO() << std::endl;

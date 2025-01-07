@@ -24,6 +24,18 @@ TEST( Service, DaemonStartStop )
     Daemon daemon( {}, PortNumber{ 4321} );
 }
 
+TEST( Service, DaemonConnect )
+{
+    using namespace mega::service;
+    using namespace mega::test;
+
+    Daemon daemon( {}, PortNumber{ 4321} );
+
+    
+
+}
+
+
     
    //  namespace bp = boost::process;
 
