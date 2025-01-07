@@ -1,8 +1,10 @@
 
 #include "test/test_object.hpp"
 #include "test/test_factory.hpp"
+#include "service/connectivity.hpp"
 
 #include "service/daemon.hpp"
+#include "service/connect.hpp"
 #include "service/logical_thread.hpp"
 #include "service/network.hpp"
 #include "service/registry.hpp"
@@ -29,10 +31,25 @@ TEST( Service, DaemonConnect )
     using namespace mega::service;
     using namespace mega::test;
 
-    Daemon daemon( {}, PortNumber{ 4321} );
+    LogicalThread::registerThread();
 
-    
+    std::thread daemon(
+        []
+        {
+            LogicalThread::registerThread();
+            Daemon daemon( {}, PortNumber{ 1234 } );
+            OConnectivity connectivity(daemon);
+            daemon.run();
+        });
 
+    {
+        Connect con( {},  PortNumber{ 1234 }  );
+
+        auto pConnectivity = con.readRegistry()->one< Connectivity >( MP{} );
+        pConnectivity->shutdown();
+    }
+
+    daemon.join();
 }
 
 

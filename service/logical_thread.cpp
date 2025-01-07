@@ -15,6 +15,9 @@ namespace mega::service
         static boost::fibers::fiber_specific_ptr< LogicalThread > fiber_local_storage;
         using LogicalThreads = std::unordered_map< MPTF, LogicalThread*, MPTF::Hash >;
         static LogicalThreads g_logicalThreads;
+
+        static ThreadID::ValueType g_threadIDCounter{};
+        static thread_local ThreadID g_threadID{};
     }
 
     LogicalThread& LogicalThread::get(MPTF mptf)
@@ -24,6 +27,13 @@ namespace mega::service
         VERIFY_RTE_MSG(iFind != detail::g_logicalThreads.end(),
             "Failed to locate logical thread: " << mptf);
         return *iFind->second;
+    }
+
+    void LogicalThread::registerThread()
+    {
+        static std::mutex mut;
+        std::lock_guard< std::mutex > l(mut);
+        detail::g_threadID = ThreadID{ detail::g_threadIDCounter++ };
     }
 
     void LogicalThread::registerLogicalThread(MPTF mptf, LogicalThread* pLogicalThread)
@@ -43,7 +53,7 @@ namespace mega::service
                 std::numeric_limits<FiberID::ValueType>::max(),
                 "No remaining fiber IDs available" );
             const FiberID fiberID{ m_fiberIDCounter++ };
-            const MPTF mptf( mp, ThreadID{}, fiberID );
+            const MPTF mptf( mp, detail::g_threadID, fiberID );
             detail::fiber_local_storage.reset( new LogicalThread );
             detail::fiber_local_storage->m_mptf = mptf;
 

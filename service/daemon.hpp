@@ -193,7 +193,12 @@ namespace mega::service
 
         void run()
         {
-            m_pServer->start();
+            m_pIOContext->post(
+                [this]()
+                {
+                    m_pServer->start();
+                });
+
             // run this logical thread while network running
             LogicalThread& thisLogicalThread
                 = LogicalThread::get();

@@ -160,7 +160,8 @@ namespace mega::service
             VERIFY_RTE_MSG(status == boost::fibers::channel_op_status::success,
                 "Error sending message to channel" );
         }
-    
+   
+        static void registerThread();
         static void registerFiber(MP mp);
         static LogicalThread& get();
         static LogicalThread& get(MPTF mptf);
