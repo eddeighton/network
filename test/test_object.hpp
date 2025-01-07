@@ -14,7 +14,7 @@ class OTest : public Test
 public:
     std::string test1() override
     {
-        std::cout << "Hello World inside OTest::test1" << std::endl;
+        // std::cout << "Hello World inside OTest::test1" << std::endl;
         return "Hello World";
     }
 

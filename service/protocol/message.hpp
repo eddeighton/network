@@ -38,7 +38,7 @@ namespace mega::service
         PacketBuffer m_buffer;
     };
 
-    struct Other
+    struct Shutdown
     {
     };
 
@@ -48,7 +48,7 @@ namespace mega::service
         InProcessResponse,
         InterProcessRequest,
         InterProcessResponse,
-        Other
+        Shutdown
     >;
 
     // Protocol for messages sent over the wire

@@ -39,7 +39,10 @@ namespace mega::service
             MP mp;
             Connection::Ptr pConnection;
         };
-        using Msg = std::variant< std::monostate, ServiceMessage, Connect, Disconnect >;
+        struct Shutdown
+        {
+        };
+        using Msg = std::variant< std::monostate, ServiceMessage, Connect, Disconnect, Shutdown >;
     private:
         using Channel = boost::fibers::buffered_channel< Msg >;
     public:
@@ -92,12 +95,20 @@ namespace mega::service
         :   m_stack( std::move( stack ) )
         ,   m_table( table )
         ,   m_channel( 16 )
+        ,   m_fiber([this]()
+            {
+                std::cout << "Router start" << std::endl;
+                run(); 
+                std::cout << "Router stop" << std::endl;
+            })
         {
-            boost::fibers::fiber(
-                [this]()
-                {
-                   run(); 
-                }).detach();
+        }
+
+        ~Router()
+        {
+            m_bContinue = false;
+            send(Shutdown{});
+            m_fiber.join();
         }
 
         inline void run()
@@ -150,7 +161,6 @@ namespace mega::service
                 }
                 else
                 {
-                    THROW_TODO;
                 }
             }
         }
@@ -167,6 +177,7 @@ namespace mega::service
         Stack m_stack;
         Table& m_table;
         Channel m_channel;
+        boost::fibers::fiber m_fiber;
     };
 }
 

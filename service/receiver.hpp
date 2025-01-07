@@ -33,7 +33,13 @@ namespace mega::service
         :   m_socket(socket)
         ,   m_callback( std::move(receiverCallback) )
         ,   m_disconnect_callback( std::move( disconnect_callback ) )
+        //,   m_waitForServerShutdownFuture(m_waitForServerShutdown.get_future())
         {
+        }
+
+        ~Receiver()
+        {
+            // m_waitForServerShutdownFuture.get();
         }
 
         void run(Connection::WeakPtr pConnection)
@@ -67,8 +73,9 @@ namespace mega::service
                     }
                     else if( error.failed() )
                     {
+                        m_bContinue = false;
                         //std::cout << "Critical socket failure: " << error.what() << std::endl;
-                        std::abort();
+                        // std::abort();
                     }
                     else
                     {
@@ -76,7 +83,8 @@ namespace mega::service
                     }
                 }
                 m_disconnect_callback();
-                //std::cout << "Receiver shutdown" << std::endl;
+                //m_waitForServerShutdown.set_value();
+                std::cout << "Receiver shutdown" << std::endl;
             }).detach();
         }
 
@@ -89,6 +97,8 @@ namespace mega::service
         PacketBuffer        m_packetBuffer;
         ReceiverCallback    m_callback;
         DisconnectCallback  m_disconnect_callback;
+        // boost::fibers::promise<void>    m_waitForServerShutdown;
+        // boost::fibers::future<void>     m_waitForServerShutdownFuture;
     };
 }
 

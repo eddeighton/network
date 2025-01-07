@@ -150,12 +150,38 @@ namespace mega::service
 
         void start()
         {
-            waitForConnection();
+            m_acceptorFiber = boost::fibers::fiber(
+                [this]()
+                {
+                    std::cout << "Acceptor started" << std::endl;
+                    while(m_acceptor.is_open())
+                    {
+                        Connection::Ptr pNewConnection =
+                            std::make_shared< Connection >( *this, m_ioContext );
+                        boost::system::error_code ec;
+                        m_acceptor.async_accept( pNewConnection->m_socket,
+                            boost::fibers::asio::yield[ ec ]);
+                        if( !ec )
+                        {
+                            onConnect( pNewConnection );
+                        }
+                        else
+                        {
+                            // error ?
+                        }
+                    }
+                    std::cout << "Acceptor stopped" << std::endl;
+                }
+            );
         }
 
         void stop()
         {
             m_acceptor.close();
+            if( m_acceptorFiber.joinable() )
+            {
+                m_acceptorFiber.join();
+            }
             auto con = m_connections;
             for( auto& c : con )
             {
@@ -164,42 +190,16 @@ namespace mega::service
         }
 
     private:
-        void waitForConnection()
+        void onConnect( Connection::Ptr pNewConnection )
         {
-            boost::fibers::fiber([this]
-            {
-                //std::cout << "Acceptor started" << std::endl;
-                if( m_acceptor.is_open() )
-                {
-                    Connection::Ptr pNewConnection =
-                        std::make_shared< Connection >( *this, m_ioContext );
-                    boost::system::error_code ec;
-                    m_acceptor.async_accept( pNewConnection->m_socket,
-                        boost::fibers::asio::yield[ ec ]);
-                    onConnect( pNewConnection, ec );
-                }
-                //std::cout << "Acceptor stopped" << std::endl;
+            VERIFY_RTE_MSG(!m_processIDFreeList.empty(),
+                "No free ProcessIDs available" );
 
-            }).detach();
-        }
-
-        void onConnect( Connection::Ptr pNewConnection, const boost::system::error_code& ec )
-        {
-            if( !ec )
-            {
-                VERIFY_RTE_MSG(!m_processIDFreeList.empty(),
-                    "No free ProcessIDs available" );
-
-                const auto processID = m_processIDFreeList.front();
-                m_processIDFreeList.pop_front();
-                pNewConnection->start(processID);
-                m_connections.insert(std::make_pair(processID, pNewConnection));
-                m_connectionCallback(pNewConnection);
-            }
-            if( m_acceptor.is_open() )
-            {                   
-                waitForConnection();
-            }
+            const auto processID = m_processIDFreeList.front();
+            m_processIDFreeList.pop_front();
+            pNewConnection->start(processID);
+            m_connections.insert(std::make_pair(processID, pNewConnection));
+            m_connectionCallback(pNewConnection);
         }
 
         void onDisconnect( Connection::Ptr pConnection )
@@ -223,6 +223,7 @@ namespace mega::service
         boost::asio::ip::tcp::acceptor  m_acceptor;
         ConnectionPtrMap                m_connections;
         ProcessIDFreeList               m_processIDFreeList;
+        boost::fibers::fiber            m_acceptorFiber;
     };
 }
 

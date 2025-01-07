@@ -37,18 +37,22 @@ namespace mega::service
             :  m_client
                (
                     m_network.getIOContext(),
-                    std::bind( &Connect::receiverCallback, this, std::placeholders::_1, std::placeholders::_2 ),
+                    std::bind( &Connect::receiverCallback,
+                        this, std::placeholders::_1, std::placeholders::_2 ),
                     [this]( Connection::Ptr pConnection ){},
                     [this]( Connection::Ptr pConnection ){}
                )
         {
+            std::cout << "Connect ctor start" << std::endl;
             m_waitForRegistryPromise = boost::fibers::promise<void>{};
             auto registrationFuture = m_waitForRegistryPromise->get_future();
 
             m_pConnection = m_client.connect(ipAddress, port);
 
             // wait for enrolement and registration to complete
+            std::cout << "Connect waiting for future" << std::endl;
             registrationFuture.get();
+            std::cout << "Connect ctor got future" << std::endl;
             m_waitForRegistryPromise.reset();
 
             LogicalThread::registerFiber(m_enrolement.getMP());
@@ -68,6 +72,7 @@ namespace mega::service
                         THROW_RTE( "Cannot use creation callback connection" );
                     }
                 });
+            std::cout << "Connect ctor end" << std::endl;
         }
 
         ~Connect()
@@ -99,9 +104,9 @@ namespace mega::service
                 case MessageType::eEnrole:
                     {                                   
                         ia >> m_enrolement;
-                        // std::cout << "Got enrolement from daemon: " 
-                        //   << m_enrolement.getDaemon() << " with mp: "
-                        //   << m_enrolement.getMP() << std::endl; 
+                        std::cout << "Got enrolement from daemon: " 
+                           << m_enrolement.getDaemon() << " with mp: "
+                           << m_enrolement.getMP() << std::endl; 
                     }
                     break;
                 case MessageType::eRegistry:
@@ -115,7 +120,7 @@ namespace mega::service
                         registration.remove(m_enrolement.getMP());
                         writeRegistry()->update(
                             pResponseConnection.lock()->getSender(), registration);
-                        //std::cout << "Got registration update: " << registration << std::endl;
+                        std::cout << "Got registration update "  << std::endl;
                         if( m_waitForRegistryPromise.has_value() )
                         {
                             m_waitForRegistryPromise->set_value();

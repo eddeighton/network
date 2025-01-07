@@ -25,7 +25,7 @@ namespace mega::service
 
         Channel m_receiveChannel;
         MPTF m_mptf;
-        std::atomic< bool > m_bContinue = true;
+        bool m_bContinue = true;
         MessageID m_interProcessMessageID;
         std::vector< Stack > m_stacks;
     public:
@@ -120,8 +120,9 @@ namespace mega::service
             m_interProcessResponseCallbacks.insert( std::make_pair( messageID, std::move( callback ) ) );
         }
 
-        inline void operator()( const Other& other )
+        inline void operator()( const Shutdown& other )
         {
+            m_bContinue = false;
         }
 
         inline void receive()
@@ -140,17 +141,16 @@ namespace mega::service
 
         inline void runMessageLoop()
         {
-            // while(m_bContinue.load(std::memory_order_relaxed) == true)
             while(m_bContinue)
             {
                 receive();
             }
+            std::cout << "runMessageLoop complete" << std::endl;
         }
 
         inline void stop()
         {
-            m_bContinue = false;
-            auto status = m_receiveChannel.push(Message{Other{}});
+            auto status = m_receiveChannel.push(Message{Shutdown{}});
             VERIFY_RTE_MSG(status == boost::fibers::channel_op_status::success,
                 "Error sending message to channel" );
         }

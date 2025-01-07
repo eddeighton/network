@@ -31,14 +31,14 @@ namespace mega::service
         {
         }
 
-        inline Network(const Network&) = delete;
-        inline Network& operator=(const Network&) = delete;
-
         inline ~Network()
         {
             m_pIOContext->stop();
             m_networkThread.join();
         }
+
+        inline Network(const Network&) = delete;
+        inline Network& operator=(const Network&) = delete;
 
         inline auto& getIOContext() { return *m_pIOContext; }
     };

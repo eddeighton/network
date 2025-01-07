@@ -42,6 +42,7 @@ namespace mega::service
             ,   m_receiver( m_socket, client.m_receiverCallback, [ this ] { disconnected(); } )
             ,   m_sender( m_socket )
             {
+                std::cout << "Client Connection ctor start" << std::endl;
                 Resolver::query        query( m_ip_address.value, m_port_number.str() );
                 Resolver::results_type endpoints = m_resolver.resolve( query );
 
@@ -49,12 +50,14 @@ namespace mega::service
                 {
                     //SPDLOG_ERROR( "Failed to resolve ip: {} port: {}", strServiceIP, portNumber );
                     //THROW_RTE( "Failed to resolve ip: " << strServiceIP << " port: " << portNumber );
+                    std::cout << "Client Connection no endpoints" << std::endl;
                     throw std::runtime_error("Failed to locate ip address");
                 }
 
                 m_endPoint = boost::asio::connect( m_socket, endpoints );
                 m_socket_info = TCPSocketInfo::make( m_socket );
                 // std::cout << "Client connection start " << m_socket_info << std::endl;
+                std::cout << "Client Connection ctor end" << std::endl;
             }
 
             void run()
@@ -78,7 +81,7 @@ namespace mega::service
                     boost::this_fiber::yield();
                 }
             }
-            
+
             // connection is ALWAYS to a daemon so is always process ID zero.
             ProcessID getProcessID() const override { return PROCESS_ZERO; }
         private:

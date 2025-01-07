@@ -101,7 +101,7 @@ namespace mega::service
                         { 
                             receive( pResponseConnection, buffer ); 
                         },
-                        // connection callback
+// connection callback
                         [this](Connection::Ptr pConnection)
                         {
                             connection( pConnection );
@@ -155,6 +155,14 @@ namespace mega::service
                         }
                     }
                 });
+
+            // ensure server is started so that tests work
+            auto pFut = m_pIOContext->post(
+                boost::asio::use_future([this]()
+                {
+                    m_pServer->start();
+                }));
+            pFut.get();
         }
 
         ~Daemon()
@@ -164,19 +172,36 @@ namespace mega::service
             boost::fibers::promise<void>    waitForServerShutdown;
             boost::fibers::future<void>     waitForServerShutdownFuture =
                 waitForServerShutdown.get_future();
+
+            Router::Map routers = std::move( m_routers );
             
-            m_pIOContext->post( [&pClient = m_pClient, &pServer = m_pServer, &waitForServerShutdown]()
+            m_pIOContext->post(
+                [ 
+                    &pClient = m_pClient,
+                    &pServer = m_pServer,
+                    &waitForServerShutdown,
+                    routers = std::move( routers )
+                ]() mutable
                 {
                     // must avoid blocking asio while
                     // shutting down the server since the
                     // sockets need to return for each
                     // connection to close
-                    boost::fibers::fiber( [&pClient, &pServer, &waitForServerShutdown]()
+                    boost::fibers::fiber(
+                        [
+                            &pClient, 
+                            &pServer, 
+                            &waitForServerShutdown,
+                            routers = std::move( routers )
+                        ]() mutable
                     {
+                        std::cout << "Daemon shutdown fiber start" << std::endl;
                         pClient->stop();
                         pServer->stop();
+                        routers.clear();
                         waitForServerShutdown.set_value();
                         //std::cout << "Server stop complete" << std::endl;
+                        std::cout << "Daemon shutdown fiber stop" << std::endl;
                     }).detach();
                 });
 
@@ -193,11 +218,6 @@ namespace mega::service
 
         void run()
         {
-            m_pIOContext->post(
-                [this]()
-                {
-                    m_pServer->start();
-                });
 
             // run this logical thread while network running
             LogicalThread& thisLogicalThread

@@ -11,6 +11,7 @@
 #include "service/ptr.hpp"
 
 #include "common/assert_verify.hpp"
+#include "common/log.hpp"
 
 namespace mega::test
 {
@@ -38,11 +39,10 @@ public:
 
     service::Ptr<Test> create_test() override
     {
-        std::cout << "create_test called in OTestFactory" << std::endl;
-        
         TestPtr pTest = std::make_unique< OTest >();
         auto reg = m_access.writeRegistry();
         const service::MPTFO mptfo = reg->createInProcessProxy(m_mptfo.getMPTF(), *pTest);
+        LOG( "create_test called in OTestFactory created: " << mptfo );
         m_tests.push_back( std::move( pTest ) );
         return reg->one< Test >( mptfo );
     }
