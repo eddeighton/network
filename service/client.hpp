@@ -15,6 +15,10 @@
 #include <set>
 #include <iostream>
 
+using namespace std::string_literals;
+#define LOG_CLIENT(msg) LOG("CLIENT: "s + msg)
+// #define LOG_CLIENT(msg)
+
 namespace mega::service
 {
     class Client
@@ -24,12 +28,12 @@ namespace mega::service
         {
             friend class Client;
 
-            using DisconnectCallback = std::function< void() >;
-            using Strand             = boost::asio::strand< boost::asio::io_context::executor_type >;
-            using Socket             = boost::asio::ip::tcp::socket;
-            using Resolver           = boost::asio::ip::tcp::resolver;
-            using EndPoint           = boost::asio::ip::tcp::endpoint;
-            using SocketReceiver     = Receiver< Socket, DisconnectCallback >;
+            using DisconnectCallback  = std::function< void() >;
+            using Strand              = boost::asio::strand< boost::asio::io_context::executor_type >;
+            using Socket              = boost::asio::ip::tcp::socket;
+            using Resolver            = boost::asio::ip::tcp::resolver;
+            using EndPoint            = boost::asio::ip::tcp::endpoint;
+            using SocketReceiver      = Receiver< Socket, DisconnectCallback >;
 
         public:
             using Ptr = std::shared_ptr< Connection >;
@@ -44,22 +48,19 @@ namespace mega::service
             ,   m_receiver( m_socket, client.m_receiverCallback, [ this ] { disconnected(); } )
             ,   m_sender( m_socket )
             {
-                LOG( "Client Connection ctor start" ) ;
+                LOG_CLIENT( "Connection ctor start" ) ;
                 Resolver::query        query( m_ip_address.value, m_port_number.str() );
                 Resolver::results_type endpoints = m_resolver.resolve( query );
 
                 if( endpoints.empty() )
                 {
-                    //SPDLOG_ERROR( "Failed to resolve ip: {} port: {}", strServiceIP, portNumber );
-                    //THROW_RTE( "Failed to resolve ip: " << strServiceIP << " port: " << portNumber );
-                    LOG( "Client Connection no endpoints" ) ;
-                    throw std::runtime_error("Failed to locate ip address");
+                    LOG_CLIENT( "Connection no endpoints" ) ;
+                    THROW_RTE( "Failed to resolve ip: " << m_ip_address.value << " port: " << m_port_number );
                 }
 
                 m_endPoint = boost::asio::connect( m_socket, endpoints );
                 m_socket_info = TCPSocketInfo::make( m_socket );
-                // LOG( "Client connection start " << m_socket_info ) ;
-                LOG( "Client Connection ctor end" ) ;
+                LOG_CLIENT( "Connection ctor complete " << m_socket_info ) ;
             }
 
             void run()
@@ -69,11 +70,12 @@ namespace mega::service
         public:
             const TCPSocketInfo& getSocketInfo() const override { return m_socket_info; }
 
-            Sender& getSender() override { return m_sender; }
+            // connection is ALWAYS to a daemon so is always process ID zero.
+            ProcessID getProcessID() const override { return PROCESS_ZERO; }
 
             void stop() override
             {
-                // LOG( "Client connection stop from: " << m_socket_info ) ;
+                // LOG_CLIENT( "Client connection stop from: " << m_socket_info ) ;
                 boost::system::error_code ec;
                 m_socket.shutdown( m_socket.shutdown_both, ec );
                 m_socket.close();
@@ -83,31 +85,34 @@ namespace mega::service
                     boost::this_fiber::yield();
                 }
             }
+            
+            void send( const PacketBuffer& buffer ) override
+            {
+                m_sender.send( buffer );
+            }
 
-            // connection is ALWAYS to a daemon so is always process ID zero.
-            ProcessID getProcessID() const override { return PROCESS_ZERO; }
         private:
             void disconnected()
             {
-                // LOG( "Client connection disconnect from: " << m_socket_info ) ;
+                LOG_CLIENT( "disconnect from: " << m_socket_info ) ;
                 m_client.onDisconnect(
                     std::dynamic_pointer_cast< Connection >( shared_from_this() ));
-                // LOG( "Disconnected" ) ;
+                LOG_CLIENT( "Disconnected" ) ;
                 m_bDisconnected = true;
             }
 
         private:
-            Client&         m_client;
-            IPAddress       m_ip_address;
-            PortNumber      m_port_number;
-            Resolver        m_resolver;
-            Strand          m_strand;
-            Socket          m_socket;
-            TCPSocketInfo   m_socket_info;
-            EndPoint        m_endPoint;
-            SocketReceiver  m_receiver;
-            SocketSender    m_sender;
-            bool            m_bDisconnected = false;
+            Client&             m_client;
+            IPAddress           m_ip_address;
+            PortNumber          m_port_number;
+            Resolver            m_resolver;
+            Strand              m_strand;
+            Socket              m_socket;
+            TCPSocketInfo       m_socket_info;
+            EndPoint            m_endPoint;
+            SocketReceiver      m_receiver;
+            SocketSender        m_sender;
+            bool                m_bDisconnected = false;
         };
         using ConnectionPtrSet = std::set< Connection::Ptr >;
         using ConnectionCallback = std::function< void(service::Connection::Ptr) >;

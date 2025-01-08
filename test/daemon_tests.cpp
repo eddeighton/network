@@ -44,22 +44,31 @@ TEST( Service, DaemonConnect )
     std::thread daemonThread(
         [&waitForDaemonStart]
         {
-            LogicalThread::registerThread();
-            Daemon daemon( {}, PortNumber{ 1234 } );
-            OConnectivity connectivity(daemon);
-            waitForDaemonStart.set_value();
-            daemon.run();
+            try
+            {
+                LogicalThread::registerThread();
+                Daemon daemon( {}, PortNumber{ 1234 } );
+                OConnectivity connectivity(daemon);
+                waitForDaemonStart.set_value();
+                daemon.run();
+            }
+            catch( Shutdown& ) { }
         });
+    waitForDaemonStartFut.get();
 
+    try
     {
-        waitForDaemonStartFut.get();
         LOG( "Client started" );
         Connect con( {}, PortNumber{ 1234 } );
 
         LOG( "Client started 2" );
         auto pConnectivity = con.readRegistry()->one< Connectivity >( MP{} );
         pConnectivity->shutdown();
-        LOG( "Client complete" );
+        con.run();
+    }
+    catch( Shutdown& )
+    {
+        LOG( "Client shutdown exception" );
     }
 
     daemonThread.join();
@@ -77,16 +86,21 @@ TEST( Service, CreateTest )
     std::thread daemon(
         [&waitForDaemonStart]
         {
-            LogicalThread::registerThread();
-            Daemon daemon( {}, PortNumber{ 1234 } );
-            OConnectivity connectivity(daemon);
-            OTestFactory testFactory( daemon );
-            waitForDaemonStart.set_value();
-            daemon.run();
+            try
+            {
+                LogicalThread::registerThread();
+                Daemon daemon( {}, PortNumber{ 1234 } );
+                OConnectivity connectivity(daemon);
+                OTestFactory testFactory( daemon );
+                waitForDaemonStart.set_value();
+                daemon.run();
+            }
+            catch( Shutdown& ) { }
         });
+    waitForDaemonStartFut.get();
 
+    try
     {
-        waitForDaemonStartFut.get();
         Connect con( {}, PortNumber{ 1234 } );
 
         auto pTestFactory = con.readRegistry()->one< TestFactory >( MP{} );
@@ -102,6 +116,11 @@ TEST( Service, CreateTest )
 
         auto pConnectivity = con.readRegistry()->one< Connectivity >( MP{} );
         pConnectivity->shutdown();
+        con.run();
+    }
+    catch( Shutdown& )
+    {
+        LOG( "client shutdown exception" );
     }
 
     daemon.join();
@@ -119,6 +138,7 @@ TEST( Service, InterConnect )
     std::thread daemon(
         [&waitForDaemonStart]
         {
+            try
             {
                 LogicalThread::registerThread();
                 Daemon daemon( {}, PortNumber{ 1234 } );
@@ -127,35 +147,64 @@ TEST( Service, InterConnect )
                 waitForDaemonStart.set_value();
                 daemon.run();
             }
-            LOG( "daemon shutting down" );
+            catch( Shutdown& ) { }
+            LOG( "daemon shut down" );
         });
     waitForDaemonStartFut.get();
 
-    std::promise< LogicalThread* > p;
-    auto f = p.get_future();
     std::thread client1(
         [&]
         {
+            try
             {
                 LogicalThread::registerThread();
                 Connect con( {}, PortNumber{ 1234 } );
-                p.set_value( &LogicalThread::get() );
                 con.run();
             }
+            catch( Shutdown& ) { }
             LOG( "client1 shut down" );
         });
 
+    std::thread client2(
+        [&]
+        {
+            try
+            {
+                LogicalThread::registerThread();
+                Connect con( {}, PortNumber{ 1234 } );
+                con.run();
+            }
+            catch( Shutdown& ) { }
+            LOG( "client2 shut down" );
+        });
+
+    std::thread client3(
+        [&]
+        {
+            try
+            {
+                LogicalThread::registerThread();
+                Connect con( {}, PortNumber{ 1234 } );
+                con.run();
+            }
+            catch( Shutdown& ) { }
+            LOG( "client3 shut down" );
+        });
+
     {
+        try
         {
             Connect con( {}, PortNumber{ 1234 } );
             auto pConnectivity = con.readRegistry()->one< Connectivity >( MP{} );
             pConnectivity->shutdown();
         }
-        LOG( "client2 shut down" );
+        catch( Shutdown& ) { }
+        LOG( "client4 shut down" );
     }
 
-    f.get()->stop();
     client1.join();
+    client2.join();
+    client3.join();
     daemon.join();
 }
 

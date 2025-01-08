@@ -25,6 +25,11 @@
 #include <functional>
 #include <optional>
 
+// disable logging
+// #define LOG_CONNECT(msg)
+using namespace std::string_literals;
+#define LOG_CONNECT(msg) LOG( "CONNECT: "s + msg )
+
 namespace mega::service
 {
     class Connect : public Access
@@ -41,20 +46,20 @@ namespace mega::service
                     m_network.getIOContext(),
                     std::bind( &Connect::receiverCallback,
                         this, std::placeholders::_1, std::placeholders::_2 ),
-                    [this]( Connection::Ptr pConnection ){},
-                    [this]( Connection::Ptr pConnection ){}
+                    [this]( Connection::Ptr pConnection ){ connectCallback( pConnection ); },
+                    [this]( Connection::Ptr pConnection ){ disconnectCallback( pConnection ); }
                )
         {
-            LOG( "Connect ctor start" ) ;
+            LOG_CONNECT( "ctor start" ) ;
             m_waitForRegistryPromise = boost::fibers::promise<void>{};
             auto registrationFuture = m_waitForRegistryPromise->get_future();
 
             m_pConnection = m_client.connect(ipAddress, port);
 
             // wait for enrolement and registration to complete
-            LOG( "Connect waiting for future" ) ;
+            LOG_CONNECT( "waiting for future" ) ;
             registrationFuture.get();
-            LOG( "Connect ctor got future" ) ;
+            LOG_CONNECT( "ctor got future" ) ;
             m_waitForRegistryPromise.reset();
 
             LogicalThread::registerFiber(m_enrolement.getMP());
@@ -64,17 +69,16 @@ namespace mega::service
             writeRegistry()->setCreationCallback(
                 [pWeak, mp = getMP()](Registration reg)
                 {
-                    //LOG( "Generated reg update of: " << reg ) ;
                     if( auto pCon = pWeak.lock() )
                     {
-                        sendRegistration( reg, { mp }, pCon->getSender() );
+                        sendRegistration( reg, { mp }, pCon );
                     }
                     else
                     {
                         THROW_RTE( "Cannot use creation callback connection" );
                     }
                 });
-            LOG( "Connect ctor end" ) ;
+            LOG_CONNECT( "ctor end" ) ;
         }
 
         ~Connect()
@@ -92,6 +96,23 @@ namespace mega::service
         }
 
     private:
+        void connectCallback(service::Connection::Ptr pConnection)
+        {
+            LOG_CONNECT( "connect callback: " << pConnection->getSocketInfo() <<
+                 " Process: " << pConnection->getProcessID() );
+        }
+
+        void disconnectCallback(service::Connection::Ptr pConnection)
+        {
+            LOG_CONNECT( "disconnect callback: " << pConnection->getSocketInfo() <<
+                " Process: " << pConnection->getProcessID() );
+            if( m_waitForRegistryPromise.has_value() )
+            {
+                m_waitForRegistryPromise->set_value();
+            }
+            LogicalThread::shutdownAll();
+        }
+
         void receiverCallback(
                 Connection::WeakPtr pResponseConnection,
                 const PacketBuffer& buffer)
@@ -106,13 +127,14 @@ namespace mega::service
                 case MessageType::eEnrole:
                     {                                   
                         ia >> m_enrolement;
-                        LOG( "Got enrolement from daemon: " 
+                        LOG_CONNECT( "Got enrolement from daemon: " 
                            << m_enrolement.getDaemon() << " with mp: "
                            << m_enrolement.getMP() ) ; 
                     }
                     break;
                 case MessageType::eRegistry:
                     {
+                        LOG_CONNECT( "eRegistry");
                         std::vector< MP > mps;
                         Registration registration;
                         ia >> mps;
@@ -120,9 +142,7 @@ namespace mega::service
                         // filter registration entries for THIS process
                         // since ONLY created inter-process proxies
                         registration.remove(m_enrolement.getMP());
-                        writeRegistry()->update(
-                            pResponseConnection.lock()->getSender(), registration);
-                        LOG( "Got registration update "  ) ;
+                        writeRegistry()->update(pResponseConnection, registration);
                         if( m_waitForRegistryPromise.has_value() )
                         {
                             m_waitForRegistryPromise->set_value();
@@ -131,6 +151,7 @@ namespace mega::service
                     break;
                 case MessageType::eDisconnect      :
                     {
+                        LOG_CONNECT( "eDisconnect" );
                         std::set< MP > visited;
                         MP shutdownMP;
 
@@ -138,6 +159,10 @@ namespace mega::service
                         ia >> shutdownMP;
 
                         writeRegistry()->disconnected(shutdownMP);
+                        if( m_waitForRegistryPromise.has_value() )
+                        {
+                            m_waitForRegistryPromise->set_value();
+                        }
                     }
                     break;
                 case MessageType::eRequest:

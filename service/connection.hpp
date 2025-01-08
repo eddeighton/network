@@ -6,6 +6,7 @@
 #include "service/sender.hpp"
 
 #include <memory>
+#include <functional>
 
 namespace mega::service
 {
@@ -18,8 +19,8 @@ namespace mega::service
         virtual ~Connection() = 0;
         virtual const TCPSocketInfo& getSocketInfo() const = 0;
         virtual ProcessID getProcessID() const = 0;
-        virtual Sender& getSender() = 0;
         virtual void stop() = 0;
+        virtual void send( const PacketBuffer& buffer) = 0;
     };
     inline Connection::~Connection() = default;
 }

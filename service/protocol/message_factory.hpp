@@ -11,7 +11,7 @@
 
 namespace mega::service
 {
-    inline void sendEnrole( const Enrole& enrole, Sender& sender )
+    inline void sendEnrole( const Enrole& enrole, Connection::Ptr& pConnection )
     {
         boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer;
         boost::archive::binary_oarchive oa(vectorBuffer, boostArchiveFlags);
@@ -19,10 +19,10 @@ namespace mega::service
         oa << mega::service::MessageType::eEnrole;
         oa << enrole;
 
-        sender.send(vectorBuffer.vector());
+        pConnection->send(vectorBuffer.vector());
     }
 
-    inline void sendRegistration( const Registration& registration, std::set< MP > mps, Sender& sender )
+    inline void sendRegistration( const Registration& registration, std::set< MP > mps, Connection::Ptr& pConnection )
     {
         boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer;
         boost::archive::binary_oarchive oa(vectorBuffer, boostArchiveFlags);
@@ -31,10 +31,10 @@ namespace mega::service
         oa << mps;
         oa << registration;
 
-        sender.send(vectorBuffer.vector());
+        pConnection->send(vectorBuffer.vector());
     }
 
-    inline void sendDisconnect( const MP& mp, std::set< MP > mps, Sender& sender )
+    inline void sendDisconnect( const MP& mp, std::set< MP > mps, Connection::Ptr& pConnection )
     {
         boost::interprocess::basic_vectorbuf< mega::service::PacketBuffer > vectorBuffer;
         boost::archive::binary_oarchive oa(vectorBuffer, boostArchiveFlags);
@@ -43,7 +43,7 @@ namespace mega::service
         oa << mps;
         oa << mp;
 
-        sender.send(vectorBuffer.vector());
+        pConnection->send(vectorBuffer.vector());
     }
 }
 

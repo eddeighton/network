@@ -76,9 +76,9 @@ namespace mega::service
             m_creationCallback = creationCallback;
         }
 
-        inline void update(Sender& sender, const Registration& registration )
+        inline void update(Connection::WeakPtr& pConnection, const Registration& registration )
         {
-            service::update(m_access, sender, registration, m_proxies, m_interfaceMPTFOMap);
+            service::update(m_access, pConnection, registration, m_proxies, m_interfaceMPTFOMap);
         }
 
         inline void disconnected(MP mp)

@@ -82,7 +82,14 @@ void decodeInboundRequest(Access& access,
 {% if function.return_type != "void" %}
                                 oa << result;
 {% endif %}
-                                pResponseConnection.lock()->getSender().send(oa.vector());
+                                if( auto p = pResponseConnection.lock() )
+                                {
+                                    p->send(oa.vector());
+                                }
+                                else
+                                {
+                                    THROW_RTE( "Lost connection" );
+                                }
                             }
                         }
                         catch(...)

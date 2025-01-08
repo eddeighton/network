@@ -17,6 +17,9 @@
 #include <set>
 #include <iostream>
 
+using namespace std::string_literals;
+#define LOG_SERVER(msg) LOG("SERVER: "s + msg)
+
 namespace mega::service
 {
     class Server
@@ -53,38 +56,50 @@ namespace mega::service
 
             const TCPSocketInfo& getSocketInfo() const override { return m_socket_info; }
 
-            Sender& getSender() override { return m_sender; }
+            ProcessID getProcessID() const override { return m_processID; }
 
             void stop() override
             {
-                //LOG( "Server connection stoppping " << m_socket_info ) ;
+                LOG_SERVER( "connection stoppping " << m_socket_info ) ;
+                if( m_socket.is_open() )
+                {
+                    boost::system::error_code ec;
+                    m_socket.shutdown( m_socket.shutdown_both, ec );
+                    m_socket.close( ec );
+                }
                 if( m_receiver.started() && !m_bDisconnected )
                 {
-                    if( m_socket.is_open() )
-                    {
-                        boost::system::error_code ec;
-                        m_socket.shutdown( m_socket.shutdown_both, ec );
-                        m_socket.close( ec );
-                    }
                     m_receiver.stop();
                     m_waitForDisconnectFuture.get();
                 }
-                //LOG( "Server connection stop complete " << m_socket_info ) ;
+                LOG_SERVER( "connection stop complete " << m_socket_info ) ;
             }
 
-            ProcessID getProcessID() const override { return m_processID; }
+            void send( const PacketBuffer& buffer ) override
+            {
+                if( !m_bDisconnected && m_socket.is_open() )
+                {
+                    m_sender.send( buffer );
+                }
+                else
+                {
+                    THROW_RTE( "Cannot send of disconnected connection" );
+                }
+            }
+
         private:
             void start(ProcessID processID)
             {
                 m_processID = processID;
                 m_socket_info = TCPSocketInfo::make( m_socket );
-                //LOG( "Server connection start " << m_socket_info ) ;
+                LOG_SERVER( "connection start " << m_socket_info ) ;
                 m_receiver.run(shared_from_this());
+                m_bDisconnected = false;
             }
 
             void disconnected()
             {
-                //LOG( "Server connection disconnecting " << m_socket_info ) ;
+                LOG_SERVER( "connection disconnecting " << m_socket_info ) ;
                 if( m_socket.is_open() )
                 {
                     boost::system::error_code ec;
@@ -93,6 +108,7 @@ namespace mega::service
                 }
                 // NOTE - call to onDisconnect will invoke 
                 // destructor which will block on m_bDisconnected being true
+                LOG_SERVER( "connection disconnect socket closed " << m_socket_info ) ;
                 if( !m_bDisconnected )
                 {
                     m_bDisconnected = true;
@@ -102,7 +118,7 @@ namespace mega::service
                         std::dynamic_pointer_cast< Connection >( shared_from_this() ) );
                 }
 
-                //LOG( "Server connection disconnect complete" ) ;
+                LOG_SERVER( "connection disconnect complete " << m_socket_info ) ;
             }
         private:
             boost::fibers::promise<void>    m_waitForDisconnect;
@@ -114,7 +130,7 @@ namespace mega::service
             SocketReceiver  m_receiver;
             SocketSender    m_sender;
             ProcessID       m_processID;
-            bool            m_bDisconnected = false;
+            bool            m_bDisconnected = true;
         };
 
         using ConnectionPtrMap = std::map< ProcessID, Connection::Ptr >;
@@ -155,7 +171,7 @@ namespace mega::service
             m_acceptorFiber = boost::fibers::fiber(
                 [this]()
                 {
-                    LOG( "Acceptor started" ) ;
+                    LOG_SERVER( "Acceptor started" ) ;
                     while(m_acceptor.is_open())
                     {
                         Connection::Ptr pNewConnection =
@@ -172,13 +188,14 @@ namespace mega::service
                             // error ?
                         }
                     }
-                    LOG( "Acceptor stopped" ) ;
+                    LOG_SERVER( "Acceptor stopped" ) ;
                 }
             );
         }
 
         void stop()
         {
+            LOG_SERVER( "stop" );
             m_acceptor.close();
             if( m_acceptorFiber.joinable() )
             {
@@ -189,6 +206,7 @@ namespace mega::service
             {
                 c.second->stop();
             }
+            LOG_SERVER( "stop complete" );
         }
 
     private:
@@ -206,7 +224,7 @@ namespace mega::service
 
         void onDisconnect( Connection::Ptr pConnection )
         {
-            // LOG( "onDisconnect" ) ;
+            LOG_SERVER( "onDisconnect" ) ;
             auto processID = pConnection->getProcessID();
             auto iFind = m_connections.find(processID);
             VERIFY_RTE_MSG( iFind != m_connections.end(),
@@ -214,7 +232,9 @@ namespace mega::service
  
             m_connections.erase( iFind );
             m_processIDFreeList.push_back( processID );
+            LOG_SERVER( "onDisconnect calling callback" ) ;
             m_disconnectCallback( pConnection );
+            LOG_SERVER( "onDisconnect complete" ) ;
         }
 
         boost::asio::io_context&        m_ioContext;

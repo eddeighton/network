@@ -134,7 +134,7 @@ namespace mega::service
                         // route the message using direct connection which should always be correct
                         if( auto pCon = iFind->second.lock() )
                         {
-                            pCon->getSender().send( pMsg->m_buffer );
+                            pCon->send( pMsg->m_buffer );
                             // now wait for response
                             auto response = receive();
 
@@ -144,8 +144,12 @@ namespace mega::service
                             {
                                 if( auto pConResponse = pOriginalRequestResponseConnection.lock() )
                                 {
-                                    pConResponse->getSender().send( pResponseMsg->m_buffer );
+                                    pConResponse->send( pResponseMsg->m_buffer );
                                     bDirectResponse = true;
+                                }
+                                else
+                                {
+                                    //  ?
                                 }
                             }
                             else
@@ -153,6 +157,10 @@ namespace mega::service
                                 THROW_TODO;
                             }
                             bDirectSend = true;
+                        }
+                        else
+                        {
+                            THROW_RTE( "Lost connection" );
                         }
                     }
                     if( !bDirectSend )

@@ -7,7 +7,7 @@
 {% endfor %}
 
 #include "service/logical_thread.hpp"
-#include "service/sender.hpp"
+#include "service/connection.hpp"
 
 #include "service/protocol/header.hpp"
 #include "service/protocol/serialization.hpp"
@@ -24,15 +24,15 @@
     // Interface {{ interface.full_type_name }}
     class {{ interface.type_name }}_IPC : public mega::service::Proxy< {{ interface.type_name }} >
     {
-        service::Sender& m_sender;
+        service::Connection::WeakPtr& m_pConnection;
         using Buffer = std::vector< char >;
     public:
         inline {{ interface.type_name }}_IPC(service::Access& access,
-                service::Sender& sender,
+                service::Connection::WeakPtr& pConnection,
                 const service::MPTFO& mptfo,
                 const service::RTTI& rtti )
         :   service::Proxy< {{ interface.type_name }} >(access, mptfo, rtti)
-        ,   m_sender(sender)
+        ,   m_pConnection(pConnection)
         {
         }
 
@@ -99,7 +99,16 @@
                     bResponse = true;
                 });
 
-            m_sender.send( oa.vector() );
+            {
+                if( auto p = m_pConnection.lock() )
+                {
+                    p->send( oa.vector());
+                }
+                else
+                {
+                    THROW_RTE( "Unable to get connection" );
+                }
+            }
 
             while(bResponse == false)
             {

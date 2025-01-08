@@ -124,6 +124,7 @@ namespace mega::service
         inline void operator()( const Shutdown& other )
         {
             m_bContinue = false;
+            throw Shutdown{};
         }
 
         inline void receive()
@@ -149,7 +150,7 @@ namespace mega::service
             LOG( "runMessageLoop complete" ) ;
         }
 
-        inline void stop()
+        inline void shutdown()
         {
             auto status = m_receiveChannel.push(Message{Shutdown{}});
             VERIFY_RTE_MSG(status == boost::fibers::channel_op_status::success,
@@ -167,6 +168,7 @@ namespace mega::service
         static void registerThread();
         static void registerFiber(MP mp);
         static LogicalThread& get();
+        static void shutdownAll();
         static LogicalThread& get(MPTF mptf);
         static void registerLogicalThread(MPTF mptf, LogicalThread* pLogicalThread);
     };

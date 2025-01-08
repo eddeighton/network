@@ -32,8 +32,10 @@
 #include "common/log.hpp"
 
 #include <thread>
-#include <atomic>
 #include <tuple>
+
+using namespace std::string_literals;
+#define LOG_DAEMON(msg) LOG("DAEMON: "s + msg)
 
 namespace mega::service
 {
@@ -42,8 +44,6 @@ namespace mega::service
         MP                          m_mp;
         PortNumber                  m_port;
         IOContextPtr                m_pIOContext;
-        std::atomic<bool>           m_bShutdown{false};
-        std::atomic<bool>           m_bStopped{false};
         std::unique_ptr< Server >   m_pServer;
         std::unique_ptr< Client >   m_pClient;
         std::thread                 m_thread;
@@ -103,7 +103,7 @@ namespace mega::service
                         { 
                             receive( pResponseConnection, buffer ); 
                         },
-// connection callback
+                        // connection callback
                         [this](Connection::Ptr pConnection)
                         {
                             connection( pConnection );
@@ -138,7 +138,7 @@ namespace mega::service
                     init_fiber_scheduler(m_pIOContext);
                     m_pIOContext->run();
                 }
-                //LOG( "network thread shutting down" ) ;
+                LOG_DAEMON( "network thread shutting down" ) ;
             })
         {
             LogicalThread::registerFiber(m_mp);
@@ -147,13 +147,13 @@ namespace mega::service
                 [&cons = m_connectionsTable, mp = m_mp, &registration = m_registration](Registration reg)
                 {
                     registration.add( reg );
-                    //LOG( "Generated reg update of: " << registration ) ;
+                    //LOG_DAEMON( "Generated reg update of: " << registration ) ;
                     for( auto& [ mp, pWeak ] : cons.getDirect() )
                     {
                         if( auto pCon = pWeak.lock() )
                         {
-                            //LOG( "Sending reg update to: " << mp ) ;
-                            sendRegistration( registration, { mp }, pCon->getSender() );
+                            //LOG_DAEMON( "Sending reg update to: " << mp ) ;
+                            sendRegistration( registration, { mp }, pCon );
                         }
                     }
                 });
@@ -169,8 +169,6 @@ namespace mega::service
 
         ~Daemon()
         {
-            m_bShutdown = true;
-
             boost::fibers::promise<void>    waitForServerShutdown;
             boost::fibers::future<void>     waitForServerShutdownFuture =
                 waitForServerShutdown.get_future();
@@ -197,13 +195,12 @@ namespace mega::service
                             routers = std::move( routers )
                         ]() mutable
                     {
-                        LOG( "Daemon shutdown fiber start" ) ;
+                        LOG_DAEMON( "shutdown fiber start" ) ;
                         pClient->stop();
                         pServer->stop();
                         routers.clear();
                         waitForServerShutdown.set_value();
-                        //LOG( "Server stop complete" ) ;
-                        LOG( "Daemon shutdown fiber stop" ) ;
+                        LOG_DAEMON( "shutdown fiber stop" ) ;
                     }).detach();
                 });
 
@@ -211,29 +208,21 @@ namespace mega::service
  
             m_pIOContext->stop();
 
-            //LOG( "io service stopped" ) ;
+            LOG_DAEMON( "io service stopped" ) ;
 
             m_thread.join();
 
-            //LOG( "Daemon shut down" ) ;
+            LOG_DAEMON( "dtor complete" ) ;
         }
 
         void run()
         {
-
-            // run this logical thread while network running
-            LogicalThread& thisLogicalThread
-                = LogicalThread::get();
-
-            while( m_bShutdown.load(std::memory_order_relaxed) == false )
-            {
-                thisLogicalThread.receive();
-            }
+            LogicalThread::get().runMessageLoop();
         }
 
         void shutdown()
         {
-            m_bShutdown = true;
+            LogicalThread::shutdownAll();
         }
 
         void receive(Connection::WeakPtr pResponseConnection,
@@ -263,7 +252,7 @@ namespace mega::service
                         m_registration.add(reg);
                         reg.add(m_registration);
 
-                        //LOG( "Got reg update: " << reg ) ;
+                        //LOG_DAEMON( "Got reg update: " << reg ) ;
 
                         for( auto& [ mp, pWeak ] : m_connectionsTable.getDirect() )
                         {
@@ -271,8 +260,8 @@ namespace mega::service
                             {
                                 if( auto pCon = pWeak.lock() )
                                 {
-                                    //LOG( "Forwarding reg to: " << mp ) ;
-                                    sendRegistration( reg, visited, pCon->getSender() );
+                                    //LOG_DAEMON( "Forwarding reg to: " << mp ) ;
+                                    sendRegistration( reg, visited, pCon );
                                 }
                             }
                         }
@@ -295,8 +284,8 @@ namespace mega::service
                             {
                                 if( auto pCon = pWeak.lock() )
                                 {
-                                    //LOG( "Forwarding reg to: " << mp ) ;
-                                    sendDisconnect( shutdownMP, visited, pCon->getSender() );
+                                    //LOG_DAEMON( "Forwarding reg to: " << mp ) ;
+                                    sendDisconnect( shutdownMP, visited, pCon );
                                 }
                             }
                         }
@@ -352,19 +341,18 @@ namespace mega::service
             const MP mp{ m_mp.getMachineID(), pConnection->getProcessID() };
 
             // enrole connection
-            // LOG( "Connection callback called for: " <<
+            // LOG_DAEMON( "Connection callback called for: " <<
             //    pConnection->getSocketInfo() ) ;
             m_connectionsTable.addDirect( mp, pConnection );
 
-            auto& sender = pConnection->getSender();
-
-            sendEnrole( Enrole{ m_mp, mp }, sender );
-            //LOG( "Sending registration: " << m_registration ) ;
-            sendRegistration( m_registration, { m_mp }, sender );
+            sendEnrole( Enrole{ m_mp, mp }, pConnection );
+            //LOG_DAEMON( "Sending registration: " << m_registration ) ;
+            sendRegistration( m_registration, { m_mp }, pConnection );
         }
 
         void disconnect(Connection::Ptr pConnection)
         {
+            LOG_DAEMON( "disconnect" );
             const MP mp{ m_mp.getMachineID(), pConnection->getProcessID() };
             m_connectionsTable.removeDirect(mp);
 
@@ -373,14 +361,16 @@ namespace mega::service
             writeRegistry()->disconnected(mp);
             m_registration.remove(mp);
 
-            for( auto& [ mp, pWeak ] : m_connectionsTable.getDirect() )
-            {
-                if( auto pCon = pWeak.lock() )
-                {
-                    //LOG( "Forwarding reg to: " << mp ) ;
-                    sendDisconnect( mp, visited, pCon->getSender() );
-                }
-            }
+            LOG_DAEMON( "discconnect sending disconnects" );
+            // for( auto& [ mp, pWeak ] : m_connectionsTable.getDirect() )
+            // {
+            //     if( auto pCon = pWeak.lock() )
+            //     {
+            //         LOG_DAEMON( "Forwarding reg to: " << mp ) ;
+            //         sendDisconnect( mp, visited, pCon );
+            //     }
+            // }
+            LOG_DAEMON( "disconnect complete" );
         }
     };
 }

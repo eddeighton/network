@@ -26,7 +26,7 @@ namespace mega::service
     using InterfaceMPTFOMap  = std::map< InterfaceMPTFO, std::shared_ptr<Interface> >;
 
     template< typename TInterface, typename TProxy >
-    void registerIfInterface(Access& access, Sender& sender, const Registration::Registrant& registrant,
+    void registerIfInterface(Access& access, Connection::WeakPtr& pConnection, const Registration::Registrant& registrant,
             ProxyVariantVector& proxies, InterfaceMPTFOMap& interfaceMPTFOMap)
     {
         const auto interfaceTypeName = getInterfaceTypeName< TInterface >();
@@ -36,21 +36,21 @@ namespace mega::service
             if(interfaceMPTFOMap.find(key) == interfaceMPTFOMap.end())
             {
                 auto pProxy = std::make_shared<TProxy>(
-                    access, sender, registrant.m_mptfo, registrant.m_rtti);
+                    access, pConnection, registrant.m_mptfo, registrant.m_rtti);
                 interfaceMPTFOMap.insert(std::make_pair(key, pProxy));
                 proxies.push_back(std::move(pProxy));
             }
         }
     }
 
-    inline void update(Access& access, Sender& sender, const Registration& registration,
+    inline void update(Access& access, Connection::WeakPtr& pConnection, const Registration& registration,
         ProxyVariantVector& proxies, InterfaceMPTFOMap& interfaceMPTFOMap)
     {
         for( const auto& registrant : registration.m_registrants )
         {
 {% for interface in interfaces %}
             registerIfInterface< {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}, {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}_IPC >(
-                access, sender, registrant, proxies, interfaceMPTFOMap);
+                access, pConnection, registrant, proxies, interfaceMPTFOMap);
 {% endfor %}
 
         }

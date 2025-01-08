@@ -44,6 +44,16 @@ namespace mega::service
             "Failed to register logical thread.  Duplicate mptf found: " << mptf );
     }
 
+    void LogicalThread::shutdownAll()
+    {
+        std::lock_guard< std::shared_mutex > lock( detail::g_mutex );
+        for( auto& [ mptf, pLogicalThread ] : detail::g_logicalThreads )
+        {
+            pLogicalThread->shutdown();
+        }
+        detail::g_logicalThreads.clear();
+    }
+
     void LogicalThread::registerFiber( MP mp )
     {
         static thread_local FiberID::ValueType m_fiberIDCounter{};
