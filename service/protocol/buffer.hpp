@@ -7,9 +7,8 @@
 
 namespace mega::service
 {
-    using PacketSizeType = std::uint64_t;
-    static constexpr auto PacketSizeSize = sizeof(PacketSizeType);
-    
-    using PacketBuffer = std::vector< char >;
-}
+using PacketSizeType                 = std::uint64_t;
+static constexpr auto PacketSizeSize = sizeof( PacketSizeType );
 
+using PacketBuffer = std::vector< char >;
+} // namespace mega::service

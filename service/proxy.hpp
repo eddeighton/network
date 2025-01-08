@@ -8,27 +8,29 @@
 
 namespace mega::service
 {
-    class Access;
+class Access;
 
-    template< typename T >
-    class Proxy : public T, Common::DisableCopy, Common::DisableMove
+template < typename T >
+class Proxy : public T, Common::DisableCopy, Common::DisableMove
+{
+    friend class Registry;
+
+protected:
+    Access&        m_access;
+    service::MPTFO m_mptfo;
+    RTTI           m_rtti;
+
+protected:
+    Proxy( Access& access, MPTFO mptfo, const RTTI& rtti )
+        : m_access( access )
+        , m_mptfo( mptfo )
+        , m_rtti( rtti )
     {
-        friend class Registry;
-    protected:
-        Access&         m_access;
-        service::MPTFO  m_mptfo;
-        RTTI            m_rtti;
-    protected:
-        Proxy(Access& access, MPTFO mptfo, const RTTI& rtti)
-        :   m_access( access )
-        ,   m_mptfo(mptfo)
-        ,   m_rtti(rtti)
-        {
-        }
-    public:
-        Access& getAccess() const { return m_access; }
-        service::MPTFO getMPTFO() const { return m_mptfo; }
-        const RTTI& getRTTI() const { return m_rtti; }
-    };
-}
+    }
 
+public:
+    Access&        getAccess() const { return m_access; }
+    service::MPTFO getMPTFO() const { return m_mptfo; }
+    const RTTI&    getRTTI() const { return m_rtti; }
+};
+} // namespace mega::service

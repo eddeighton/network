@@ -7,8 +7,7 @@
 
 namespace mega::service
 {
-    using IOContextPtr = std::shared_ptr< boost::asio::io_context >;
+using IOContextPtr = std::shared_ptr< boost::asio::io_context >;
 
-    void init_fiber_scheduler(IOContextPtr pIOContext);
-}
-
+void init_fiber_scheduler( IOContextPtr pIOContext );
+} // namespace mega::service

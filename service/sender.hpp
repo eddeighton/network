@@ -12,9 +12,9 @@ class Sender
 {
 public:
     virtual ~Sender() = 0;
-    virtual boost::system::error_code send( const PacketBuffer& msg ) = 0;
+    virtual boost::system::error_code send( const PacketBuffer& msg )
+        = 0;
 };
 inline Sender::~Sender() = default;
 
-}
-
+} // namespace mega::service

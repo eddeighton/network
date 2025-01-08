@@ -13,6 +13,8 @@ set(Boost_USE_STATIC_LIBS ON)
 # always enable some gcc diagnostic options
 add_compile_options(-fdiagnostics-color)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # TODO: fix warnings
 # add_compile_options(-Wall -Wextra -Wpedantic )
 

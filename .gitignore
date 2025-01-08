@@ -3,4 +3,6 @@ project.manifest
 *.cxx
 *.hxx
 meta/interface_report.html
+compile_commands.json
+.cache/
 

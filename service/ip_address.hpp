@@ -5,13 +5,13 @@
 
 namespace mega::service
 {
-    struct IPAddress
-    {
-        std::string value;
-    };
-    inline std::ostream& operator<<(std::ostream& os, const IPAddress& ipAddress )
-    {
-        return os << ipAddress.value;
-    }
+struct IPAddress
+{
+    std::string value;
+};
+inline std::ostream& operator<<( std::ostream&    os,
+                                 const IPAddress& ipAddress )
+{
+    return os << ipAddress.value;
 }
-
+} // namespace mega::service
