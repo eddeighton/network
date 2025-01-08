@@ -2,18 +2,13 @@
 
 #pragma once
 
-#include "service/gen/decoder.hxx"
-
 #include "service/asio.hpp"
 #include "service/connection.hpp"
 
-#include "service/protocol/header.hpp"
 #include "service/protocol/packet.hpp"
 
 #include "common/log.hpp"
 
-#include <array>
-#include <iostream>
 #include <functional>
 
 // using namespace std::string_literals;
@@ -88,7 +83,7 @@ private:
                 m_bContinue = false;
                 // LOG_RECEIVER( "Critical socket failure: " <<
                 // error.what() ) ;
-                //  std::abort();
+                // std::abort();
             }
             else
             {

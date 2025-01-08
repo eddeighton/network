@@ -72,7 +72,7 @@ boost::system::error_code receive( TSocket&      socket,
         {
             VERIFY_RTE_MSG(
                 szBytesTransferred == PacketSizeSize,
-                "Unexpected message size size recevied of: "
+                "Unexpected message size size received of: "
                     << szBytesTransferred );
             packetSize = *reinterpret_cast< const PacketSizeType* >(
                 messageSizeBuffer.data() );
@@ -91,7 +91,7 @@ boost::system::error_code receive( TSocket&      socket,
     if( !ec )
     {
         VERIFY_RTE_MSG( szBytesTransferred == packetSize,
-                        "Unexpected message size recevied of: "
+                        "Unexpected message size received of: "
                             << szBytesTransferred );
     }
     return ec;

@@ -25,8 +25,6 @@
 #include <boost/program_options.hpp>
 
 #include <iostream>
-#include <filesystem>
-#include <memory>
 
 int main( int argc, const char* argv[] )
 {
@@ -38,7 +36,7 @@ int main( int argc, const char* argv[] )
         {
             // clang-format off
             genericOptions.add_options()
-            ( "help,?",                                          "Produce general or command help message" )
+            ( "help,?",        "Produce general or command help message" )
             ;
             // clang-format on
         }

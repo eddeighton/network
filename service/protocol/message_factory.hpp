@@ -3,6 +3,7 @@
 
 #include "service/enrole.hpp"
 #include "service/registration.hpp"
+#include "service/connection.hpp"
 
 #include "service/protocol/message.hpp"
 #include "service/protocol/serialization.hpp"

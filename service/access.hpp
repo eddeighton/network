@@ -21,6 +21,11 @@ public:
     {
     }
 
+    Access( const Access& )            = delete;
+    Access( Access&& )                 = delete;
+    Access& operator=( const Access& ) = delete;
+    Access& operator=( Access&& )      = delete;
+
     class RegistryReadAccess
     {
         std::shared_mutex&                    m_mutex;
@@ -39,32 +44,35 @@ public:
         RegistryReadAccess( RegistryReadAccess&& )      = default;
         RegistryReadAccess& operator=( const RegistryReadAccess& )
             = delete;
-        RegistryReadAccess& operator=( RegistryReadAccess&& )
-            = default;
+        RegistryReadAccess& operator=( RegistryReadAccess&& other )
+            = delete;
 
         const Registry* operator->() { return &m_registry; }
     };
 
     class RegistryWriteAccess
     {
-        std::shared_mutex&                   m_mutex;
-        std::lock_guard< std::shared_mutex > m_lock_guard;
-        Registry&                            m_registry;
+        using LockType    = std::lock_guard< std::shared_mutex >;
+        using LockTypePtr = std::unique_ptr< LockType >;
+
+        std::shared_mutex& m_mutex;
+        LockTypePtr        m_pLock;
+        Registry&          m_registry;
 
     public:
         RegistryWriteAccess( std::shared_mutex& mut, Registry& reg )
             : m_mutex( mut )
-            , m_lock_guard( m_mutex )
+            , m_pLock( std::make_unique< LockType >( m_mutex ) )
             , m_registry( reg )
         {
         }
+        RegistryWriteAccess( RegistryWriteAccess&& other ) = default;
 
+        RegistryWriteAccess& operator=( RegistryWriteAccess&& )
+            = delete;
         RegistryWriteAccess( const RegistryWriteAccess& ) = delete;
-        RegistryWriteAccess( RegistryWriteAccess&& )      = default;
         RegistryWriteAccess& operator=( const RegistryWriteAccess& )
             = delete;
-        RegistryWriteAccess& operator=( RegistryWriteAccess&& )
-            = default;
 
         Registry* operator->() { return &m_registry; }
     };
@@ -81,4 +89,3 @@ public:
 } // namespace mega::service
 
 #include "service/ptr.ipp"
-

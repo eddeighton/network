@@ -25,6 +25,8 @@
 #include "service/asio.hpp"
 #include "service/enrole.hpp"
 
+#include "service/gen/decoder.hxx"
+
 #include "service/protocol/serialization.hpp"
 #include "service/protocol/message_factory.hpp"
 

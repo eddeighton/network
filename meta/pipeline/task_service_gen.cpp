@@ -1,14 +1,11 @@
 
 
-
-
 #include "meta/db/database/AnalysisStage.hxx"
 #include "meta/environment.hpp"
 #include "meta/task.hpp"
 
 #include "common/file.hpp"
 #include "common/assert_verify.hpp"
-
 
 #include "nlohmann/json.hpp"
 
@@ -19,11 +16,11 @@
 namespace mega::meta
 {
 
-static void renderTemplate(
-        const boost::filesystem::path& templateFilePath,
-        const boost::filesystem::path& outputFilePath,
-        const boost::filesystem::path& templateDir,
-        const nlohmann::json& data )
+static void
+renderTemplate( const boost::filesystem::path& templateFilePath,
+                const boost::filesystem::path& outputFilePath,
+                const boost::filesystem::path& templateDir,
+                const nlohmann::json&          data )
 {
     try
     {
@@ -34,56 +31,58 @@ static void renderTemplate(
             injaEnv.set_trim_blocks( true );
             std::ostringstream osAddSlash;
             osAddSlash << '/' << templateFilePath.string();
-            inja::Template tmp = injaEnv.parse_template( osAddSlash.str() );
+            inja::Template tmp
+                = injaEnv.parse_template( osAddSlash.str() );
             injaEnv.render_to( osOutput, tmp, data );
             strOutput = osOutput.str();
         }
-        boost::filesystem::updateFileIfChanged(outputFilePath, strOutput);
+        boost::filesystem::updateFileIfChanged(
+            outputFilePath, strOutput );
     }
-    catch (std::exception& ex)
+    catch( std::exception& ex )
     {
         THROW_RTE( "Error processing template: "
                    << templateFilePath.string()
-                   << " generating: " << outputFilePath.string() 
+                   << " generating: " << outputFilePath.string()
                    << " Error: " << ex.what() );
     }
 }
 
 using namespace AnalysisStage;
 
-void task_service_gen(TaskDependencies& dependencies)
+void task_service_gen( TaskDependencies& dependencies )
 {
-    TASK_START("task_service_gen");
+    TASK_START( "task_service_gen" );
 
     using namespace std::string_literals;
     using namespace AnalysisStage::Service;
 
-    const mega::io::CompilationFilePath compilationFilePath =
-        dependencies.m_environment.AnalysisStage_AnalysisFile(
+    const mega::io::CompilationFilePath compilationFilePath
+        = dependencies.m_environment.AnalysisStage_AnalysisFile(
             dependencies.m_environment.project_manifest() );
 
     task::DeterminantHash determinant(
         dependencies.m_configuration.pipelineHash,
-        dependencies.m_environment.getBuildHashCode(compilationFilePath));
+        dependencies.m_environment.getBuildHashCode(
+            compilationFilePath ) );
 
-    // if( dependencies.m_environment.restore( compilationFilePath, determinant ) )
+    // if( dependencies.m_environment.restore( compilationFilePath,
+    // determinant ) )
     // {
-    //     dependencies.m_environment.setBuildHashCode( compilationFilePath );
-    //     TASK_CACHED( "task_interface_analysis" );
-    //     return;
+    //     dependencies.m_environment.setBuildHashCode(
+    //     compilationFilePath ); TASK_CACHED(
+    //     "task_interface_analysis" ); return;
     // }
-    
-    auto src = dependencies.m_environment.project_manifest();
+
+    auto     src = dependencies.m_environment.project_manifest();
     Database database( dependencies.m_environment, src, true );
 
     nlohmann::json data(
-        {
-            { "includes", nlohmann::json::array() },
-            { "interfaces", nlohmann::json::array() }
-        }
-    );
+        { { "includes", nlohmann::json::array() },
+          { "interfaces", nlohmann::json::array() } } );
 
-    auto qualifiedTypeToString = []( const QualifiedType* pType ) -> std::string
+    auto qualifiedTypeToString
+        = []( const QualifiedType* pType ) -> std::string
     {
         std::ostringstream os;
         if( pType->get_is_const() )
@@ -108,38 +107,33 @@ void task_service_gen(TaskDependencies& dependencies)
         }
         return os.str();
     };
- 
+
     std::set< std::string > includes;
 
-    for( auto pInterface : database.many< Interface >(src) )
+    for( auto pInterface : database.many< Interface >( src ) )
     {
-        includes.insert(pInterface->get_include_path());
+        includes.insert( pInterface->get_include_path() );
 
         nlohmann::json interface(
-            {
-                { "type_name", pInterface->get_type_name() },
-                { "full_type_name", pInterface->get_full_type_name() },
-                { "functions", nlohmann::json::array() },
-                { "namespaces", pInterface->get_namespaces() }
-            }
-        );
+            { { "type_name", pInterface->get_type_name() },
+              { "full_type_name", pInterface->get_full_type_name() },
+              { "functions", nlohmann::json::array() },
+              { "namespaces", pInterface->get_namespaces() } } );
         for( auto pFunction : pInterface->get_functions() )
         {
             nlohmann::json function(
-                {
-                    { "name", pFunction->get_name() },
-                    { "return_type", qualifiedTypeToString( pFunction->get_return_type() ) },
-                    { "parameters", nlohmann::json::array() }
-                }
-            );
+                { { "name", pFunction->get_name() },
+                  { "return_type",
+                    qualifiedTypeToString(
+                        pFunction->get_return_type() ) },
+                  { "parameters", nlohmann::json::array() } } );
             for( auto pParam : pFunction->get_parameters() )
             {
                 nlohmann::json parameter(
-                    {
-                        { "name", pFunction->get_name() },
-                        { "type", qualifiedTypeToString( pParam->get_qualified_type() ) }
-                    }
-                );
+                    { { "name", pFunction->get_name() },
+                      { "type",
+                        qualifiedTypeToString(
+                            pParam->get_qualified_type() ) } } );
                 function[ "parameters" ].push_back( parameter );
             }
             interface[ "functions" ].push_back( function );
@@ -151,39 +145,38 @@ void task_service_gen(TaskDependencies& dependencies)
     {
         data[ "includes" ].push_back( include );
     }
- 
-    renderTemplate( 
+
+    renderTemplate(
         dependencies.m_environment.getServiceTemplate_registry(),
         dependencies.m_environment.getServiceCodeGen_registry(),
         dependencies.m_environment.getDirectories().templatesDir,
         data );
 
-    renderTemplate( 
+    renderTemplate(
         dependencies.m_environment.getServiceTemplate_receiver(),
         dependencies.m_environment.getServiceCodeGen_receiver(),
         dependencies.m_environment.getDirectories().templatesDir,
         data );
 
-    renderTemplate( 
+    renderTemplate(
         dependencies.m_environment.getServiceTemplate_proxy_itc(),
         dependencies.m_environment.getServiceCodeGen_proxy_itc(),
         dependencies.m_environment.getDirectories().templatesDir,
         data );
 
-    renderTemplate( 
+    renderTemplate(
         dependencies.m_environment.getServiceTemplate_proxy_ipc(),
         dependencies.m_environment.getServiceCodeGen_proxy_ipc(),
         dependencies.m_environment.getDirectories().templatesDir,
         data );
 
-    renderTemplate( 
+    renderTemplate(
         dependencies.m_environment.getServiceTemplate_cmd(),
         dependencies.m_environment.getServiceCodeGen_cmd(),
         dependencies.m_environment.getDirectories().templatesDir,
         data );
 
-    TASK_COMPLETE("task_service_gen");
+    TASK_COMPLETE( "task_service_gen" );
 }
 
-}
-
+} // namespace mega::meta
