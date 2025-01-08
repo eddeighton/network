@@ -8,6 +8,8 @@
 #include "service/access.hpp"
 #include "service/connection.hpp"
 
+#include "common/log.hpp"
+
 {% for include in includes %}
 #include "{{ include }}"
 {% endfor %}
@@ -88,14 +90,17 @@ void decodeInboundRequest(Access& access,
                                 }
                                 else
                                 {
-                                    THROW_RTE( "Lost connection" );
+                                    LOG( "Decoder Lost connection and cannot send response: " << header );
                                 }
                             }
                         }
+                        catch(std::exception& ex )
+                        {
+                            THROW_RTE( "Exception decoding msg: " << header << " : " << ex.what() );
+                        }
                         catch(...)
                         {
-                            // TODO: ??
-                            throw;
+                            THROW_RTE( "Unknown exception decoding msg: " << header );
                         }
                     }
 {% endfor %}

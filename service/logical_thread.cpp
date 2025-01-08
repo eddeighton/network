@@ -70,7 +70,12 @@ namespace mega::service
             registerLogicalThread(mptf, detail::fiber_local_storage.get());
         }
     }
-            
+
+    void LogicalThread::resetFiber()
+    {
+        delete detail::fiber_local_storage.release();
+    }
+
     LogicalThread& LogicalThread::get()
     {
         VERIFY_RTE_MSG( detail::fiber_local_storage.get() != nullptr,

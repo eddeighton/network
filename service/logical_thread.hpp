@@ -166,6 +166,7 @@ namespace mega::service
         }
    
         static void registerThread();
+        static void resetFiber();
         static void registerFiber(MP mp);
         static LogicalThread& get();
         static void shutdownAll();

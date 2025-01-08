@@ -19,14 +19,6 @@
 
 namespace mega::service
 {
-    inline void onSocketError( const boost::system::error_code& ec )
-    {
-        if( ec.failed() )
-        {
-            THROW_RTE( "Unexpected socket error: " << ec.what() );
-        }
-    }
-
     template< typename TSocket, typename TPayload >
     boost::system::error_code send( TSocket& socket, const TPayload& payload )
     {

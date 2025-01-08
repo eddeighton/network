@@ -37,6 +37,7 @@ TEST( Service, DaemonConnect )
     using namespace mega::service;
     using namespace mega::test;
 
+    LogicalThread::resetFiber();
     LogicalThread::registerThread();
 
     std::promise< void > waitForDaemonStart;
@@ -79,6 +80,7 @@ TEST( Service, CreateTest )
     using namespace mega::service;
     using namespace mega::test;
 
+    LogicalThread::resetFiber();
     LogicalThread::registerThread();
 
     std::promise< void > waitForDaemonStart;
@@ -130,7 +132,7 @@ TEST( Service, InterConnect )
 {
     using namespace mega::service;
     using namespace mega::test;
-
+    LogicalThread::resetFiber();
     LogicalThread::registerThread();
 
     std::promise< void > waitForDaemonStart;
@@ -152,6 +154,8 @@ TEST( Service, InterConnect )
         });
     waitForDaemonStartFut.get();
 
+    std::promise< void > waitForClient1Start;
+    std::future< void > waitForClient1StartFut = waitForClient1Start.get_future();
     std::thread client1(
         [&]
         {
@@ -159,12 +163,15 @@ TEST( Service, InterConnect )
             {
                 LogicalThread::registerThread();
                 Connect con( {}, PortNumber{ 1234 } );
+                waitForClient1Start.set_value();
                 con.run();
             }
             catch( Shutdown& ) { }
             LOG( "client1 shut down" );
         });
 
+    std::promise< void > waitForClient2Start;
+    std::future< void > waitForClient2StartFut = waitForClient2Start.get_future();
     std::thread client2(
         [&]
         {
@@ -172,12 +179,15 @@ TEST( Service, InterConnect )
             {
                 LogicalThread::registerThread();
                 Connect con( {}, PortNumber{ 1234 } );
+                waitForClient2Start.set_value();
                 con.run();
             }
             catch( Shutdown& ) { }
             LOG( "client2 shut down" );
         });
 
+    std::promise< void > waitForClient3Start;
+    std::future< void > waitForClient3StartFut = waitForClient3Start.get_future();
     std::thread client3(
         [&]
         {
@@ -185,11 +195,16 @@ TEST( Service, InterConnect )
             {
                 LogicalThread::registerThread();
                 Connect con( {}, PortNumber{ 1234 } );
+                waitForClient3Start.set_value();
                 con.run();
             }
             catch( Shutdown& ) { }
             LOG( "client3 shut down" );
         });
+
+    waitForClient1StartFut.get();
+    waitForClient2StartFut.get();
+    waitForClient3StartFut.get();
 
     {
         try
