@@ -14,6 +14,7 @@
 #include "service/gen/registry.hxx"
 
 #include "common/disable_special_members.hpp"
+#include "common/log.hpp"
 
 #include <map>
 #include <vector>
@@ -29,14 +30,9 @@ namespace mega::service
     class Registry : public Common::DisableCopy, Common::DisableMove
     {
     public:
-        // struct ObjectInfo
-        // {
-        //     Interface* pObject;
-        //     LogicalThread& logicalThread;
-        // };
         using CreationCallback = std::function< void(Registration) >;
     private:
-        using Objects        = std::unordered_map< MPTFO, Interface*,     MPTFO::Hash >;
+        using Objects = std::unordered_map< MPTFO, Interface*,     MPTFO::Hash >;
 
         Access&                           m_access;
         Objects                           m_objects;
@@ -188,6 +184,7 @@ namespace mega::service
         template< typename T >
         std::shared_ptr< Proxy< T > > one(MP mp) const
         {
+            LOG( "REGISTRY: one: " << mp );
             auto r = get<T>(mp);
             VERIFY_RTE_MSG(r.size()!=0,
                 "Could not find instance of proxy type: " <<
@@ -195,6 +192,7 @@ namespace mega::service
             VERIFY_RTE_MSG(r.size()==1,
                 "Non-singular result finding type: " <<
                 boost::typeindex::type_id<T>().pretty_name());
+            LOG( "REGISTRY: one complete: " << mp );
             return r.front();
         }
     };

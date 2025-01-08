@@ -118,13 +118,14 @@ namespace mega::service
         inline void setInterProcessResponseCallback(MessageID messageID, T&& callback)
         {
             // record the callback
-            m_interProcessResponseCallbacks.insert( std::make_pair( messageID, std::move( callback ) ) );
+            m_interProcessResponseCallbacks.insert( 
+                std::make_pair( messageID, std::move( callback ) ) );
         }
 
         inline void operator()( const Shutdown& other )
         {
             m_bContinue = false;
-            throw Shutdown{};
+            throw ::mega::service::Shutdown{};
         }
 
         inline void receive()

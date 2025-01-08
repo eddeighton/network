@@ -29,11 +29,13 @@ namespace mega::service
             friend class Client;
 
             using DisconnectCallback  = std::function< void() >;
-            using Strand              = boost::asio::strand< boost::asio::io_context::executor_type >;
+            using Strand              = boost::asio::strand< 
+                boost::asio::io_context::executor_type >;
             using Socket              = boost::asio::ip::tcp::socket;
             using Resolver            = boost::asio::ip::tcp::resolver;
             using EndPoint            = boost::asio::ip::tcp::endpoint;
-            using SocketReceiver      = Receiver< Socket, DisconnectCallback >;
+            using SocketReceiver      = Receiver< Socket >;
+            using SocketReceiverPtr   = std::unique_ptr< SocketReceiver >;
 
         public:
             using Ptr = std::shared_ptr< Connection >;
@@ -45,7 +47,6 @@ namespace mega::service
             ,   m_resolver(client.m_io_context)
             ,   m_strand( boost::asio::make_strand( client.m_io_context ) )
             ,   m_socket( m_strand )
-            ,   m_receiver( m_socket, client.m_receiverCallback, [ this ] { disconnected(); } )
             ,   m_sender( m_socket )
             {
                 LOG_CLIENT( "Connection ctor start" ) ;
@@ -55,7 +56,8 @@ namespace mega::service
                 if( endpoints.empty() )
                 {
                     LOG_CLIENT( "Connection no endpoints" ) ;
-                    THROW_RTE( "Failed to resolve ip: " << m_ip_address.value << " port: " << m_port_number );
+                    THROW_RTE( "Failed to resolve ip: " << 
+                        m_ip_address.value << " port: " << m_port_number );
                 }
 
                 m_endPoint = boost::asio::connect( m_socket, endpoints );
@@ -63,9 +65,18 @@ namespace mega::service
                 LOG_CLIENT( "Connection ctor complete " << m_socket_info ) ;
             }
 
-            void run()
+        private:
+            void start()
             {
-                m_receiver.run(shared_from_this());
+                VERIFY_RTE(!m_pReceiver);
+                m_pReceiver = std::make_unique< SocketReceiver >(
+                    shared_from_this(),
+                    m_socket,
+                    m_client.m_receiverCallback,
+                    [ &client = m_client ]( service::Connection::WeakPtr pConnection )
+                    {
+                        client.onDisconnect( pConnection ); 
+                    } );
             }
         public:
             const TCPSocketInfo& getSocketInfo() const override { return m_socket_info; }
@@ -75,30 +86,22 @@ namespace mega::service
 
             void stop() override
             {
-                // LOG_CLIENT( "Client connection stop from: " << m_socket_info ) ;
-                boost::system::error_code ec;
-                m_socket.shutdown( m_socket.shutdown_both, ec );
-                m_socket.close();
-
-                while(m_bDisconnected == false)
+                if( m_pReceiver )
                 {
-                    boost::this_fiber::yield();
+                    m_pReceiver->stop();
                 }
             }
             
             void send( const PacketBuffer& buffer ) override
             {
-                m_sender.send( buffer );
-            }
-
-        private:
-            void disconnected()
-            {
-                LOG_CLIENT( "disconnect from: " << m_socket_info ) ;
-                m_client.onDisconnect(
-                    std::dynamic_pointer_cast< Connection >( shared_from_this() ));
-                LOG_CLIENT( "Disconnected" ) ;
-                m_bDisconnected = true;
+                if( m_socket.is_open() )
+                {
+                    m_sender.send( buffer );
+                }
+                else
+                {
+                    THROW_RTE( "Cannot send of disconnected connection" );
+                }
             }
 
         private:
@@ -110,9 +113,8 @@ namespace mega::service
             Socket              m_socket;
             TCPSocketInfo       m_socket_info;
             EndPoint            m_endPoint;
-            SocketReceiver      m_receiver;
             SocketSender        m_sender;
-            bool                m_bDisconnected = false;
+            SocketReceiverPtr   m_pReceiver;
         };
         using ConnectionPtrSet = std::set< Connection::Ptr >;
         using ConnectionCallback = std::function< void(service::Connection::Ptr) >;
@@ -131,10 +133,11 @@ namespace mega::service
 
         Connection::Ptr connect(IPAddress ip_address, PortNumber port_number)
         {
-            auto pConnection = std::make_shared< Connection >(*this, ip_address, port_number );
-            pConnection->run();
+            auto pConnection = std::make_shared< Connection >(
+                *this, ip_address, port_number );
             m_connections.insert(pConnection);
             m_connectionCallback(pConnection);
+            pConnection->start();
             return pConnection;
         }
 
@@ -147,10 +150,15 @@ namespace mega::service
             }
         }
     private:
-        void onDisconnect(Connection::Ptr pConnection)
+        void onDisconnect(service::Connection::WeakPtr pWeakConnectionPtr)
         {
-            m_connections.erase(pConnection);
-            m_disconnectCallback(pConnection);
+            if( auto p = pWeakConnectionPtr.lock() )
+            {
+                Connection::Ptr pConnection =
+                    std::dynamic_pointer_cast< Connection >( p );
+                m_connections.erase(pConnection);
+                m_disconnectCallback(pConnection);
+            }
         }
 
     private:

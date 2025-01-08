@@ -40,39 +40,63 @@ TEST( Service, DaemonConnect )
     LogicalThread::resetFiber();
     LogicalThread::registerThread();
 
-    std::promise< void > waitForDaemonStart;
-    std::future< void > waitForDaemonStartFut = waitForDaemonStart.get_future();
-    std::thread daemonThread(
-        [&waitForDaemonStart]
-        {
-            try
-            {
-                LogicalThread::registerThread();
-                Daemon daemon( {}, PortNumber{ 1234 } );
-                OConnectivity connectivity(daemon);
-                waitForDaemonStart.set_value();
-                daemon.run();
-            }
-            catch( Shutdown& ) { }
-        });
-    waitForDaemonStartFut.get();
+    std::unique_ptr< std::thread > pDaemonThread;
 
     try
     {
-        LOG( "Client started" );
-        Connect con( {}, PortNumber{ 1234 } );
 
-        LOG( "Client started 2" );
-        auto pConnectivity = con.readRegistry()->one< Connectivity >( MP{} );
-        pConnectivity->shutdown();
-        con.run();
+        std::promise< void > waitForDaemonStart;
+        std::future< void > waitForDaemonStartFut = waitForDaemonStart.get_future();
+        pDaemonThread = std::make_unique< std::thread >(
+            [&waitForDaemonStart]
+            {
+                try
+                {
+                    LogicalThread::registerThread();
+                    Daemon daemon( {}, PortNumber{ 1234 } );
+                    OConnectivity connectivity(daemon);
+                    waitForDaemonStart.set_value();
+                    daemon.run();
+                }
+                catch( Shutdown& ) {}
+                LOG( "Daemon stopped" );
+            });
+        waitForDaemonStartFut.get();
+
+        {
+            try
+            {
+                LOG( "Client started" );
+                Connect con( {}, PortNumber{ 1234 } );
+
+                LOG( "Client started 2" );
+                auto pConnectivity = con.readRegistry()->one< Connectivity >( MP{} );
+                LOG( "Client started 3" );
+                pConnectivity->shutdown();
+                LOG( "Client started 4" );
+                con.run();
+            }
+            catch( ::mega::service::Shutdown& ) {}
+            catch( std::exception& ex )
+            {
+                LOG( "Unexpected exception in  client: " << ex.what() );
+                FAIL();
+            }
+            catch( ... )
+            {
+                LOG( "Unknown exception in  client " );
+                FAIL();
+            }
+            LOG( "Client stopped" );
+        }
+
     }
-    catch( Shutdown& )
+    catch( std::exception& ex )
     {
-        LOG( "Client shutdown exception" );
+        std::cout << "Unexpected exception: " << ex.what() << std::endl;
+        FAIL();
     }
-
-    daemonThread.join();
+    pDaemonThread->join();
 }
 
 TEST( Service, CreateTest )

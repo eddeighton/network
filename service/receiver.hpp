@@ -12,12 +12,6 @@
 
 #include "common/log.hpp"
 
-#include <boost/interprocess/interprocess_fwd.hpp>
-#include <boost/interprocess/streams/vectorstream.hpp>
-
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/archive/binary_oarchive.hpp>
-
 #include <array>
 #include <iostream>
 #include <functional>
@@ -25,82 +19,102 @@
 namespace mega::service
 {
     using ReceiverCallback = std::function< void( Connection::WeakPtr, const PacketBuffer& ) >;
+    using DisconnectCallback = std::function< void( Connection::WeakPtr ) >;
     
-    template<typename Socket, typename DisconnectCallback >
+    template<typename Socket >
     class Receiver
     {
     public:
-        template< typename Functor >
-        Receiver(Socket& socket, ReceiverCallback receiverCallback, Functor disconnect_callback)
-        :   m_socket(socket)
+        Receiver(Connection::WeakPtr pConnection, 
+                Socket& socket, 
+                ReceiverCallback receiverCallback, 
+                DisconnectCallback disconnect_callback)
+        :   m_pConnection(pConnection)
+        ,   m_socket(socket)
         ,   m_callback( std::move(receiverCallback) )
         ,   m_disconnect_callback( std::move( disconnect_callback ) )
-        //,   m_waitForServerShutdownFuture(m_waitForServerShutdown.get_future())
+        ,   m_fiber( [this](){ run(); } )
         {
+            LOG( "RECEIVER: ctor" ) ;
         }
 
         ~Receiver()
         {
-            // m_waitForServerShutdownFuture.get();
+            stop();
+            m_fiber.join();
+            LOG( "RECEIVER: dtor" ) ;
         }
 
-        void run(Connection::WeakPtr pConnection)
+    private:
+        void run()
         {
-            m_bStarted = true;
-            boost::fibers::fiber( [this, pConnection]
+            LOG( "RECEIVER: fiber started" ) ;
+            while( m_bContinue && m_socket.is_open() )
             {
-                //LOG( "Receiver started" ) ;
-                while( m_bContinue && m_socket.is_open() )
+                const auto error = receive( m_socket, m_packetBuffer );
+
+                //LOG( "Received packet with error: " << error.what() ) ;
+
+                if( error.value() == boost::asio::error::eof )
                 {
-                    const auto error = receive( m_socket, m_packetBuffer );
-
-                    //LOG( "Received packet with error: " << error.what() ) ;
-
-                    if( error.value() == boost::asio::error::eof )
-                    {
-                        //  This is what happens when close socket normally
-                        m_bContinue = false;
-                        //LOG( "Socket returned eof" ) ;
-                    }
-                    else if( error.value() == boost::asio::error::operation_aborted )
-                    {
-                        //  This is what happens when close socket normally
-                        m_bContinue = false;
-                        //LOG( "Socket returned operation aborted" ) ;
-                    }
-                    else if( error.value() == boost::asio::error::connection_reset )
-                    {
-                        m_bContinue = false;
-                        //LOG( "Socket returned connection reset" ) ;
-                    }
-                    else if( error.failed() )
-                    {
-                        m_bContinue = false;
-                        //LOG( "Critical socket failure: " << error.what() ) ;
-                        // std::abort();
-                    }
-                    else
-                    {
-                        m_callback(pConnection, m_packetBuffer);
-                    }
+                    //  This is what happens when close socket normally
+                    m_bContinue = false;
+                    //LOG( "Socket returned eof" ) ;
                 }
-                m_disconnect_callback();
-                //m_waitForServerShutdown.set_value();
-                LOG( "Receiver shutdown" ) ;
-            }).detach();
+                else if( error.value() == boost::asio::error::operation_aborted )
+                {
+                    //  This is what happens when close socket normally
+                    m_bContinue = false;
+                    //LOG( "Socket returned operation aborted" ) ;
+                }
+                else if( error.value() == boost::asio::error::connection_reset )
+                {
+                    m_bContinue = false;
+                    //LOG( "Socket returned connection reset" ) ;
+                }
+                else if( error.failed() )
+                {
+                    m_bContinue = false;
+                    //LOG( "Critical socket failure: " << error.what() ) ;
+                    // std::abort();
+                }
+                else
+                {
+                    m_callback(m_pConnection, m_packetBuffer);
+                }
+            }
+            boost::fibers::fiber( 
+                [
+                    pConnection = m_pConnection, 
+                    callback = std::move(m_disconnect_callback)
+                ]()
+                {
+                    LOG( "RECEIVER: shutdown callback" ) ;
+                    callback(pConnection);
+                }).detach();
+            LOG( "RECEIVER: fiber shutdown" ) ;
         }
 
-        void stop() { m_bContinue = false; }
-        bool started() const { return m_bStarted; }
+    public:
+        void stop()
+        { 
+            if( m_socket.is_open() )
+            {
+                boost::system::error_code ec;
+                m_socket.shutdown( m_socket.shutdown_both, ec );
+                m_socket.close( ec );
+            }
+            m_bContinue = false; 
+        }
 
+    private:
         bool                m_bContinue = true;
-        bool                m_bStarted = false;
+        Connection::WeakPtr m_pConnection;
         Socket&             m_socket; 
         PacketBuffer        m_packetBuffer;
         ReceiverCallback    m_callback;
         DisconnectCallback  m_disconnect_callback;
-        // boost::fibers::promise<void>    m_waitForServerShutdown;
-        // boost::fibers::future<void>     m_waitForServerShutdownFuture;
+        boost::fibers::fiber m_fiber;
     };
 }
 

@@ -14,6 +14,10 @@
 
 #include "common/assert_verify.hpp"
 #include "common/disable_special_members.hpp"
+#include "common/log.hpp"
+
+using namespace std::string_literals;
+#define LOG_PROXY_IPC(msg) LOG("PROXY_IPC: "s + msg)
 
 {% for interface in interfaces %}
 {% for namespace in interface.namespaces %} 
@@ -24,7 +28,7 @@
     // Interface {{ interface.full_type_name }}
     class {{ interface.type_name }}_IPC : public mega::service::Proxy< {{ interface.type_name }} >
     {
-        service::Connection::WeakPtr& m_pConnection;
+        service::Connection::WeakPtr m_pConnection;
         using Buffer = std::vector< char >;
     public:
         inline {{ interface.type_name }}_IPC(service::Access& access,
@@ -45,6 +49,7 @@
 
         ) override
         {
+            LOG_PROXY_IPC( "Started {{ interface.full_type_name }}::{{ function.name }}" );
             service::OArchive oa( m_access );
 
             using namespace std::string_literals;
@@ -78,6 +83,7 @@
 
             bool bResponse = false;
 
+            LOG_PROXY_IPC( "Registering callback {{ interface.full_type_name }}::{{ function.name }}" );
             thisLogicalThread.setInterProcessResponseCallback(
                 messageID,
                 [
@@ -99,6 +105,7 @@
                     bResponse = true;
                 });
 
+            LOG_PROXY_IPC( "Sending {{ interface.full_type_name }}::{{ function.name }}" );
             {
                 if( auto p = m_pConnection.lock() )
                 {
@@ -106,14 +113,18 @@
                 }
                 else
                 {
+                    LOG_PROXY_IPC( "Connection error {{ interface.full_type_name }}::{{ function.name }}" );
                     THROW_RTE( "Unable to get connection" );
                 }
             }
 
+            LOG_PROXY_IPC( "Waiting {{ interface.full_type_name }}::{{ function.name }}" );
             while(bResponse == false)
             {
                 thisLogicalThread.receive();
             }
+
+            LOG_PROXY_IPC( "Completed {{ interface.full_type_name }}::{{ function.name }}" );
 
 {% if function.return_type != "void" %}
             return result;

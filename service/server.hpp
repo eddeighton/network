@@ -9,6 +9,7 @@
 #include "service/socket_info.hpp"
 #include "service/network.hpp"
 #include "service/connection.hpp"
+#include "service/acceptor.hpp"
 
 #include "common/log.hpp"
 
@@ -28,56 +29,56 @@ namespace mega::service
         class Connection : public service::Connection
         {
             friend class Server;
-            
+            friend class Acceptor< std::shared_ptr< Connection > >;
+ 
             using DisconnectCallback = std::function< void() >;
             using Strand             = boost::asio::strand< boost::asio::io_context::executor_type >;
             using Socket             = boost::asio::ip::tcp::socket;
-            using SocketReceiver     = Receiver< Socket, DisconnectCallback >;
+            using SocketReceiver     = Receiver< Socket >;
+            using SocketReceiverPtr  = std::unique_ptr< SocketReceiver >;
 
         public:
             using Ptr = std::shared_ptr< Connection >;
-            using WeakPtr = std::weak_ptr< Connection >;
 
-            Connection( Server& server, boost::asio::io_context& ioContext )
+            Connection( Server& server )
             : m_server( server )
-            , m_strand( boost::asio::make_strand( ioContext ) )
+            , m_strand( boost::asio::make_strand( m_server.m_ioContext ) )
             , m_socket( m_strand )
-            , m_receiver( m_socket, server.m_receiverCallback, [ this ] { disconnected(); } )
             , m_sender( m_socket )
             , m_processID( PROCESS_ZERO )
             {
-                m_waitForDisconnectFuture = m_waitForDisconnect.get_future();
             }
 
-            ~Connection()
+        private:
+            void start(ProcessID processID)
             {
-                stop();
+                LOG_SERVER( "connection start " << m_socket_info ) ;
+                m_processID = processID;
+                m_socket_info = TCPSocketInfo::make( m_socket );
+                VERIFY_RTE(!m_pReceiver);
+                m_pReceiver = std::make_unique< SocketReceiver >(
+                    shared_from_this(),
+                    m_socket,
+                    m_server.m_receiverCallback,
+                    [ &server = m_server ]( service::Connection::WeakPtr pConnection )
+                    {
+                        server.onDisconnect( pConnection ); 
+                    } );
             }
-
+        public:
             const TCPSocketInfo& getSocketInfo() const override { return m_socket_info; }
 
             ProcessID getProcessID() const override { return m_processID; }
 
             void stop() override
             {
+                m_pReceiver.reset();
                 LOG_SERVER( "connection stoppping " << m_socket_info ) ;
-                if( m_socket.is_open() )
-                {
-                    boost::system::error_code ec;
-                    m_socket.shutdown( m_socket.shutdown_both, ec );
-                    m_socket.close( ec );
-                }
-                if( m_receiver.started() && !m_bDisconnected )
-                {
-                    m_receiver.stop();
-                    m_waitForDisconnectFuture.get();
-                }
-                LOG_SERVER( "connection stop complete " << m_socket_info ) ;
             }
 
             void send( const PacketBuffer& buffer ) override
             {
-                if( !m_bDisconnected && m_socket.is_open() )
+                if( m_socket.is_open() )
                 {
                     m_sender.send( buffer );
                 }
@@ -88,55 +89,24 @@ namespace mega::service
             }
 
         private:
-            void start(ProcessID processID)
-            {
-                m_processID = processID;
-                m_socket_info = TCPSocketInfo::make( m_socket );
-                LOG_SERVER( "connection start " << m_socket_info ) ;
-                m_receiver.run(shared_from_this());
-                m_bDisconnected = false;
-            }
-
-            void disconnected()
-            {
-                LOG_SERVER( "connection disconnecting " << m_socket_info ) ;
-                if( m_socket.is_open() )
-                {
-                    boost::system::error_code ec;
-                    m_socket.shutdown( m_socket.shutdown_both, ec );
-                    m_socket.close( ec );
-                }
-                // NOTE - call to onDisconnect will invoke 
-                // destructor which will block on m_bDisconnected being true
-                LOG_SERVER( "connection disconnect socket closed " << m_socket_info ) ;
-                if( !m_bDisconnected )
-                {
-                    m_bDisconnected = true;
-                    m_waitForDisconnect.set_value();
-                    // NOTE: deleted on next line
-                    m_server.onDisconnect( 
-                        std::dynamic_pointer_cast< Connection >( shared_from_this() ) );
-                }
-
-                LOG_SERVER( "connection disconnect complete " << m_socket_info ) ;
-            }
-        private:
-            boost::fibers::promise<void>    m_waitForDisconnect;
-            boost::fibers::future<void>     m_waitForDisconnectFuture;
-            Server&         m_server;
-            Strand          m_strand;
-            Socket          m_socket;
-            TCPSocketInfo   m_socket_info;
-            SocketReceiver  m_receiver;
-            SocketSender    m_sender;
-            ProcessID       m_processID;
-            bool            m_bDisconnected = true;
+            Server&             m_server;
+            Strand              m_strand;
+            Socket              m_socket;
+            TCPSocketInfo       m_socket_info;
+            SocketSender        m_sender;
+            ProcessID           m_processID;
+            SocketReceiverPtr   m_pReceiver;
         };
 
+    private:
+        using Acceptor = service::Acceptor< Connection::Ptr >;
+        using AcceptorPtr = Acceptor::Ptr;
+        using ProcessIDFreeList = boost::circular_buffer< ProcessID >;
         using ConnectionPtrMap = std::map< ProcessID, Connection::Ptr >;
+
+    public:
         using ConnectionCallback = std::function< void(service::Connection::Ptr) >;
         using DisconnectCallback = std::function< void(service::Connection::Ptr) >;
-        using ProcessIDFreeList = boost::circular_buffer< ProcessID >;
 
         Server(boost::asio::io_context& ioContext,
                 PortNumber port_number,
@@ -149,8 +119,6 @@ namespace mega::service
         ,   m_receiverCallback(std::move(receiverCallback))
         ,   m_connectionCallback(std::move(connectionCallback))
         ,   m_disconnectCallback(std::move(disconnectCallback))
-        ,   m_acceptor( m_ioContext,
-                boost::asio::ip::tcp::endpoint( boost::asio::ip::tcp::v4(), port_number.value ) )
         ,   m_processIDFreeList( std::numeric_limits< ProcessID::ValueType >::max() - 1 )
         {
             // simply add ALL valid ProcessIDs to the freelist on startup
@@ -168,27 +136,16 @@ namespace mega::service
 
         void start()
         {
-            m_acceptorFiber = boost::fibers::fiber(
-                [this]()
+            m_pAcceptor = std::make_unique< Acceptor >(
+                m_ioContext,
+                boost::asio::ip::tcp::endpoint( boost::asio::ip::tcp::v4(), m_port_number.value ),
+                [this]() -> Connection::Ptr
                 {
-                    LOG_SERVER( "Acceptor started" ) ;
-                    while(m_acceptor.is_open())
-                    {
-                        Connection::Ptr pNewConnection =
-                            std::make_shared< Connection >( *this, m_ioContext );
-                        boost::system::error_code ec;
-                        m_acceptor.async_accept( pNewConnection->m_socket,
-                            boost::fibers::asio::yield[ ec ]);
-                        if( !ec )
-                        {
-                            onConnect( pNewConnection );
-                        }
-                        else
-                        {
-                            // error ?
-                        }
-                    }
-                    LOG_SERVER( "Acceptor stopped" ) ;
+                    return std::make_shared< Connection >( *this ); 
+                },
+                [this]( Connection::Ptr pConnection )
+                {
+                    onConnect( pConnection );
                 }
             );
         }
@@ -196,11 +153,8 @@ namespace mega::service
         void stop()
         {
             LOG_SERVER( "stop" );
-            m_acceptor.close();
-            if( m_acceptorFiber.joinable() )
-            {
-                m_acceptorFiber.join();
-            }
+            m_pAcceptor.reset();
+            LOG_SERVER( "stop acceptor joined" );
             auto con = m_connections;
             for( auto& c : con )
             {
@@ -217,23 +171,29 @@ namespace mega::service
 
             const auto processID = m_processIDFreeList.front();
             m_processIDFreeList.pop_front();
-            pNewConnection->start(processID);
             m_connections.insert(std::make_pair(processID, pNewConnection));
+            pNewConnection->start(processID);
             m_connectionCallback(pNewConnection);
         }
 
-        void onDisconnect( Connection::Ptr pConnection )
+        void onDisconnect( service::Connection::WeakPtr pWeakConnectionPtr )
         {
             LOG_SERVER( "onDisconnect" ) ;
-            auto processID = pConnection->getProcessID();
-            auto iFind = m_connections.find(processID);
-            VERIFY_RTE_MSG( iFind != m_connections.end(),
-                "Invalid call to onDisconnect for already disconnected connection");
- 
-            m_connections.erase( iFind );
-            m_processIDFreeList.push_back( processID );
-            LOG_SERVER( "onDisconnect calling callback" ) ;
-            m_disconnectCallback( pConnection );
+            if( auto p = pWeakConnectionPtr.lock() )
+            {
+                Connection::Ptr pConnection =
+                    std::dynamic_pointer_cast< Connection >( p );
+                VERIFY_RTE( pConnection );
+                auto processID = pConnection->getProcessID();
+                auto iFind = m_connections.find(processID);
+                VERIFY_RTE_MSG( iFind != m_connections.end(),
+                    "Invalid call to onDisconnect for already disconnected connection");
+
+                m_connections.erase( iFind );
+                m_processIDFreeList.push_back( processID );
+                LOG_SERVER( "onDisconnect calling callback" ) ;
+                m_disconnectCallback( pConnection );
+            }
             LOG_SERVER( "onDisconnect complete" ) ;
         }
 
@@ -242,10 +202,9 @@ namespace mega::service
         ReceiverCallback                m_receiverCallback;
         ConnectionCallback              m_connectionCallback;
         DisconnectCallback              m_disconnectCallback;
-        boost::asio::ip::tcp::acceptor  m_acceptor;
         ConnectionPtrMap                m_connections;
         ProcessIDFreeList               m_processIDFreeList;
-        boost::fibers::fiber            m_acceptorFiber;
+        AcceptorPtr                     m_pAcceptor;
     };
 }
 

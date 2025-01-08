@@ -38,6 +38,7 @@ namespace mega::service
         PacketBuffer m_buffer;
     };
 
+    // NOTE: used as exception type
     struct Shutdown
     {
     };
