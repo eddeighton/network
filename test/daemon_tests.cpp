@@ -247,3 +247,85 @@ TEST( Service, InterConnect )
     daemon.join();
 }
 
+TEST( Service, InterClientRequest )
+{
+    using namespace mega::service;
+    using namespace mega::test;
+    LogicalThread::resetFiber();
+    LogicalThread::registerThread();
+
+    std::promise< void > waitForDaemonStart;
+    std::future< void > waitForDaemonStartFut = waitForDaemonStart.get_future();
+    std::thread daemon(
+        [&waitForDaemonStart]
+        {
+            try
+            {
+                LogicalThread::registerThread();
+                Daemon daemon( {}, PortNumber{ 1234 } );
+                OConnectivity connectivity(daemon);
+                OTestFactory testFactory( daemon );
+                waitForDaemonStart.set_value();
+                daemon.run();
+            }
+            catch( Shutdown& ) { }
+            LOG( "daemon shut down" );
+        });
+    waitForDaemonStartFut.get();
+
+    std::promise< void > waitForClient1Start;
+    std::future< void > waitForClient1StartFut = waitForClient1Start.get_future();
+    std::thread client1(
+        [&]
+        {
+            try
+            {
+                LogicalThread::registerThread();
+                Connect con( {}, PortNumber{ 1234 } );
+                OTestFactory testFactory( con );
+                waitForClient1Start.set_value();
+                con.run();
+            }
+            catch( Shutdown& ) { }
+            LOG( "client1 shut down" );
+        });
+
+
+    waitForClient1StartFut.get();
+
+    {
+        try
+        {
+            Connect con( {}, PortNumber{ 1234 } );
+
+            auto pDaemonTestFactory = con.readRegistry()->one< TestFactory >( MP{MachineID{0},ProcessID{0}} );
+            auto pDaemonTest = pDaemonTestFactory->create_test();
+            ASSERT_EQ( pDaemonTest->test1(), "Hello World"s );
+
+            auto pTestFactory = con.readRegistry()->one< TestFactory >( MP{MachineID{0},ProcessID{1}} );
+            auto pTest = pTestFactory->create_test();
+
+            ASSERT_TRUE(pTest);
+            // for( int i = 0; i != 1000; i++ )
+            {
+                ASSERT_EQ( pTest->test1(), "Hello World"s );
+                ASSERT_EQ( pTest->test2( 123 ), 123 );
+                ASSERT_EQ( pTest->test3( "This"s ), "This"s );
+                ASSERT_EQ( pTest->test3( ""s ), ""s );
+            }
+
+            ASSERT_EQ( pTest->test4( pDaemonTest ), "Hello World"s );
+            ASSERT_EQ( pTest->test4( pTest ), "Hello World"s );
+
+            auto pConnectivity = con.readRegistry()->one< Connectivity >( MP{} );
+            pConnectivity->shutdown();
+        }
+        catch( Shutdown& ) { }
+        LOG( "client4 shut down" );
+    }
+
+    client1.join();
+    daemon.join();
+
+}
+

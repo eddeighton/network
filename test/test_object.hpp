@@ -4,6 +4,7 @@
 #include "service/interface/test.interface.hpp"
 
 #include "common/assert_verify.hpp"
+#include "common/log.hpp"
 
 #include <iostream>
 
@@ -12,19 +13,30 @@ namespace mega::test
 class OTest : public Test
 {
 public:
-    std::string test1() override
+    inline std::string test1() override
     {
         return "Hello World";
     }
 
-    int test2(int i) override
+    inline int test2(int i) override
     {
         return i;
     }
 
-    std::string test3(std::string str) override
+    inline std::string test3(std::string str) override
     {
         return str;
+    }
+
+    inline std::string test4( service::Ptr< Test > pTest ) override
+    {
+        if( pTest )
+        {
+            auto result = pTest->test1();
+            LOG( "test4 calling pTest->test1() and got: " << result );
+            return result;
+        }
+        return "";
     }
 };
 }

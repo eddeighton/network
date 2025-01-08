@@ -18,6 +18,7 @@ namespace mega
             virtual std::string test1() = 0;
             virtual int test2(int i) = 0;
             virtual std::string test3(std::string str) = 0;
+            virtual std::string test4( service::Ptr< Test > pTest ) = 0;
         };
 
         struct TestFactory : public virtual mega::service::Factory
