@@ -11,6 +11,7 @@
 #include "vocab/service/mp.hpp"
 
 #include "common/log.hpp"
+#include "common/time.hpp"
 
 #include <vector>
 #include <unordered_map>
@@ -18,6 +19,10 @@
 #include <map>
 #include <memory>
 #include <mutex>
+
+using namespace std::string_literals;
+#define LOG_ROUTER(msg) LOG("ROUTER: "s + msg)
+// #define LOG_ROUTER(msg)
 
 namespace mega::service
 {
@@ -99,9 +104,9 @@ namespace mega::service
         ,   m_channel( 16 )
         ,   m_fiber([this]()
             {
-                LOG( "Router start" ) ;
+                LOG_ROUTER( "start" ) ;
                 run(); 
-                LOG( "Router stop" ) ;
+                LOG_ROUTER( "stop" ) ;
             })
         {
         }
@@ -121,6 +126,9 @@ namespace mega::service
              
                 if( const ServiceMessage* pMsg = std::get_if< ServiceMessage >( &msg ) )
                 {
+                    auto startTime = std::chrono::steady_clock::now();
+
+                    LOG_ROUTER( "Got Service Message: " << pMsg->m_header );
                     VERIFY_RTE_MSG( pMsg->m_messageType == MessageType::eRequest,
                             "Expected request in router for msg: " << pMsg->m_header );
                     // attempt to find direct connection to route message
@@ -134,6 +142,7 @@ namespace mega::service
                         // route the message using direct connection which should always be correct
                         if( auto pCon = iFind->second.lock() )
                         {
+                            LOG_ROUTER( "Sending request direct: " << pMsg->m_header );
                             pCon->send( pMsg->m_buffer );
                             // now wait for response
                             auto response = receive();
@@ -144,6 +153,7 @@ namespace mega::service
                             {
                                 if( auto pConResponse = pOriginalRequestResponseConnection.lock() )
                                 {
+                                    LOG_ROUTER( "Sending response direct: " << pMsg->m_header );
                                     pConResponse->send( pResponseMsg->m_buffer );
                                     bDirectResponse = true;
                                 }
@@ -168,6 +178,9 @@ namespace mega::service
                         // no direct connection to attempt indirect routing
                         THROW_TODO;
                     }
+
+                    LOG_ROUTER( "Dispatch of: " << pMsg->m_header << " in : " << 
+                        common::printDuration( common::elapsed( startTime ) ) );
                 }
                 else
                 {

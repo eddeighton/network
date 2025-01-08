@@ -15,6 +15,7 @@
 #include "common/assert_verify.hpp"
 #include "common/disable_special_members.hpp"
 #include "common/log.hpp"
+#include "common/time.hpp"
 
 // using namespace std::string_literals;
 // #define LOG_PROXY_IPC(msg) LOG("PROXY_IPC: "s + msg)
@@ -106,6 +107,8 @@
                     bResponse = true;
                 });
 
+            auto startTime = std::chrono::steady_clock::now();
+
             LOG_PROXY_IPC( "Sending {{ interface.full_type_name }}::{{ function.name }}" );
             {
                 if( auto p = m_pConnection.lock() )
@@ -126,6 +129,9 @@
             }
 
             LOG_PROXY_IPC( "Completed {{ interface.full_type_name }}::{{ function.name }}" );
+
+            LOG( "{{ interface.full_type_name }}::{{ function.name }} : " << 
+                common::printDuration( common::elapsed( startTime ) ) );
 
 {% if function.return_type != "void" %}
             return result;
