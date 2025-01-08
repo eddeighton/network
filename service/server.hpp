@@ -18,8 +18,9 @@
 #include <set>
 #include <iostream>
 
-using namespace std::string_literals;
-#define LOG_SERVER(msg) LOG("SERVER: "s + msg)
+// using namespace std::string_literals;
+// #define LOG_SERVER(msg) LOG("SERVER: "s + msg)
+#define LOG_SERVER(msg)
 
 namespace mega::service
 {

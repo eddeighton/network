@@ -9,8 +9,9 @@
 #include <functional>
 #include <memory>
 
-using namespace std::string_literals;
-#define LOG_ACCEPTOR(msg) LOG("ACCEPTOR: "s + msg)
+// using namespace std::string_literals;
+// #define LOG_ACCEPTOR(msg) LOG("ACCEPTOR: "s + msg)
+#define LOG_ACCEPTOR(msg)
 
 namespace mega::service
 {

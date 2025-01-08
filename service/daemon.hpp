@@ -34,8 +34,9 @@
 #include <thread>
 #include <tuple>
 
-using namespace std::string_literals;
-#define LOG_DAEMON(msg) LOG("DAEMON: "s + msg)
+// using namespace std::string_literals;
+// #define LOG_DAEMON(msg) LOG("DAEMON: "s + msg)
+#define LOG_DAEMON(msg)
 
 namespace mega::service
 {

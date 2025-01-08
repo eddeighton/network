@@ -23,6 +23,10 @@
 #include <unordered_map>
 #include <functional>
 
+// using namespace std::string_literals;
+// #define LOG_REGISTRY(msg) LOG("SERVER: "s + msg)
+#define LOG_REGISTRY(msg)
+
 namespace mega::service
 {
     class Access;
@@ -184,7 +188,7 @@ namespace mega::service
         template< typename T >
         std::shared_ptr< Proxy< T > > one(MP mp) const
         {
-            LOG( "REGISTRY: one: " << mp );
+            LOG_REGISTRY( "REGISTRY: one: " << mp );
             auto r = get<T>(mp);
             VERIFY_RTE_MSG(r.size()!=0,
                 "Could not find instance of proxy type: " <<
@@ -192,7 +196,7 @@ namespace mega::service
             VERIFY_RTE_MSG(r.size()==1,
                 "Non-singular result finding type: " <<
                 boost::typeindex::type_id<T>().pretty_name());
-            LOG( "REGISTRY: one complete: " << mp );
+            LOG_REGISTRY( "REGISTRY: one complete: " << mp );
             return r.front();
         }
     };

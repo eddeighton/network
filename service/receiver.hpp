@@ -16,6 +16,10 @@
 #include <iostream>
 #include <functional>
 
+// using namespace std::string_literals;
+// #define LOG_RECEIVER(msg) LOG("RECEIVER: "s + msg)
+#define LOG_RECEIVER(msg)
+
 namespace mega::service
 {
     using ReceiverCallback = std::function< void( Connection::WeakPtr, const PacketBuffer& ) >;
@@ -35,47 +39,47 @@ namespace mega::service
         ,   m_disconnect_callback( std::move( disconnect_callback ) )
         ,   m_fiber( [this](){ run(); } )
         {
-            LOG( "RECEIVER: ctor" ) ;
+            LOG_RECEIVER( "RECEIVER: ctor" ) ;
         }
 
         ~Receiver()
         {
             stop();
             m_fiber.join();
-            LOG( "RECEIVER: dtor" ) ;
+            LOG_RECEIVER( "RECEIVER: dtor" ) ;
         }
 
     private:
         void run()
         {
-            LOG( "RECEIVER: fiber started" ) ;
+            LOG_RECEIVER( "RECEIVER: fiber started" ) ;
             while( m_bContinue && m_socket.is_open() )
             {
                 const auto error = receive( m_socket, m_packetBuffer );
 
-                //LOG( "Received packet with error: " << error.what() ) ;
+                //LOG_RECEIVER( "Received packet with error: " << error.what() ) ;
 
                 if( error.value() == boost::asio::error::eof )
                 {
                     //  This is what happens when close socket normally
                     m_bContinue = false;
-                    //LOG( "Socket returned eof" ) ;
+                    //LOG_RECEIVER( "Socket returned eof" ) ;
                 }
                 else if( error.value() == boost::asio::error::operation_aborted )
                 {
                     //  This is what happens when close socket normally
                     m_bContinue = false;
-                    //LOG( "Socket returned operation aborted" ) ;
+                    //LOG_RECEIVER( "Socket returned operation aborted" ) ;
                 }
                 else if( error.value() == boost::asio::error::connection_reset )
                 {
                     m_bContinue = false;
-                    //LOG( "Socket returned connection reset" ) ;
+                    //LOG_RECEIVER( "Socket returned connection reset" ) ;
                 }
                 else if( error.failed() )
                 {
                     m_bContinue = false;
-                    //LOG( "Critical socket failure: " << error.what() ) ;
+                    //LOG_RECEIVER( "Critical socket failure: " << error.what() ) ;
                     // std::abort();
                 }
                 else
@@ -89,10 +93,10 @@ namespace mega::service
                     callback = std::move(m_disconnect_callback)
                 ]()
                 {
-                    LOG( "RECEIVER: shutdown callback" ) ;
+                    LOG_RECEIVER( "RECEIVER: shutdown callback" ) ;
                     callback(pConnection);
                 }).detach();
-            LOG( "RECEIVER: fiber shutdown" ) ;
+            LOG_RECEIVER( "RECEIVER: fiber shutdown" ) ;
         }
 
     public:

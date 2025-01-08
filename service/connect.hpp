@@ -26,9 +26,9 @@
 #include <optional>
 
 // disable logging
-// #define LOG_CONNECT(msg)
-using namespace std::string_literals;
-#define LOG_CONNECT(msg) LOG( "CONNECT: "s + msg )
+#define LOG_CONNECT(msg)
+//using namespace std::string_literals;
+//#define LOG_CONNECT(msg) LOG( "CONNECT: "s + msg )
 
 namespace mega::service
 {

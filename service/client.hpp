@@ -15,9 +15,9 @@
 #include <set>
 #include <iostream>
 
-using namespace std::string_literals;
-#define LOG_CLIENT(msg) LOG("CLIENT: "s + msg)
-// #define LOG_CLIENT(msg)
+// using namespace std::string_literals;
+// #define LOG_CLIENT(msg) LOG("CLIENT: "s + msg)
+#define LOG_CLIENT(msg)
 
 namespace mega::service
 {

@@ -16,8 +16,9 @@
 #include "common/disable_special_members.hpp"
 #include "common/log.hpp"
 
-using namespace std::string_literals;
-#define LOG_PROXY_IPC(msg) LOG("PROXY_IPC: "s + msg)
+// using namespace std::string_literals;
+// #define LOG_PROXY_IPC(msg) LOG("PROXY_IPC: "s + msg)
+#define LOG_PROXY_IPC(msg) 
 
 {% for interface in interfaces %}
 {% for namespace in interface.namespaces %} 
