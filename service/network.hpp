@@ -1,13 +1,9 @@
 
 #pragma once
 
-#include "service/registry.hpp"
 #include "service/asio.hpp"
 
-#include "vocab/service/mp.hpp"
-
 #include <thread>
-#include <atomic>
 
 namespace mega::service
 {

@@ -7,16 +7,12 @@
 #include "service/receiver.hpp"
 #include "service/sender_socket.hpp"
 #include "service/socket_info.hpp"
-#include "service/network.hpp"
 #include "service/connection.hpp"
 #include "service/acceptor.hpp"
 
 #include "common/log.hpp"
 
 #include <boost/circular_buffer.hpp>
-
-#include <set>
-#include <iostream>
 
 // using namespace std::string_literals;
 // #define LOG_SERVER(msg) LOG("SERVER: "s + msg)
@@ -89,7 +85,9 @@ public:
         {
             if( m_socket.is_open() )
             {
-                m_sender.send( buffer );
+                auto ec = m_sender.send( buffer );
+                VERIFY_RTE_MSG( !ec,
+                    "Error attempting to send buffer: " << ec.what() );
             }
             else
             {

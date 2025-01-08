@@ -75,6 +75,8 @@ int main( int argc, const char* argv[] )
         }
         try
         {
+            LOG( "Megastructure Daemon Starting" );
+
             const mega::service::MP mp{
                 machineID, mega::service::PROCESS_ZERO };
 

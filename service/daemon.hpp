@@ -33,7 +33,7 @@
 #include "vocab/service/mp.hpp"
 
 #include "common/log.hpp"
-
+#include <atomic>
 #include <thread>
 #include <tuple>
 
@@ -54,6 +54,7 @@ class Daemon : public Access
     Router::Table             m_connectionsTable;
     Router::Map               m_routers;
     Registration              m_registration;
+    std::atomic< bool >       m_bShuttingDown{ false };
 
 private:
     void route( MessageType         messageType,
@@ -150,6 +151,9 @@ public:
 
     ~Daemon()
     {
+        // prevent sending disconnect messages from now on.
+        m_bShuttingDown = true;
+
         boost::fibers::promise< void > waitForServerShutdown;
         boost::fibers::future< void >  waitForServerShutdownFuture
             = waitForServerShutdown.get_future();
@@ -343,16 +347,19 @@ public:
         writeRegistry()->disconnected( mp );
         m_registration.remove( mp );
 
-        LOG_DAEMON( "discconnect sending disconnects" );
-        // for( auto& [ mp, pWeak ] : m_connectionsTable.getDirect() )
-        // {
-        //     if( auto pCon = pWeak.lock() )
-        //     {
-        //         LOG_DAEMON( "Forwarding reg to: " << mp ) ;
-        //         sendDisconnect( mp, visited, pCon );
-        //     }
-        // }
-        LOG_DAEMON( "disconnect complete" );
+        if( !m_bShuttingDown )
+        {
+            LOG_DAEMON( "discconnect sending disconnects" );
+            for( auto& [ mp, pWeak ] : m_connectionsTable.getDirect() )
+            {
+                if( auto pCon = pWeak.lock() )
+                {
+                    LOG_DAEMON( "Forwarding reg to: " << mp );
+                    sendDisconnect( mp, visited, pCon );
+                }
+            }
+            LOG_DAEMON( "disconnect complete" );
+        }
     }
 };
 } // namespace mega::service
