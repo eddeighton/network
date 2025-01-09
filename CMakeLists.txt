@@ -59,6 +59,7 @@ add_subdirectory( report )
 set(SERVICE_INTERFACES 
     ${CMAKE_SOURCE_DIR}/service/interface/test.interface.hpp
     ${CMAKE_SOURCE_DIR}/service/interface/connectivity.interface.hpp
+    ${CMAKE_SOURCE_DIR}/service/interface/controller.interface.hpp
 )
 
 set(GENERATED_INTERFACE_FILES 
