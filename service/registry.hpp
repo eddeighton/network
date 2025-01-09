@@ -14,7 +14,6 @@
 #include "service/gen/registry.hxx"
 
 #include "common/disable_special_members.hpp"
-#include "common/log.hpp"
 
 #include <map>
 #include <vector>
@@ -23,10 +22,6 @@
 #include <unordered_map>
 #include <functional>
 
-using namespace std::string_literals;
-#define LOG_REGISTRY(msg) LOG("SERVER: "s + msg)
-// #define LOG_REGISTRY( msg )
-
 namespace mega::service
 {
 class Access;
@@ -34,7 +29,9 @@ class Access;
 class Registry : public Common::DisableCopy, Common::DisableMove
 {
 public:
-    using CreationCallback = std::function< void( Registration ) >;
+    using CreationCallback = std::function< void(
+        boost::fibers::promise< void >&,
+        const Registration& ) >;
 
 private:
     using Objects
@@ -112,6 +109,7 @@ public:
 
     inline MPTFO createInProcessProxy( MPTF mptf, Interface& object )
     {
+        LOG_REGISTRY( "REGISTRY: createInProcessProxy start: " << mptf );
         VERIFY_RTE_MSG(
             m_objects.size()
                 < std::numeric_limits< ObjectID::ValueType >::max(),
@@ -120,13 +118,17 @@ public:
         const ObjectID objectID{
             static_cast< ObjectID::ValueType >( m_objects.size() ) };
         const MPTFO mptfo( mptf, objectID );
-        LOG_REGISTRY( "createInProcessProxy: " << mptfo );
         registerInProcessProxy(
             m_access, object, mptfo, m_proxies, m_interfaceMPTFOMap );
         m_objects.insert( std::make_pair( mptfo, &object ) );
         VERIFY_RTE_MSG( m_creationCallback.has_value(),
                         "No creation callback set" );
-        ( *m_creationCallback )( getRegistration() );
+        boost::fibers::promise< void > prom;
+        auto fut = prom.get_future();
+        auto reg = getRegistration();
+        ( *m_creationCallback )( prom, reg );
+        fut.get();
+        LOG_REGISTRY( "REGISTRY: createInProcessProxy end: " << mptf );
         return mptfo;
     }
 

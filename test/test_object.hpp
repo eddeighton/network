@@ -3,10 +3,7 @@
 
 #include "service/interface/test.interface.hpp"
 
-#include "common/assert_verify.hpp"
 #include "common/log.hpp"
-
-#include <iostream>
 
 namespace mega::test
 {

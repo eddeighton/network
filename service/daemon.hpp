@@ -123,23 +123,48 @@ public:
     {
         LogicalThread::registerFiber( m_mp );
 
-        auto creation
-            = [ this ]( Registration reg ) { onCreate( reg ); };
+        // clang-format off
+        auto creation = [ this ]
+            ( boost::fibers::promise< void >& prom, const Registration& reg ) 
+        { 
+            onCreate( reg );
+            prom.set_value();
+        };
 
         writeRegistry()->setCreationCallback(
-            [ this,
-              creation = std::move( creation ) ]( Registration reg )
+            [ this, creation ]
+            ( 
+                boost::fibers::promise< void >& prom, 
+                const Registration& reg 
+            )
             {
-                m_pIOContext->post(
-                    [ creation = std::move( creation ),
-                      reg      = std::move( reg ) ]()
-                    { creation( reg ); } );
+                m_pIOContext->post
+                ( 
+                    [
+                        creation, 
+                        &prom = prom,
+                        &reg = reg 
+                    ]()
+                    {
+                        boost::fibers::fiber(
+                            [
+                                creation, 
+                                &prom = prom,
+                                &reg = reg 
+                            ]()
+                            {
+                                creation( prom, reg );
+                            }
+                        ).detach();
+                    }
+                );
             } );
+        // clang-format on
 
         // ensure server is started
         auto pFut = m_pIOContext->post( boost::asio::use_future(
             [ this ]() { m_pServer->start(); } ) );
-        pFut.get();
+        pFut.get();  
     }
 
     ~Daemon()
@@ -195,9 +220,9 @@ public:
     void shutdown() { LogicalThread::shutdownAll(); }
 
 private:
-    void onCreate( Registration reg )
+    void onCreate( const Registration& reg )
     {
-        LOG_DAEMON( "onCreate of: " << reg );
+        LOG_DAEMON( "onCreate of:\n" << reg );
         m_registration.add( reg );
         for( auto& [ mp, pWeak ] : m_connectionsTable.getDirect() )
         {

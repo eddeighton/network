@@ -5,12 +5,10 @@
 #include "service/interface/test.interface.hpp"
 
 #include "service/access.hpp"
-#include "service/rtti.hpp"
 #include "service/logical_thread.hpp"
 #include "service/registry.hpp"
 #include "service/ptr.hpp"
 
-#include "common/assert_verify.hpp"
 #include "common/log.hpp"
 
 namespace mega::test

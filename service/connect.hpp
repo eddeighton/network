@@ -64,18 +64,43 @@ public:
 
         LogicalThread::registerFiber( m_enrolement.getMP() );
 
-        auto creation
-            = [ this ]( Registration reg ) { onCreate( reg ); };
+        // clang-format off
+        auto creation = [ this ]
+            ( boost::fibers::promise< void >& prom, const Registration& reg ) 
+        { 
+            onCreate( reg );
+            prom.set_value();
+        };
 
         writeRegistry()->setCreationCallback(
-            [ this,
-              creation = std::move( creation ) ]( Registration reg )
+            [ this, creation = std::move( creation ) ]
+            ( 
+                boost::fibers::promise< void >& prom, 
+                const Registration& reg 
+            )
             {
-                m_network.getIOContext().post(
-                    [ creation = std::move( creation ),
-                      reg      = std::move( reg ) ]()
-                    { creation( reg ); } );
+                m_network.getIOContext().post
+                ( 
+                    [
+                        creation = std::move( creation ), 
+                        &prom = prom,
+                        &reg = reg 
+                    ]()
+                    {
+                        boost::fibers::fiber(
+                            [
+                                creation, 
+                                &prom = prom,
+                                &reg = reg 
+                            ]()
+                            {
+                                creation( prom, reg );
+                            }
+                        ).detach();
+                    }
+                );
             } );
+        // clang-format on
 
         LOG_CONNECT( "ctor end" );
     }
@@ -89,9 +114,9 @@ public:
     void run() { LogicalThread::get().runMessageLoop(); }
 
 private:
-    void onCreate( Registration reg )
+    void onCreate( const Registration& reg )
     {
-        LOG_CONNECT( "onCreate: " << reg );
+        LOG_CONNECT( "onCreate:\n" << reg );
         if( auto p = std::dynamic_pointer_cast< service::Connection >(
                 m_pConnection ) )
         {
@@ -143,7 +168,7 @@ private:
                 Registration      registration;
                 ia >> mps;
                 ia >> registration;
-                LOG_CONNECT( "eRegistry: " << registration );
+                LOG_CONNECT( "eRegistry:\n" << registration );
 
                 // filter registration entries for THIS process
                 // since ONLY created inter-process proxies

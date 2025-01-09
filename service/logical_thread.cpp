@@ -8,9 +8,9 @@
 #include <unordered_map>
 #include <shared_mutex>
 
-using namespace std::string_literals;
-#define LOG_LOGICAL_THREAD( msg ) LOG( "LOGICAL_THREAD: "s + msg )
-// #define LOG_REGISTRY( msg )
+// using namespace std::string_literals;
+// #define LOG_LOGICAL_THREAD( msg ) LOG( "LOGICAL_THREAD: "s + msg )
+#define LOG_LOGICAL_THREAD( msg )
 
 namespace mega::service
 {

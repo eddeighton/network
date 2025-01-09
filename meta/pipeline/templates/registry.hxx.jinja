@@ -7,6 +7,12 @@
 #include "service/gen/proxy_itc.hxx"
 #include "service/gen/proxy_ipc.hxx"
 
+#include "common/log.hpp"
+
+using namespace std::string_literals;
+#define LOG_REGISTRY(msg) LOG("REGISTRY: "s + msg)
+// #define LOG_REGISTRY( msg )
+
 {% for include in includes %}
 #include "{{ include }}"
 {% endfor %}
@@ -28,7 +34,7 @@ namespace mega::service
     using InterfaceMPTFOMap  = std::map< InterfaceMPTFO, std::shared_ptr<Interface> >;
 
     template< typename TInterface, typename TProxy >
-    void registerIfInterface(Access& access, Connection::WeakPtr& pConnection, const Registration::Registrant& registrant,
+    void registerIPCInterface(Access& access, Connection::WeakPtr& pConnection, const Registration::Registrant& registrant,
             ProxyVariantVector& proxies, InterfaceMPTFOMap& interfaceMPTFOMap)
     {
         const auto interfaceTypeName = getInterfaceTypeName< TInterface >();
@@ -41,6 +47,7 @@ namespace mega::service
                     access, pConnection, registrant.m_mptfo, registrant.m_rtti);
                 interfaceMPTFOMap.insert(std::make_pair(key, pProxy));
                 proxies.push_back(std::move(pProxy));
+                LOG_REGISTRY( "registerIPCInterface: " << registrant.m_mptfo << " : " << interfaceTypeName );
             }
         }
     }
@@ -51,7 +58,7 @@ namespace mega::service
         for( const auto& registrant : registration.m_registrants )
         {
 {% for interface in interfaces %}
-            registerIfInterface< {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}, {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}_IPC >(
+            registerIPCInterface< {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}, {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}_IPC >(
                 access, pConnection, registrant, proxies, interfaceMPTFOMap);
 {% endfor %}
 
@@ -68,7 +75,7 @@ namespace mega::service
     }
 
     template< typename TInterface, typename TProxy >
-    void registerIfInterface(Access& access, Interface* pInterface, MPTFO mptfo, const RTTI& rtti,
+    void registerITCInterface(Access& access, Interface* pInterface, MPTFO mptfo, const RTTI& rtti,
             ProxyVariantVector& proxies, InterfaceMPTFOMap& interfaceMPTFOMap)
     {
         if(auto p = dynamic_cast< TInterface* >( pInterface ))
@@ -78,6 +85,7 @@ namespace mega::service
             interfaceMPTFOMap.insert(
                 std::make_pair( InterfaceMPTFO{ interfaceTypeName, mptfo }, pProxy ) );
             proxies.push_back( std::move( pProxy ) );
+            LOG_REGISTRY( "registerITCInterface: " << mptfo << " : " << interfaceTypeName );
         }
     }
 
@@ -90,7 +98,7 @@ namespace mega::service
         conditionallyAddRTTI< {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }} >( &object, rtti );
 {% endfor %}
 {% for interface in interfaces %}
-        registerIfInterface< {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}, {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}_ITC >(
+        registerITCInterface< {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}, {% for namespace in interface.namespaces %}::{{namespace}}{% endfor %}::{{ interface.type_name }}_ITC >(
             access, &object, mptfo, rtti, proxies, interfaceMPTFOMap );
 {% endfor %}
     }
