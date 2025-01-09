@@ -4,7 +4,6 @@
 #include "service/client.hpp"
 #include "service/access.hpp"
 #include "service/registry.hpp"
-#include "service/network.hpp"
 #include "service/enrole.hpp"
 
 #include "service/gen/decoder.hxx"
@@ -30,71 +29,92 @@ namespace mega::service
 {
 class Connect : public Access
 {
-    Network m_network;
-    Enrole  m_enrolement;
-    std::optional< boost::fibers::promise< void > >
-                            m_waitForRegistryPromise;
-    Client                  m_client;
-    Client::Connection::Ptr m_pConnection;
+    IOContextPtr                   m_pIOContext;
+    std::unique_ptr< Client >      m_pClient;
+    boost::fibers::promise< void > m_startupPromise;
+    boost::fibers::future< void >  m_startupFuture;
+    bool                           m_bStarting = true;
+    std::thread                    m_thread;
+    Enrole                         m_enrolement;
+    Client::Connection::WeakPtr    m_pConnection;
+    std::atomic< bool >            m_bShuttingDown{ false };
 
 public:
     Connect( IPAddress ipAddress, PortNumber port )
-        : m_client(
-              m_network.getIOContext(),
-              std::bind( &Connect::receiverCallback, this,
-                         std::placeholders::_1,
-                         std::placeholders::_2 ),
-              [ this ]( Connection::Ptr pConnection )
-              { connectCallback( pConnection ); },
-              [ this ]( Connection::Ptr pConnection )
-              { disconnectCallback( pConnection ); } )
-    {
-        LOG_CONNECT( "ctor start" );
-        m_waitForRegistryPromise = boost::fibers::promise< void >{};
-        auto registrationFuture
-            = m_waitForRegistryPromise->get_future();
+        : m_pIOContext(
+              std::make_shared< boost::asio::io_context >() )
+        , m_startupFuture( m_startupPromise.get_future() )
+        , m_thread(
+              [ this, ipAddress, port ]()
+              {
+                  LogicalThread::registerThread();
+                  {
+                      m_pClient = std::make_unique< Client >(
+                          *m_pIOContext,
+                          // receive callback
+                          [ this ](
+                              Connection::WeakPtr pResponseConnection,
+                              const PacketBuffer& buffer )
+                          {
+                              receiverCallback(
+                                  pResponseConnection, buffer );
+                          },
+                          // connection callback
+                          [ this ]( Connection::Ptr pConnection )
+                          { connectCallback( pConnection ); },
+                          // disconnect callback
+                          [ this ]( Connection::Ptr pConnection )
+                          { disconnectCallback( pConnection ); } );
 
-        m_pConnection = m_client.connect( ipAddress, port );
+                      init_fiber_scheduler( m_pIOContext );
+                      m_pIOContext->run();
+                  }
+                  LOG_CLIENT( "network thread shutting down" );
+              } )
+    {
+        LogicalThread::registerThread();
+
+        LOG_CONNECT( "ctor start" );
 
         // wait for enrolement and registration to complete
-        LOG_CONNECT( "waiting for future" );
-        registrationFuture.get();
-        LOG_CONNECT( "ctor got future" );
-        m_waitForRegistryPromise.reset();
+        auto pFut     = m_pIOContext->post( boost::asio::use_future(
+            [ this, ipAddress, port ]()
+            { return m_pClient->connect( ipAddress, port ); } ) );
+        m_pConnection = pFut.get();
+        m_startupFuture.get();
+
+        LOG_CONNECT( "Connection completed" );
 
         LogicalThread::registerFiber( m_enrolement.getMP() );
 
         // clang-format off
         auto creation = [ this ]
-            ( boost::fibers::promise< void >& prom, const Registration& reg ) 
+            ( Registry::Update::Ptr pUpdate ) 
         { 
-            onCreate( reg );
-            prom.set_value();
+            onCreate( pUpdate->registration );
+            pUpdate->done();
         };
 
         writeRegistry()->setCreationCallback(
-            [ this, creation = std::move( creation ) ]
+            [ this, creation = creation ]
             ( 
-                boost::fibers::promise< void >& prom, 
-                const Registration& reg 
+                Registry::Update::Ptr pUpdate 
             )
             {
-                m_network.getIOContext().post
+                m_pIOContext->post
                 ( 
                     [
-                        creation = std::move( creation ), 
-                        &prom = prom,
-                        &reg = reg 
-                    ]()
+                        creation, 
+                        pUpdate
+                    ]() mutable
                     {
                         boost::fibers::fiber(
                             [
                                 creation, 
-                                &prom = prom,
-                                &reg = reg 
-                            ]()
+                                pUpdate
+                            ]() mutable
                             {
-                                creation( prom, reg );
+                                creation( pUpdate );
                             }
                         ).detach();
                     }
@@ -105,20 +125,55 @@ public:
         LOG_CONNECT( "ctor end" );
     }
 
-    ~Connect() { m_pConnection->stop(); }
+    ~Connect()
+    {
+        m_bShuttingDown = true;
 
-    Network& getNetwork() { return m_network; }
-    MP       getMP() const { return m_enrolement.getMP(); }
-    MP       getDaemonMP() const { return m_enrolement.getDaemon(); }
+        boost::fibers::promise< void > waitForServerShutdown;
+        boost::fibers::future< void >  waitForServerShutdownFuture
+            = waitForServerShutdown.get_future();
+
+        m_pIOContext->post(
+            [ &pClient = m_pClient, &waitForServerShutdown ]()
+            {
+                boost::fibers::fiber(
+                    [ &pClient, &waitForServerShutdown ]
+                    {
+                        LOG_CLIENT( "shutdown fiber start" );
+                        pClient->stop();
+                        waitForServerShutdown.set_value();
+                        LOG_CLIENT( "shutdown fiber stop" );
+                    } )
+                    .detach();
+            } );
+
+        waitForServerShutdownFuture.get();
+
+        m_pIOContext->stop();
+
+        LOG_CLIENT( "io service stopped" );
+
+        m_thread.join();
+
+        LOG_CLIENT( "dtor complete" );
+    }
+
+    MP getMP() const { return m_enrolement.getMP(); }
+    MP getDaemonMP() const { return m_enrolement.getDaemon(); }
 
     void run() { LogicalThread::get().runMessageLoop(); }
 
 private:
     void onCreate( const Registration& reg )
     {
+        if( m_bShuttingDown )
+        {
+            LOG_CONNECT( "Ignoring onCreate because shutting down" );
+            return;
+        }
         LOG_CONNECT( "onCreate:\n" << reg );
         if( auto p = std::dynamic_pointer_cast< service::Connection >(
-                m_pConnection ) )
+                m_pConnection.lock() ) )
         {
             sendRegistration( reg, { getMP() }, p );
         }
@@ -126,6 +181,12 @@ private:
 
     void connectCallback( service::Connection::Ptr pConnection )
     {
+        if( m_bShuttingDown )
+        {
+            LOG_CONNECT(
+                "Ignoring connectCallback because shutting down" );
+            return;
+        }
         LOG_CONNECT( "connect callback: "
                      << pConnection->getSocketInfo()
                      << " Process: " << pConnection->getProcessID() );
@@ -133,19 +194,27 @@ private:
 
     void disconnectCallback( service::Connection::Ptr pConnection )
     {
+        if( m_bStarting )
+        {
+            m_bStarting = false;
+            m_startupPromise.set_value();
+        }
         LOG_CONNECT( "disconnect callback: "
                      << pConnection->getSocketInfo()
                      << " Process: " << pConnection->getProcessID() );
-        if( m_waitForRegistryPromise.has_value() )
-        {
-            m_waitForRegistryPromise->set_value();
-        }
-        LogicalThread::shutdownAll();
+        m_bShuttingDown = true;
+        LogicalThread::shutdownAll( getMP() );
     }
 
     void receiverCallback( Connection::WeakPtr pResponseConnection,
                            const PacketBuffer& buffer )
     {
+        if( m_bShuttingDown )
+        {
+            LOG_CONNECT( "Ignoring message because shutting down" );
+            return;
+        }
+
         IArchive ia( *this, buffer );
 
         MessageType messageType;
@@ -164,8 +233,8 @@ private:
             break;
             case MessageType::eRegistry:
             {
-                std::vector< MP > mps;
-                Registration      registration;
+                std::set< MP > mps;
+                Registration   registration;
                 ia >> mps;
                 ia >> registration;
                 LOG_CONNECT( "eRegistry:\n" << registration );
@@ -175,10 +244,12 @@ private:
                 registration.remove( m_enrolement.getMP() );
                 writeRegistry()->update(
                     pResponseConnection, registration );
-                if( m_waitForRegistryPromise.has_value() )
+                if( m_bStarting )
                 {
-                    m_waitForRegistryPromise->set_value();
+                    m_bStarting = false;
+                    m_startupPromise.set_value();
                 }
+                LOG_CONNECT( "eRegistry complete" );
             }
             break;
             case MessageType::eDisconnect:

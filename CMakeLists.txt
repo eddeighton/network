@@ -13,6 +13,8 @@ set(Boost_USE_STATIC_LIBS ON)
 # always enable some gcc diagnostic options
 add_compile_options(-fdiagnostics-color)
 
+add_definitions(-DBOOST_STACKTRACE_USE_ADDR2LINE)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # TODO: fix warnings

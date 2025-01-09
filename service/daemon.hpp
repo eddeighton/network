@@ -85,6 +85,7 @@ public:
         , m_thread(
               [ this, port ]()
               {
+                  LogicalThread::registerThread();
                   {
                       m_pServer = std::make_unique< Server >(
                           *m_pIOContext,
@@ -121,39 +122,37 @@ public:
                   LOG_DAEMON( "network thread shutting down" );
               } )
     {
+        LogicalThread::registerThread();
         LogicalThread::registerFiber( m_mp );
 
         // clang-format off
         auto creation = [ this ]
-            ( boost::fibers::promise< void >& prom, const Registration& reg ) 
+            ( Registry::Update::Ptr pUpdate ) 
         { 
-            onCreate( reg );
-            prom.set_value();
+            onCreate( pUpdate->registration );
+            pUpdate->done();
         };
 
         writeRegistry()->setCreationCallback(
             [ this, creation ]
             ( 
-                boost::fibers::promise< void >& prom, 
-                const Registration& reg 
+                Registry::Update::Ptr pUpdate 
             )
             {
                 m_pIOContext->post
                 ( 
                     [
                         creation, 
-                        &prom = prom,
-                        &reg = reg 
-                    ]()
+                        pUpdate 
+                    ]() mutable
                     {
                         boost::fibers::fiber(
                             [
                                 creation, 
-                                &prom = prom,
-                                &reg = reg 
-                            ]()
+                                pUpdate
+                            ]() mutable
                             {
-                                creation( prom, reg );
+                                creation( pUpdate );
                             }
                         ).detach();
                     }
@@ -164,7 +163,7 @@ public:
         // ensure server is started
         auto pFut = m_pIOContext->post( boost::asio::use_future(
             [ this ]() { m_pServer->start(); } ) );
-        pFut.get();  
+        pFut.get();
     }
 
     ~Daemon()
@@ -217,11 +216,21 @@ public:
 
     void run() { LogicalThread::get().runMessageLoop(); }
 
-    void shutdown() { LogicalThread::shutdownAll(); }
+    void shutdown()
+    {
+        m_bShuttingDown = true;
+        LogicalThread::shutdownAll(m_mp);
+    }
 
 private:
     void onCreate( const Registration& reg )
     {
+        if( m_bShuttingDown )
+        {
+            LOG_DAEMON( "Ignoring onCreate because shutting down" );
+            return;
+        }
+
         LOG_DAEMON( "onCreate of:\n" << reg );
         m_registration.add( reg );
         for( auto& [ mp, pWeak ] : m_connectionsTable.getDirect() )
@@ -236,6 +245,12 @@ private:
     void receive( Connection::WeakPtr pResponseConnection,
                   const PacketBuffer& buffer )
     {
+        if( m_bShuttingDown )
+        {
+            LOG_DAEMON( "Ignoring message because shutting down" );
+            return;
+        }
+
         IArchive ia( *this, buffer );
 
         MessageType messageType;
@@ -354,6 +369,12 @@ private:
 
     void connection( Connection::Ptr pConnection )
     {
+        if( m_bShuttingDown )
+        {
+            LOG_DAEMON( "Ignoring connection because shutting down" );
+            return;
+        }
+
         LOG_DAEMON( "connection" );
         const MP mp{
             m_mp.getMachineID(), pConnection->getProcessID() };
@@ -370,6 +391,12 @@ private:
 
     void disconnect( Connection::Ptr pConnection )
     {
+        if( m_bShuttingDown )
+        {
+            LOG_DAEMON( "Ignoring disconnect because shutting down" );
+            return;
+        }
+
         LOG_DAEMON( "disconnect" );
         const MP mp{
             m_mp.getMachineID(), pConnection->getProcessID() };
@@ -380,29 +407,24 @@ private:
         writeRegistry()->disconnected( mp );
         m_registration.remove( mp );
 
-        if( !m_bShuttingDown )
+        LOG_DAEMON( "discconnect sending disconnects" );
+        for( auto& [ mp, pWeak ] : m_connectionsTable.getDirect() )
         {
-            LOG_DAEMON( "discconnect sending disconnects" );
-            for( auto& [ mp, pWeak ] :
-                 m_connectionsTable.getDirect() )
+            if( auto pCon = pWeak.lock() )
             {
-                if( auto pCon = pWeak.lock() )
+                try
                 {
-                    try
-                    {
-                        LOG_DAEMON(
-                            "Propagating disconnect of: " << mp );
-                        sendDisconnect( mp, visited, pCon );
-                    }
-                    catch( ... )
-                    {
-                        LOG_DAEMON(
-                            "Exception sending disconnect: " << mp );
-                    }
+                    LOG_DAEMON( "Propagating disconnect of: " << mp );
+                    // sendDisconnect( mp, visited, pCon );
+                }
+                catch( ... )
+                {
+                    LOG_DAEMON(
+                        "Exception sending disconnect: " << mp );
                 }
             }
-            LOG_DAEMON( "disconnect complete" );
         }
+        LOG_DAEMON( "disconnect complete" );
     }
 };
 } // namespace mega::service

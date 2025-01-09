@@ -29,9 +29,16 @@ class Access;
 class Registry : public Common::DisableCopy, Common::DisableMove
 {
 public:
-    using CreationCallback = std::function< void(
-        boost::fibers::promise< void >&,
-        const Registration& ) >;
+    struct Update
+    {
+        using Ptr = std::shared_ptr< Update >;
+        Registration                   registration;
+        boost::fibers::promise< void > promise;
+
+        inline auto get_future() { return promise.get_future(); }
+        inline void done() { promise.set_value(); }
+    };
+    using CreationCallback = std::function< void( Update::Ptr ) >;
 
 private:
     using Objects
@@ -109,7 +116,8 @@ public:
 
     inline MPTFO createInProcessProxy( MPTF mptf, Interface& object )
     {
-        LOG_REGISTRY( "REGISTRY: createInProcessProxy start: " << mptf );
+        LOG_REGISTRY(
+            "REGISTRY: createInProcessProxy start: " << mptf );
         VERIFY_RTE_MSG(
             m_objects.size()
                 < std::numeric_limits< ObjectID::ValueType >::max(),
@@ -123,12 +131,14 @@ public:
         m_objects.insert( std::make_pair( mptfo, &object ) );
         VERIFY_RTE_MSG( m_creationCallback.has_value(),
                         "No creation callback set" );
-        boost::fibers::promise< void > prom;
-        auto fut = prom.get_future();
-        auto reg = getRegistration();
-        ( *m_creationCallback )( prom, reg );
+
+        Update::Ptr pUpdate
+            = std::make_shared< Update >( getRegistration() );
+        auto fut = pUpdate->get_future();
+        ( *m_creationCallback )( std::move( pUpdate ) );
         fut.get();
-        LOG_REGISTRY( "REGISTRY: createInProcessProxy end: " << mptf );
+        LOG_REGISTRY(
+            "REGISTRY: createInProcessProxy end: " << mptf );
         return mptfo;
     }
 
@@ -204,7 +214,8 @@ public:
     template < typename T >
     std::shared_ptr< Proxy< T > > one( MP mp ) const
     {
-        LOG_REGISTRY( "REGISTRY: one: " << mp );
+        LOG_REGISTRY( "REGISTRY: one: "
+                      << mp << ' ' << getInterfaceTypeName< T >() );
         auto r = get< T >( mp );
         VERIFY_RTE_MSG(
             r.size() != 0,
@@ -214,7 +225,8 @@ public:
             r.size() == 1,
             "Non-singular result finding type: "
                 << boost::typeindex::type_id< T >().pretty_name() );
-        LOG_REGISTRY( "REGISTRY: one complete: " << mp );
+        LOG_REGISTRY( "REGISTRY complete: one: "
+                      << mp << ' ' << getInterfaceTypeName< T >() );
         return r.front();
     }
 };

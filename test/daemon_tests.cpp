@@ -6,7 +6,6 @@
 #include "service/daemon.hpp"
 #include "service/connect.hpp"
 #include "service/logical_thread.hpp"
-#include "service/network.hpp"
 #include "service/registry.hpp"
 #include "service/ptr.hpp"
 
@@ -22,7 +21,21 @@
 #include <string>
 #include <chrono>
 
+#include <boost/stacktrace.hpp>
+// #include <stacktrace>
+
+#include <csignal>
+
 using namespace std::string_literals;
+
+void signalHandler( int nSignum )
+{
+    std::cout << "Signal handler called" << std::endl;
+
+    std::cout << boost::stacktrace::stacktrace() << std::endl;
+
+    std::abort();
+}
 
 TEST( Service, DaemonStartStop )
 {
@@ -38,7 +51,6 @@ TEST( Service, DaemonConnect )
     using namespace mega::test;
 
     LogicalThread::reset();
-    LogicalThread::registerThread();
 
     std::unique_ptr< std::thread > pDaemonThread;
 
@@ -52,28 +64,22 @@ TEST( Service, DaemonConnect )
             {
                 try
                 {
-                    LogicalThread::registerThread();
                     Daemon daemon( {}, PortNumber{ 1234 } );
                     OConnectivity connectivity(daemon);
                     waitForDaemonStart.set_value();
                     daemon.run();
                 }
                 catch( Shutdown& ) {}
-                LOG( "Daemon stopped" );
             });
         waitForDaemonStartFut.get();
 
         {
             try
             {
-                LOG( "Client started" );
                 Connect con( {}, PortNumber{ 1234 } );
 
-                LOG( "Client started 2" );
                 auto pConnectivity = con.readRegistry()->one< Connectivity >( MP{} );
-                LOG( "Client started 3" );
                 pConnectivity->shutdown();
-                LOG( "Client started 4" );
                 con.run();
             }
             catch( ::mega::service::Shutdown& ) {}
@@ -87,7 +93,6 @@ TEST( Service, DaemonConnect )
                 LOG( "Unknown exception in  client " );
                 FAIL();
             }
-            LOG( "Client stopped" );
         }
 
     }
@@ -101,11 +106,13 @@ TEST( Service, DaemonConnect )
 
 TEST( Service, CreateTest )
 {
+
+    std::signal( SIGSEGV, signalHandler );
+
     using namespace mega::service;
     using namespace mega::test;
 
     LogicalThread::reset();
-    LogicalThread::registerThread();
 
     std::promise< void > waitForDaemonStart;
     std::future< void > waitForDaemonStartFut = waitForDaemonStart.get_future();
@@ -114,7 +121,6 @@ TEST( Service, CreateTest )
         {
             try
             {
-                LogicalThread::registerThread();
                 Daemon daemon( {}, PortNumber{ 1234 } );
                 OConnectivity connectivity(daemon);
                 OTestFactory testFactory( daemon );
@@ -128,6 +134,8 @@ TEST( Service, CreateTest )
     try
     {
         Connect con( {}, PortNumber{ 1234 } );
+
+        LOG( "Connect constructed starting test function calls" );
 
         auto pTestFactory = con.readRegistry()->one< TestFactory >( MP{} );
         auto pTest = pTestFactory->create_test();
@@ -162,7 +170,6 @@ TEST( Service, InterConnect )
     using namespace mega::service;
     using namespace mega::test;
     LogicalThread::reset();
-    LogicalThread::registerThread();
 
     std::promise< void > waitForDaemonStart;
     std::future< void > waitForDaemonStartFut = waitForDaemonStart.get_future();
@@ -171,7 +178,6 @@ TEST( Service, InterConnect )
         {
             try
             {
-                LogicalThread::registerThread();
                 Daemon daemon( {}, PortNumber{ 1234 } );
                 OConnectivity connectivity(daemon);
                 OTestFactory testFactory( daemon );
@@ -179,7 +185,6 @@ TEST( Service, InterConnect )
                 daemon.run();
             }
             catch( Shutdown& ) { }
-            LOG( "daemon shut down" );
         });
     waitForDaemonStartFut.get();
 
@@ -190,13 +195,11 @@ TEST( Service, InterConnect )
         {
             try
             {
-                LogicalThread::registerThread();
                 Connect con( {}, PortNumber{ 1234 } );
                 waitForClient1Start.set_value();
                 con.run();
             }
             catch( Shutdown& ) { }
-            LOG( "client1 shut down" );
         });
 
     std::promise< void > waitForClient2Start;
@@ -206,13 +209,11 @@ TEST( Service, InterConnect )
         {
             try
             {
-                LogicalThread::registerThread();
                 Connect con( {}, PortNumber{ 1234 } );
                 waitForClient2Start.set_value();
                 con.run();
             }
             catch( Shutdown& ) { }
-            LOG( "client2 shut down" );
         });
 
     std::promise< void > waitForClient3Start;
@@ -222,13 +223,11 @@ TEST( Service, InterConnect )
         {
             try
             {
-                LogicalThread::registerThread();
                 Connect con( {}, PortNumber{ 1234 } );
                 waitForClient3Start.set_value();
                 con.run();
             }
             catch( Shutdown& ) { }
-            LOG( "client3 shut down" );
         });
 
     waitForClient1StartFut.get();
@@ -243,7 +242,6 @@ TEST( Service, InterConnect )
             pConnectivity->shutdown();
         }
         catch( Shutdown& ) { }
-        LOG( "client4 shut down" );
     }
 
     client1.join();
@@ -257,7 +255,6 @@ TEST( Service, InterClientRequest )
     using namespace mega::service;
     using namespace mega::test;
     LogicalThread::reset();
-    LogicalThread::registerThread();
 
     std::promise< void > waitForDaemonStart;
     std::future< void > waitForDaemonStartFut = waitForDaemonStart.get_future();
@@ -266,7 +263,6 @@ TEST( Service, InterClientRequest )
         {
             try
             {
-                LogicalThread::registerThread();
                 Daemon daemon( {}, PortNumber{ 1234 } );
                 OConnectivity connectivity(daemon);
                 OTestFactory testFactory( daemon );
@@ -274,7 +270,6 @@ TEST( Service, InterClientRequest )
                 daemon.run();
             }
             catch( Shutdown& ) { }
-            LOG( "daemon shut down" );
         });
     waitForDaemonStartFut.get();
 
@@ -285,14 +280,12 @@ TEST( Service, InterClientRequest )
         {
             try
             {
-                LogicalThread::registerThread();
                 Connect con( {}, PortNumber{ 1234 } );
                 OTestFactory testFactory( con );
                 waitForClient1Start.set_value();
                 con.run();
             }
             catch( Shutdown& ) { }
-            LOG( "client1 shut down" );
         });
 
 
@@ -326,7 +319,6 @@ TEST( Service, InterClientRequest )
             pConnectivity->shutdown();
         }
         catch( Shutdown& ) { }
-        LOG( "client4 shut down" );
     }
 
     client1.join();

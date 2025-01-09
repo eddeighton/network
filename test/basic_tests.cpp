@@ -3,7 +3,6 @@
 #include "test/test_factory.hpp"
 
 #include "service/logical_thread.hpp"
-#include "service/network.hpp"
 #include "service/registry.hpp"
 #include "service/ptr.hpp"
 

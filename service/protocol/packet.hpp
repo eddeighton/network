@@ -67,6 +67,7 @@ boost::system::error_code receive( TSocket&      socket,
         const auto szBytesTransferred = boost::asio::async_read(
             socket,
             boost::asio::buffer( messageSizeBuffer ),
+            boost::asio::transfer_exactly(PacketSizeSize),
             boost::fibers::asio::yield[ ec ] );
         if( !ec )
         {
@@ -87,6 +88,7 @@ boost::system::error_code receive( TSocket&      socket,
     const auto szBytesTransferred = boost::asio::async_read(
         socket,
         boost::asio::buffer( packetBuffer ),
+        boost::asio::transfer_all(),
         boost::fibers::asio::yield[ ec ] );
     if( !ec )
     {

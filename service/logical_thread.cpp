@@ -8,9 +8,9 @@
 #include <unordered_map>
 #include <shared_mutex>
 
-// using namespace std::string_literals;
-// #define LOG_LOGICAL_THREAD( msg ) LOG( "LOGICAL_THREAD: "s + msg )
-#define LOG_LOGICAL_THREAD( msg )
+using namespace std::string_literals;
+#define LOG_LOGICAL_THREAD( msg ) LOG( "LOGICAL_THREAD: "s + msg )
+// #define LOG_LOGICAL_THREAD( msg )
 
 namespace mega::service
 {
@@ -38,6 +38,17 @@ void LogicalThread::reset()
     delete detail::fiber_local_storage.release();
 }
 
+ThreadID LogicalThread::getThreadID()
+{
+    return detail::g_threadID;
+}
+
+int getThreadID()
+{
+    auto id = LogicalThread::getThreadID();
+    return id.getValue();
+}
+
 LogicalThread& LogicalThread::get( MPTF mptf )
 {
     std::shared_lock< std::shared_mutex > lock( detail::g_mutex );
@@ -50,8 +61,6 @@ LogicalThread& LogicalThread::get( MPTF mptf )
 void LogicalThread::registerThread()
 {
     std::lock_guard< std::shared_mutex > lock( detail::g_mutex );
-    LOG_LOGICAL_THREAD(
-        "registerThread: " << detail::g_threadIDCounter );
     VERIFY_RTE_MSG(
         detail::g_threadIDCounter.getValue()
             < std::numeric_limits< ThreadID::ValueType >::max(),
@@ -60,15 +69,17 @@ void LogicalThread::registerThread()
     LOG_LOGICAL_THREAD( "registerThread: " << detail::g_threadID );
 }
 
-void LogicalThread::shutdownAll()
+void LogicalThread::shutdownAll(MP mp)
 {
     LOG_LOGICAL_THREAD( "shutdownAll" );
     std::lock_guard< std::shared_mutex > lock( detail::g_mutex );
     for( auto& [ mptf, pLogicalThread ] : detail::g_logicalThreads )
     {
-        pLogicalThread->shutdown();
+        if( mptf.getMP() == mp )
+        {
+            pLogicalThread->shutdown();
+        }
     }
-    detail::g_logicalThreads.clear();
 }
 
 void LogicalThread::registerFiber( MP mp )
@@ -77,7 +88,8 @@ void LogicalThread::registerFiber( MP mp )
 
     if( detail::fiber_local_storage.get() )
     {
-        delete detail::fiber_local_storage.release();
+        THROW_RTE( "Fiber local stored already set" );
+        // delete detail::fiber_local_storage.release();
     }
 
     VERIFY_RTE_MSG(

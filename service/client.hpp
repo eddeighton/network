@@ -7,7 +7,6 @@
 #include "service/receiver.hpp"
 #include "service/sender_socket.hpp"
 #include "service/socket_info.hpp"
-#include "service/network.hpp"
 #include "service/connection.hpp"
 
 #include "common/log.hpp"
@@ -100,17 +99,17 @@ public:
 
         void stop() override
         {
-            if( m_pReceiver )
-            {
-                m_pReceiver->stop();
-            }
+            m_pReceiver.reset();
+            LOG_CLIENT( "connection stoppping " << m_socket_info );
         }
 
         void send( const PacketBuffer& buffer ) override
         {
             if( m_socket.is_open() )
             {
-                m_sender.send( buffer );
+                auto ec = m_sender.send( buffer );
+                VERIFY_RTE_MSG( !ec,
+                    "Error attempting to send buffer: " << ec.what() );
             }
             else
             {

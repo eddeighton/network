@@ -22,7 +22,6 @@
 #include "test/test_factory.hpp"
 
 #include "service/client.hpp"
-#include "service/network.hpp"
 #include "service/enrole.hpp"
 #include "service/connect.hpp"
 #include "service/connectivity.hpp"

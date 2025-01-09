@@ -172,10 +172,11 @@ public:
     }
 
     static void           reset();
+    static ThreadID       getThreadID();
     static void           registerThread();
     static void           registerFiber( MP mp );
     static LogicalThread& get();
-    static void           shutdownAll();
+    static void           shutdownAll( MP mp );
     static LogicalThread& get( MPTF mptf );
 };
 } // namespace mega::service
