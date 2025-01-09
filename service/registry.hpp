@@ -23,9 +23,9 @@
 #include <unordered_map>
 #include <functional>
 
-// using namespace std::string_literals;
-// #define LOG_REGISTRY(msg) LOG("SERVER: "s + msg)
-#define LOG_REGISTRY( msg )
+using namespace std::string_literals;
+#define LOG_REGISTRY(msg) LOG("SERVER: "s + msg)
+// #define LOG_REGISTRY( msg )
 
 namespace mega::service
 {
@@ -120,6 +120,7 @@ public:
         const ObjectID objectID{
             static_cast< ObjectID::ValueType >( m_objects.size() ) };
         const MPTFO mptfo( mptf, objectID );
+        LOG_REGISTRY( "createInProcessProxy: " << mptfo );
         registerInProcessProxy(
             m_access, object, mptfo, m_proxies, m_interfaceMPTFOMap );
         m_objects.insert( std::make_pair( mptfo, &object ) );

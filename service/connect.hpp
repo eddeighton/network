@@ -22,9 +22,9 @@
 #include <optional>
 
 // disable logging
-#define LOG_CONNECT( msg )
-// using namespace std::string_literals;
-// #define LOG_CONNECT(msg) LOG( "CONNECT: "s + msg )
+// #define LOG_CONNECT( msg )
+using namespace std::string_literals;
+#define LOG_CONNECT( msg ) LOG( "CONNECT: "s + msg )
 
 namespace mega::service
 {
@@ -64,21 +64,19 @@ public:
 
         LogicalThread::registerFiber( m_enrolement.getMP() );
 
-        Connection::WeakPtr pWeak = m_pConnection;
-        // setup registry creation callback
+        auto creation
+            = [ this ]( Registration reg ) { onCreate( reg ); };
+
         writeRegistry()->setCreationCallback(
-            [ pWeak, mp = getMP() ]( Registration reg )
+            [ this,
+              creation = std::move( creation ) ]( Registration reg )
             {
-                if( auto pCon = pWeak.lock() )
-                {
-                    sendRegistration( reg, { mp }, pCon );
-                }
-                else
-                {
-                    THROW_RTE(
-                        "Cannot use creation callback connection" );
-                }
+                m_network.getIOContext().post(
+                    [ creation = std::move( creation ),
+                      reg      = std::move( reg ) ]()
+                    { creation( reg ); } );
             } );
+
         LOG_CONNECT( "ctor end" );
     }
 
@@ -91,6 +89,16 @@ public:
     void run() { LogicalThread::get().runMessageLoop(); }
 
 private:
+    void onCreate( Registration reg )
+    {
+        LOG_CONNECT( "onCreate: " << reg );
+        if( auto p = std::dynamic_pointer_cast< service::Connection >(
+                m_pConnection ) )
+        {
+            sendRegistration( reg, { getMP() }, p );
+        }
+    }
+
     void connectCallback( service::Connection::Ptr pConnection )
     {
         LOG_CONNECT( "connect callback: "
@@ -131,11 +139,12 @@ private:
             break;
             case MessageType::eRegistry:
             {
-                LOG_CONNECT( "eRegistry" );
                 std::vector< MP > mps;
                 Registration      registration;
                 ia >> mps;
                 ia >> registration;
+                LOG_CONNECT( "eRegistry: " << registration );
+
                 // filter registration entries for THIS process
                 // since ONLY created inter-process proxies
                 registration.remove( m_enrolement.getMP() );
@@ -157,10 +166,6 @@ private:
                 ia >> shutdownMP;
 
                 writeRegistry()->disconnected( shutdownMP );
-                if( m_waitForRegistryPromise.has_value() )
-                {
-                    m_waitForRegistryPromise->set_value();
-                }
             }
             break;
             case MessageType::eRequest:

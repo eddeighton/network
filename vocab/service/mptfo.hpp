@@ -97,8 +97,6 @@ public:
     constexpr inline MP   getMP()   const { return MP{ m_machine_id, m_process_id }; }
     constexpr inline MPTF getMPTF() const { return MPTF{ m_machine_id, m_process_id, m_thread_id, m_fiber_id }; }
 
-    constexpr inline bool valid() const { return getValue() != 0; }
-
     constexpr inline bool operator==( const MPTFO& cmp ) const { return getValue() == cmp.getValue(); }
     constexpr inline bool operator!=( const MPTFO& cmp ) const { return !this->operator==( cmp ); }
     constexpr inline bool operator<( const MPTFO& cmp ) const { return getValue() < cmp.getValue(); }
@@ -135,11 +133,12 @@ static_assert( sizeof( MPTFO ) == sizeof( MPTFO::ValueType ), "Invalid MPTFO Siz
 
 inline std::ostream& operator<<( std::ostream& os, const MPTFO& value )
 {
-    return os << value.getMachineID() 
-        << '.' << value.getProcessID() 
-        << '.' << value.getThreadID() 
-        << '.' << value.getFiberID() 
-        << '.' << value.getObjectID();
+    return os << 
+         value.getMachineID() << '.' << 
+         value.getProcessID() << '.' <<
+         value.getThreadID() << '.' <<
+         value.getFiberID() << '.' <<
+         value.getObjectID();
 }
 
 inline std::istream& operator>>( std::istream& is, MPTFO& mptfo )

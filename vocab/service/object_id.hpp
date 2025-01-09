@@ -71,6 +71,20 @@ public:
     constexpr inline bool operator==( const ObjectID& cpy ) const { return value == cpy.value; }
     constexpr inline bool operator!=( const ObjectID& cpy ) const { return !this->operator==( cpy ); }
 
+    // post increment
+    constexpr inline ObjectID operator++(int)
+    {
+        ObjectID temp = *this;
+        value = static_cast< ValueType >( static_cast<int>(value) + 1 );
+        return temp;
+    }
+    // pre increment
+    constexpr inline ObjectID operator++()
+    {
+        value = static_cast< ValueType >( static_cast<int>(value) + 1 );
+        return *this;
+    }
+
     template < class Archive >
     inline void serialize( Archive& archive, const unsigned int )
     {
@@ -96,13 +110,13 @@ static constexpr ObjectID OBJECT_ZERO = 0x00_O;
 
 inline std::ostream& operator<<( std::ostream& os, const ObjectID& instance )
 {
-    return os << "0x" << std::hex << std::setw( 2 ) << std::setfill( '0' ) << 
-        static_cast< U32 >( instance.getValue() ) << "_O";
+    return os << "0x" << std::hex << std::right << std::setw( 2 ) << std::setfill( '0' ) << 
+        static_cast< int >( instance.getValue() ) << "_O";
 }
 
 inline std::istream& operator>>( std::istream& is, ObjectID& instance )
 {
-    U32 value;
+    int value;
     is >> value;
     instance = ObjectID{ static_cast< ObjectID::ValueType >( value ) };
     return is;

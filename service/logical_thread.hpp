@@ -5,20 +5,18 @@
 #include "service/protocol/stack.hpp"
 
 #include "vocab/service/mptf.hpp"
-#include "vocab/value.hpp"
 
 #include <boost/fiber/all.hpp>
 
 #include "common/log.hpp"
 #include "common/assert_verify.hpp"
+#include "common/disable_special_members.hpp"
 
-#include <iostream>
 #include <map>
-#include <atomic>
 
 namespace mega::service
 {
-class LogicalThread
+class LogicalThread : public Common::DisableCopy, Common::DisableMove
 {
     friend class Registry;
 
@@ -26,22 +24,26 @@ private:
     using Channel = boost::fibers::buffered_channel< Message >;
 
     Channel              m_receiveChannel;
-    MPTF                 m_mptf;
+    const MPTF           m_mptf;
     bool                 m_bContinue = true;
-    MessageID            m_interProcessMessageID;
+    MessageID            m_interProcessMessageID{};
     std::vector< Stack > m_stacks;
 
 public:
-    LogicalThread()
-        : m_receiveChannel( 16 )
+    inline LogicalThread( MPTF mptf )
+        : m_receiveChannel( 64 )
+        , m_mptf( mptf )
     {
     }
 
-    MPTF getMPTF() const { return m_mptf; }
+    inline MPTF getMPTF() const { return m_mptf; }
 
-    void  push( const Stack& stack ) { m_stacks.push_back( stack ); }
-    void  pop() { m_stacks.pop_back(); }
-    Stack top()
+    inline void push( const Stack& stack )
+    {
+        m_stacks.push_back( stack );
+    }
+    inline void  pop() { m_stacks.pop_back(); }
+    inline Stack top()
     {
         Stack top;
         if( !m_stacks.empty() )
@@ -65,7 +67,7 @@ public:
         ~StackEntry() { logicalThread.pop(); }
     };
 
-    auto getUniqueMessageID()
+    inline auto getUniqueMessageID()
     {
         ++m_interProcessMessageID;
         return m_interProcessMessageID;
@@ -169,13 +171,11 @@ public:
             "Error sending message to channel" );
     }
 
+    static void           reset();
     static void           registerThread();
-    static void           resetFiber();
     static void           registerFiber( MP mp );
     static LogicalThread& get();
     static void           shutdownAll();
     static LogicalThread& get( MPTF mptf );
-    static void
-    registerLogicalThread( MPTF mptf, LogicalThread* pLogicalThread );
 };
 } // namespace mega::service

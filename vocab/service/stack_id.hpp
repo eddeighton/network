@@ -71,6 +71,20 @@ public:
     constexpr inline bool operator==( const StackID& cpy ) const { return value == cpy.value; }
     constexpr inline bool operator!=( const StackID& cpy ) const { return !this->operator==( cpy ); }
 
+    // post increment
+    constexpr inline StackID operator++(int)
+    {
+        StackID temp = *this;
+        value = static_cast< ValueType >( static_cast<int>(value) + 1 );
+        return temp;
+    }
+    // pre increment
+    constexpr inline StackID operator++()
+    {
+        value = static_cast< ValueType >( static_cast<int>(value) + 1 );
+        return *this;
+    }
+
     template < class Archive >
     inline void serialize( Archive& archive, const unsigned int )
     {
@@ -96,7 +110,7 @@ static constexpr StackID STACK_ZERO = 0x00_S;
 
 inline std::ostream& operator<<( std::ostream& os, const StackID& instance )
 {
-    return os << "0x" << std::hex << std::setw( 2 ) << std::setfill( '0' ) << 
+    return os << "0x" << std::hex << std::right << std::setw( 2 ) << std::setfill( '0' ) << 
         static_cast< U32 >( instance.getValue() ) << "_S";
 }
 

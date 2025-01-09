@@ -71,6 +71,20 @@ public:
     constexpr inline bool operator==( const ThreadID& cpy ) const { return value == cpy.value; }
     constexpr inline bool operator!=( const ThreadID& cpy ) const { return !this->operator==( cpy ); }
 
+    // post increment
+    constexpr inline ThreadID operator++(int)
+    {
+        ThreadID temp = *this;
+        value = static_cast< ValueType >( static_cast<int>(value) + 1 );
+        return temp;
+    }
+    // pre increment
+    constexpr inline ThreadID operator++()
+    {
+        value = static_cast< ValueType >( static_cast<int>(value) + 1 );
+        return *this;
+    }
+
     template < class Archive >
     inline void serialize( Archive& archive, const unsigned int )
     {
@@ -96,13 +110,13 @@ static constexpr ThreadID THREAD_ZERO = 0x00_T;
 
 inline std::ostream& operator<<( std::ostream& os, const ThreadID& instance )
 {
-    return os << "0x" << std::hex << std::setw( 2 ) << std::setfill( '0' ) << 
-        static_cast< U32 >( instance.getValue() ) << "_T";
+    return os << "0x" << std::hex << std::right << std::setw( 2 ) << std::setfill( '0' ) << 
+        static_cast< int >( instance.getValue() ) << "_T";
 }
 
 inline std::istream& operator>>( std::istream& is, ThreadID& instance )
 {
-    U32 value;
+    int value;
     is >> value;
     instance = ThreadID{ static_cast< ThreadID::ValueType >( value ) };
     return is;

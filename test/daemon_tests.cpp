@@ -37,7 +37,7 @@ TEST( Service, DaemonConnect )
     using namespace mega::service;
     using namespace mega::test;
 
-    LogicalThread::resetFiber();
+    LogicalThread::reset();
     LogicalThread::registerThread();
 
     std::unique_ptr< std::thread > pDaemonThread;
@@ -104,7 +104,7 @@ TEST( Service, CreateTest )
     using namespace mega::service;
     using namespace mega::test;
 
-    LogicalThread::resetFiber();
+    LogicalThread::reset();
     LogicalThread::registerThread();
 
     std::promise< void > waitForDaemonStart;
@@ -148,6 +148,11 @@ TEST( Service, CreateTest )
     {
         LOG( "client shutdown exception" );
     }
+    catch( std::exception& ex )
+    {
+        LOG( "Unexpected exception: " << ex.what() );
+        FAIL() << "Unexpected exception: " << ex.what();
+    }
 
     daemon.join();
 }
@@ -156,7 +161,7 @@ TEST( Service, InterConnect )
 {
     using namespace mega::service;
     using namespace mega::test;
-    LogicalThread::resetFiber();
+    LogicalThread::reset();
     LogicalThread::registerThread();
 
     std::promise< void > waitForDaemonStart;
@@ -251,7 +256,7 @@ TEST( Service, InterClientRequest )
 {
     using namespace mega::service;
     using namespace mega::test;
-    LogicalThread::resetFiber();
+    LogicalThread::reset();
     LogicalThread::registerThread();
 
     std::promise< void > waitForDaemonStart;

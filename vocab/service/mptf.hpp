@@ -124,7 +124,11 @@ static_assert( sizeof( MPTF ) == sizeof( MPTF::ValueType ), "Invalid MPTF Size" 
 
 inline std::ostream& operator<<( std::ostream& os, const MPTF& value )
 {
-    return os << value.getMachineID() << '.' << value.getProcessID() << '.' << value.getThreadID() << '.' << value.getFiberID();
+    return os << 
+        value.getMachineID() << '.' << 
+        value.getProcessID() << '.' <<
+        value.getThreadID() << '.' <<
+        value.getFiberID();
 }
 
 inline std::istream& operator>>( std::istream& is, MPTF& typeID )

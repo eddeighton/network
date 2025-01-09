@@ -9,8 +9,6 @@
 
 #include "common/log.hpp"
 
-#include <iostream>
-
 namespace mega::service
 {
 class OConnectivity : public Connectivity
@@ -23,6 +21,8 @@ public:
     OConnectivity( service::Daemon& daemon )
         : m_daemon( daemon )
     {
+        LOG( "OConnectivity in logical thread: "
+             << service::LogicalThread::get().getMPTF() );
         auto reg = m_daemon.writeRegistry();
         m_mptfo  = reg->createInProcessProxy(
             service::LogicalThread::get().getMPTF(), *this );

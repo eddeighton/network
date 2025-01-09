@@ -37,16 +37,16 @@
 #include <thread>
 #include <tuple>
 
-// using namespace std::string_literals;
-// #define LOG_DAEMON(msg) LOG("DAEMON: "s + msg)
-#define LOG_DAEMON( msg )
+using namespace std::string_literals;
+#define LOG_DAEMON( msg ) LOG( "DAEMON: "s + msg )
+// #define LOG_DAEMON( msg )
 
 namespace mega::service
 {
 class Daemon : public Access
 {
-    MP                        m_mp;
-    PortNumber                m_port;
+    const MP                  m_mp;
+    const PortNumber          m_port;
     IOContextPtr              m_pIOContext;
     std::unique_ptr< Server > m_pServer;
     std::unique_ptr< Client > m_pClient;
@@ -123,27 +123,20 @@ public:
     {
         LogicalThread::registerFiber( m_mp );
 
+        auto creation
+            = [ this ]( Registration reg ) { onCreate( reg ); };
+
         writeRegistry()->setCreationCallback(
-            [ &cons         = m_connectionsTable,
-              mp            = m_mp,
-              &registration = m_registration ]( Registration reg )
+            [ this,
+              creation = std::move( creation ) ]( Registration reg )
             {
-                registration.add( reg );
-                // LOG_DAEMON( "Generated reg update of: " <<
-                // registration ) ;
-                for( auto& [ mp, pWeak ] : cons.getDirect() )
-                {
-                    if( auto pCon = pWeak.lock() )
-                    {
-                        // LOG_DAEMON( "Sending reg update to: " << mp
-                        // ) ;
-                        sendRegistration(
-                            registration, { mp }, pCon );
-                    }
-                }
+                m_pIOContext->post(
+                    [ creation = std::move( creation ),
+                      reg      = std::move( reg ) ]()
+                    { creation( reg ); } );
             } );
 
-        // ensure server is started so that tests work
+        // ensure server is started
         auto pFut = m_pIOContext->post( boost::asio::use_future(
             [ this ]() { m_pServer->start(); } ) );
         pFut.get();
@@ -200,6 +193,20 @@ public:
     void run() { LogicalThread::get().runMessageLoop(); }
 
     void shutdown() { LogicalThread::shutdownAll(); }
+
+private:
+    void onCreate( Registration reg )
+    {
+        LOG_DAEMON( "onCreate of: " << reg );
+        m_registration.add( reg );
+        for( auto& [ mp, pWeak ] : m_connectionsTable.getDirect() )
+        {
+            if( auto pCon = pWeak.lock() )
+            {
+                sendRegistration( m_registration, { mp }, pCon );
+            }
+        }
+    }
 
     void receive( Connection::WeakPtr pResponseConnection,
                   const PacketBuffer& buffer )
@@ -322,6 +329,7 @@ public:
 
     void connection( Connection::Ptr pConnection )
     {
+        LOG_DAEMON( "connection" );
         const MP mp{
             m_mp.getMachineID(), pConnection->getProcessID() };
 
@@ -350,12 +358,22 @@ public:
         if( !m_bShuttingDown )
         {
             LOG_DAEMON( "discconnect sending disconnects" );
-            for( auto& [ mp, pWeak ] : m_connectionsTable.getDirect() )
+            for( auto& [ mp, pWeak ] :
+                 m_connectionsTable.getDirect() )
             {
                 if( auto pCon = pWeak.lock() )
                 {
-                    LOG_DAEMON( "Forwarding reg to: " << mp );
-                    sendDisconnect( mp, visited, pCon );
+                    try
+                    {
+                        LOG_DAEMON(
+                            "Propagating disconnect of: " << mp );
+                        sendDisconnect( mp, visited, pCon );
+                    }
+                    catch( ... )
+                    {
+                        LOG_DAEMON(
+                            "Exception sending disconnect: " << mp );
+                    }
                 }
             }
             LOG_DAEMON( "disconnect complete" );

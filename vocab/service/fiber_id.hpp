@@ -71,6 +71,20 @@ public:
     constexpr inline bool operator==( const FiberID& cpy ) const { return value == cpy.value; }
     constexpr inline bool operator!=( const FiberID& cpy ) const { return !this->operator==( cpy ); }
 
+    // post increment
+    constexpr inline FiberID operator++(int)
+    {
+        FiberID temp = *this;
+        value = static_cast< ValueType >( static_cast<int>(value) + 1 );
+        return temp;
+    }
+    // pre increment
+    constexpr inline FiberID operator++()
+    {
+        value = static_cast< ValueType >( static_cast<int>(value) + 1 );
+        return *this;
+    }
+
     template < class Archive >
     inline void serialize( Archive& archive, const unsigned int )
     {
@@ -96,13 +110,13 @@ static constexpr FiberID FIBER_ZERO = 0x0000_F;
 
 inline std::ostream& operator<<( std::ostream& os, const FiberID& instance )
 {
-    return os << "0x" << std::hex << std::setw( 2 ) << std::setfill( '0' ) << 
-        static_cast< U32 >( instance.getValue() ) << "_F";
+    return os << "0x" << std::hex << std::right << std::setw( 2 ) << std::setfill( '0' ) << 
+        static_cast< int >( instance.getValue() ) << "_F";
 }
 
 inline std::istream& operator>>( std::istream& is, FiberID& instance )
 {
-    U32 value;
+    int value;
     is >> value;
     instance = FiberID{ static_cast< FiberID::ValueType >( value ) };
     return is;

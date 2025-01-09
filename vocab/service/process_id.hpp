@@ -66,13 +66,18 @@ public:
     constexpr inline bool operator==( const ProcessID& cpy ) const { return value == cpy.value; }
     constexpr inline bool operator!=( const ProcessID& cpy ) const { return !this->operator==( cpy ); }
 
-    inline ProcessID operator++(int)
+    // post increment
+    constexpr inline ProcessID operator++(int)
     {
-        ProcessID tmp = *this;
-        VERIFY_RTE_MSG(value < std::numeric_limits< ValueType >::max(),
-            "Invalid increment of process ID with maximum value" );
-        ++value;
-        return tmp;
+        ProcessID temp = *this;
+        value = static_cast< ValueType >( static_cast<int>(value) + 1 );
+        return temp;
+    }
+    // pre increment
+    constexpr inline ProcessID operator++()
+    {
+        value = static_cast< ValueType >( static_cast<int>(value) + 1 );
+        return *this;
     }
 
     template < class Archive >
@@ -101,7 +106,7 @@ static constexpr ProcessID PROCESS_ONE  = 0x0001_P;
 
 inline std::ostream& operator<<( std::ostream& os, const ProcessID& instance)
 {
-    return os << "0x" << std::hex << std::setw( 2 ) << std::setfill( '0' ) << 
+    return os << "0x" << std::hex << std::right << std::setw( 2 ) << std::setfill( '0' ) << 
         static_cast< int >(instance.getValue()) << std::dec << "_P";
 }
 

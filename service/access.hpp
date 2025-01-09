@@ -10,6 +10,7 @@
 
 namespace mega::service
 {
+
 class Access : public Common::DisableCopy, Common::DisableMove
 {
     std::shared_mutex m_mutex;

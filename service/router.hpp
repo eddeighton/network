@@ -13,12 +13,10 @@
 #include "common/log.hpp"
 #include "common/time.hpp"
 
-#include <vector>
 #include <unordered_map>
 #include <variant>
 #include <map>
 #include <memory>
-#include <mutex>
 
 using namespace std::string_literals;
 #define LOG_ROUTER( msg ) LOG( "ROUTER: "s + msg )
@@ -73,22 +71,18 @@ public:
         DirectConnections m_direct;
         // indirect connections are an estimate and may be incorrect
         IndirectConnections m_indirect;
-        mutable std::mutex  m_mutex;
 
     public:
-        inline DirectConnections getDirect() const
+        inline const DirectConnections& getDirect() const
         {
-            std::lock_guard< std::mutex > g( m_mutex );
             return m_direct;
         }
         inline void addDirect( MP mp, Connection::Ptr pConnection )
         {
-            std::lock_guard< std::mutex > g( m_mutex );
             m_direct.insert( { mp, pConnection } );
         }
         inline void removeDirect( MP mp )
         {
-            std::lock_guard< std::mutex > g( m_mutex );
             m_direct.erase( mp );
         }
         inline IndirectConnections& getIndirect()
