@@ -408,19 +408,19 @@ private:
         m_registration.remove( mp );
 
         LOG_DAEMON( "discconnect sending disconnects" );
-        for( auto& [ mp, pWeak ] : m_connectionsTable.getDirect() )
+        for( auto& [ connectionMP, pWeak ] : m_connectionsTable.getDirect() )
         {
             if( auto pCon = pWeak.lock() )
             {
                 try
                 {
-                    LOG_DAEMON( "Propagating disconnect of: " << mp );
-                    // sendDisconnect( mp, visited, pCon );
+                    LOG_DAEMON( "Propagating disconnect of: " << mp << " to: " << connectionMP );
+                    sendDisconnect( mp, visited, pCon );
                 }
                 catch( ... )
                 {
                     LOG_DAEMON(
-                        "Exception sending disconnect: " << mp );
+                        "Exception sending disconnect: " << mp << " to: " << connectionMP );
                 }
             }
         }

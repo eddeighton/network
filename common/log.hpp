@@ -60,7 +60,7 @@ int getThreadID();
 
 } // namespace mega::service
 
-// #define ENABLE_LOGGING
+#define ENABLE_LOGGING
 
 #ifdef ENABLE_LOGGING
 
