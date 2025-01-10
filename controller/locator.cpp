@@ -37,7 +37,8 @@ struct error_handler
     {
     }
 
-    void operator()( Iterator, Iterator, Iterator err_pos, boost::spirit::info const& what ) const
+    void operator()( Iterator, Iterator, Iterator err_pos,
+                     boost::spirit::info const& what ) const
     {
         const int line = boost::spirit::get_line( err_pos );
         if( line != -1 )
@@ -48,24 +49,30 @@ struct error_handler
     }
 };
 
-template < template < typename IterType > class GrammarType, typename ResultType >
-inline ParseResult parse_impl( const std::string& strInput, ResultType& result, std::ostream& errorStream )
+template < template < typename IterType > class GrammarType,
+           typename ResultType >
+inline ParseResult parse_impl( const std::string& strInput,
+                               ResultType&        result,
+                               std::ostream&      errorStream )
 {
     GrammarType< IteratorType > grammar;
     {
         using namespace boost::phoenix;
-        function< error_handler< IteratorType > > const error_handler( errorStream );
+        function< error_handler< IteratorType > > const error_handler(
+            errorStream );
         boost::spirit::qi::on_error< boost::spirit::qi::fail >(
             grammar.m_main_rule,
             error_handler(
-                boost::spirit::qi::_1, boost::spirit::qi::_2, boost::spirit::qi::_3, boost::spirit::qi::_4 ) );
+                boost::spirit::qi::_1, boost::spirit::qi::_2,
+                boost::spirit::qi::_3, boost::spirit::qi::_4 ) );
     }
 
     ParseResult resultPair{ false, IteratorType( strInput.begin() ) };
 
-    resultPair.bSuccess
-        = boost::spirit::qi::phrase_parse( resultPair.iterReached, IteratorType( strInput.end() ), grammar,
-                                           boost::spirit::eol, boost::spirit::qi::skip_flag::dont_postskip, result );
+    resultPair.bSuccess = boost::spirit::qi::phrase_parse(
+        resultPair.iterReached, IteratorType( strInput.end() ),
+        grammar, boost::spirit::eol,
+        boost::spirit::qi::skip_flag::dont_postskip, result );
 
     return resultPair;
 }
@@ -73,7 +80,8 @@ inline ParseResult parse_impl( const std::string& strInput, ResultType& result, 
 static const char* valid_name_chars_ = "a-zA-Z0-9_-";
 
 template < typename Iterator >
-class NameGrammar : public boost::spirit::qi::grammar< Iterator, Name() >
+class NameGrammar
+    : public boost::spirit::qi::grammar< Iterator, Name() >
 {
 public:
     NameGrammar()
@@ -82,19 +90,22 @@ public:
         using namespace boost::spirit;
         using namespace boost::spirit::qi;
         using namespace boost::phoenix;
-        m_main_rule = +char_( valid_name_chars_ )[ push_back( _val, qi::_1 ) ];
+        m_main_rule = +char_(
+            valid_name_chars_ )[ push_back( _val, qi::_1 ) ];
     }
 
     boost::spirit::qi::rule< Iterator, Name() > m_main_rule;
 };
 
-ParseResult parse( const std::string& strInput, Name& code, std::ostream& errorStream )
+ParseResult parse( const std::string& strInput, Name& code,
+                   std::ostream& errorStream )
 {
     return parse_impl< NameGrammar >( strInput, code, errorStream );
 }
 
 template < typename Iterator >
-class ExtensionGrammar : public boost::spirit::qi::grammar< Iterator, Extension() >
+class ExtensionGrammar
+    : public boost::spirit::qi::grammar< Iterator, Extension() >
 {
 public:
     ExtensionGrammar()
@@ -104,15 +115,18 @@ public:
         using namespace boost::spirit::qi;
         using namespace boost::phoenix;
         m_main_rule
-            = char_( '.' )[ push_back( _val, qi::_1 ) ] >> +( char_( valid_name_chars_ )[ push_back( _val, qi::_1 ) ] );
+            = char_( '.' )[ push_back( _val, qi::_1 ) ] >> +( char_(
+                  valid_name_chars_ )[ push_back( _val, qi::_1 ) ] );
     }
 
     boost::spirit::qi::rule< Iterator, Extension() > m_main_rule;
 };
 
-ParseResult parse( const std::string& strInput, Extension& extension, std::ostream& errorStream )
+ParseResult parse( const std::string& strInput, Extension& extension,
+                   std::ostream& errorStream )
 {
-    return parse_impl< ExtensionGrammar >( strInput, extension, errorStream );
+    return parse_impl< ExtensionGrammar >(
+        strInput, extension, errorStream );
 }
 
 } // namespace Controller
@@ -133,7 +147,8 @@ namespace Controller
 {
 
 template < typename Iterator >
-class PathGrammar : public boost::spirit::qi::grammar< Iterator, Path() >
+class PathGrammar
+    : public boost::spirit::qi::grammar< Iterator, Path() >
 {
 public:
     PathGrammar()
@@ -142,12 +157,19 @@ public:
         using namespace boost::spirit;
         using namespace boost::spirit::qi;
         using namespace boost::phoenix;
-        m_main_rule = -m_name_rule[ at_c< 0 >( _val ) = qi::_1 ]
-                      >> *( lit( Path::DELIMITER ) >> m_name_rule[ push_back( at_c< 1 >( _val ), qi::_1 ) ] )
-                      >> +( m_extension_rule[ push_back( at_c< 2 >( _val ), qi::_1 ) ] )
-                      >> -( lit( Path::DIGIT_SEPARATOR ) >> int_[ at_c< 3 >( _val ) = qi::_1 ]
-                            >> -( lit( Path::DIGIT_SEPARATOR ) >> int_[ at_c< 4 >( _val ) = qi::_1 ]
-                                  >> -( lit( Path::DIGIT_SEPARATOR ) >> int_[ at_c< 5 >( _val ) = qi::_1 ] ) ) );
+        m_main_rule
+            = -m_name_rule[ at_c< 0 >( _val ) = qi::_1 ]
+              >> *( lit( Path::DELIMITER ) >> m_name_rule[ push_back(
+                        at_c< 1 >( _val ), qi::_1 ) ] )
+              >> +( m_extension_rule[ push_back(
+                  at_c< 2 >( _val ), qi::_1 ) ] )
+              >> -(
+                  lit( Path::DIGIT_SEPARATOR )
+                  >> int_[ at_c< 3 >( _val ) = qi::_1 ] >> -(
+                      lit( Path::DIGIT_SEPARATOR )
+                      >> int_[ at_c< 4 >( _val ) = qi::_1 ] >> -(
+                          lit( Path::DIGIT_SEPARATOR )
+                          >> int_[ at_c< 5 >( _val ) = qi::_1 ] ) ) );
     }
 
     NameGrammar< Iterator >                     m_name_rule;
@@ -155,9 +177,11 @@ public:
     boost::spirit::qi::rule< Iterator, Path() > m_main_rule;
 };
 
-ParseResult parse( const std::string& strInput, Path& extension, std::ostream& errorStream )
+ParseResult parse( const std::string& strInput, Path& extension,
+                   std::ostream& errorStream )
 {
-    return parse_impl< PathGrammar >( strInput, extension, errorStream );
+    return parse_impl< PathGrammar >(
+        strInput, extension, errorStream );
 }
 
 } // namespace Controller
@@ -171,7 +195,8 @@ namespace Controller
 {
 
 template < typename Iterator >
-class LineGrammar : public boost::spirit::qi::grammar< Iterator, Line() >
+class LineGrammar
+    : public boost::spirit::qi::grammar< Iterator, Line() >
 {
 public:
     LineGrammar()
@@ -180,14 +205,17 @@ public:
         using namespace boost::spirit;
         using namespace boost::spirit::qi;
         using namespace boost::phoenix;
-        m_main_rule = *( m_path_rule[ push_back( at_c< 0 >( _val ), qi::_1 ) ] | char_ );
+        m_main_rule
+            = *( m_path_rule[ push_back( at_c< 0 >( _val ), qi::_1 ) ]
+                 | char_ );
     }
 
     PathGrammar< Iterator >                     m_path_rule;
     boost::spirit::qi::rule< Iterator, Line() > m_main_rule;
 };
 
-ParseResult parse( const std::string& strInput, Line& line, std::ostream& errorStream )
+ParseResult parse( const std::string& strInput, Line& line,
+                   std::ostream& errorStream )
 {
     return parse_impl< LineGrammar >( strInput, line, errorStream );
 }

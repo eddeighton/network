@@ -3,6 +3,8 @@
 
 #include "service/interface/test.interface.hpp"
 
+#include "service/logical_thread.hpp"
+
 #include "common/log.hpp"
 
 namespace mega::test
@@ -34,6 +36,11 @@ public:
             return result;
         }
         return "";
+    }
+    inline void shutdown() override
+    {
+        auto& lt = service::LogicalThread::get();
+        service::LogicalThread::shutdownAll( lt.getMPTF().getMP() );
     }
 };
 }

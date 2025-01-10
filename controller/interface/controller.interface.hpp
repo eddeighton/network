@@ -5,7 +5,7 @@
 #include "service/base_interfaces.hpp"
 #include "service/ptr.hpp"
 
-#include "vocab/service/keyboard_event.hpp"
+#include "vocab/controller/keyboard_event.hpp"
 
 namespace mega
 {
@@ -20,5 +20,5 @@ struct ControllerFactory : public virtual mega::service::Factory
 {
     virtual service::Ptr< Controller > create_controller() = 0;
 };
-} // namespace test
+} // namespace controller
 } // namespace mega

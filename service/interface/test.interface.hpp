@@ -6,8 +6,6 @@
 #include "service/ptr.hpp"
 
 #include <string>
-#include <memory>
-#include <vector>
 
 namespace mega
 {
@@ -19,6 +17,7 @@ struct Test : public virtual service::Interface
     virtual int         test2( int i )                      = 0;
     virtual std::string test3( std::string str )            = 0;
     virtual std::string test4( service::Ptr< Test > pTest ) = 0;
+    virtual void shutdown() = 0;
 };
 
 struct TestFactory : public virtual mega::service::Factory

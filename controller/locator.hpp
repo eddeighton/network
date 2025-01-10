@@ -11,12 +11,12 @@
 #include <optional>
 #include <ostream>
 #include <sstream>
-#include <variant>
 
 namespace Controller
 {
 using UnderlyingIterType = std::string::const_iterator;
-using IteratorType       = boost::spirit::line_pos_iterator< UnderlyingIterType >;
+using IteratorType
+    = boost::spirit::line_pos_iterator< UnderlyingIterType >;
 
 struct ParseResult
 {
@@ -29,9 +29,12 @@ struct Name : public std::string
     class Compare
     {
     public:
-        inline bool operator()( const Name& left, const Name& right ) const
+        inline bool operator()( const Name& left,
+                                const Name& right ) const
         {
-            return std::lexicographical_compare( left.begin(), left.end(), right.begin(), right.end() );
+            return std::lexicographical_compare(
+                left.begin(), left.end(), right.begin(),
+                right.end() );
         }
     };
 
@@ -46,16 +49,20 @@ struct Name : public std::string
     }
 };
 
-ParseResult parse( const std::string& strInput, Name& code, std::ostream& errorStream );
+ParseResult parse( const std::string& strInput, Name& code,
+                   std::ostream& errorStream );
 
 struct Extension : public std::string
 {
     class Compare
     {
     public:
-        inline bool operator()( const Extension& left, const Name& right ) const
+        inline bool operator()( const Extension& left,
+                                const Name&      right ) const
         {
-            return std::lexicographical_compare( left.begin(), left.end(), right.begin(), right.end() );
+            return std::lexicographical_compare(
+                left.begin(), left.end(), right.begin(),
+                right.end() );
         }
     };
 
@@ -70,7 +77,8 @@ struct Extension : public std::string
     }
 };
 
-ParseResult parse( const std::string& strInput, Extension& extension, std::ostream& errorStream );
+ParseResult parse( const std::string& strInput, Extension& extension,
+                   std::ostream& errorStream );
 
 struct Path
 {
@@ -80,17 +88,22 @@ struct Path
     class Compare
     {
     public:
-        inline bool operator()( const Path& left, const Path& right ) const
+        inline bool operator()( const Path& left,
+                                const Path& right ) const
         {
             if( left.m_relative != right.m_relative )
                 return left.m_relative < right.m_relative;
             if( left.m_names != right.m_names )
-                return std::lexicographical_compare( left.m_names.begin(), left.m_names.end(), right.m_names.begin(),
-                                                     right.m_names.end(), Name::Compare{} );
+                return std::lexicographical_compare(
+                    left.m_names.begin(), left.m_names.end(),
+                    right.m_names.begin(), right.m_names.end(),
+                    Name::Compare{} );
             else if( left.m_extensions != right.m_extensions )
-                return std::lexicographical_compare( left.m_extensions.begin(), left.m_extensions.end(),
-                                                     right.m_extensions.begin(), right.m_extensions.end(),
-                                                     Extension::Compare{} );
+                return std::lexicographical_compare(
+                    left.m_extensions.begin(),
+                    left.m_extensions.end(),
+                    right.m_extensions.begin(),
+                    right.m_extensions.end(), Extension::Compare{} );
             else if( left.m_line != right.m_line )
                 return left.m_line < right.m_line;
             else if( left.m_column != right.m_column )
@@ -102,7 +115,8 @@ struct Path
 
     inline bool operator==( const Path& cmp ) const = default;
 
-    inline void to_path( std::ostream& os, const std::string strFilter = std::string{} ) const
+    inline void to_path( std::ostream& os, const std::string strFilter
+                                           = std::string{} ) const
     {
         if( m_relative )
         {
@@ -110,7 +124,7 @@ struct Path
         }
         for( const auto& n : m_names )
         {
-            if( strFilter.empty() || (n != strFilter) )
+            if( strFilter.empty() || ( n != strFilter ) )
             {
                 os << Path::DELIMITER << n;
             }
@@ -153,7 +167,8 @@ struct Path
     std::optional< int >     m_byte;
 };
 
-ParseResult parse( const std::string& strInput, Path& path, std::ostream& errorStream );
+ParseResult parse( const std::string& strInput, Path& path,
+                   std::ostream& errorStream );
 
 inline std::ostream& operator<<( std::ostream& os, const Path& path )
 {
@@ -166,27 +181,33 @@ struct Line
     class Compare
     {
     public:
-        inline bool operator()( const Line& left, const Line& right ) const
+        inline bool operator()( const Line& left,
+                                const Line& right ) const
         {
             return std::lexicographical_compare(
-                left.m_paths.begin(), left.m_paths.end(), right.m_paths.begin(), right.m_paths.end(), Path::Compare{} );
+                left.m_paths.begin(), left.m_paths.end(),
+                right.m_paths.begin(), right.m_paths.end(),
+                Path::Compare{} );
         }
     };
 
     std::vector< Path > m_paths;
 };
 
-ParseResult parse( const std::string& strInput, Line& line, std::ostream& errorStream );
+ParseResult parse( const std::string& strInput, Line& line,
+                   std::ostream& errorStream );
 
 template < typename T >
 T parse( const std::string& strInput )
 {
     std::ostringstream osError;
     T                  resultType;
-    const ParseResult  result = parse( strInput, resultType, osError );
-    VERIFY_RTE_MSG( result.bSuccess && result.iterReached.base() == strInput.end(),
-                    "Failed to parse string: " << strInput << " : " << osError.str() );
+    const ParseResult result = parse( strInput, resultType, osError );
+    VERIFY_RTE_MSG(
+        result.bSuccess
+            && result.iterReached.base() == strInput.end(),
+        "Failed to parse string: " << strInput << " : "
+                                   << osError.str() );
     return resultType;
 }
 } // namespace Controller
-
