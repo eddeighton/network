@@ -18,8 +18,6 @@ void serialize( std::weak_ptr< Proxy< T > >& pointer,
     if constexpr( boost::serialization::IsXMLArchive<
                       Archive >::value )
     {
-        // archive& boost::serialization::make_nvp( "machine_id",
-        // value );
         if constexpr( Archive::is_saving::value )
         {
             THROW_TODO;

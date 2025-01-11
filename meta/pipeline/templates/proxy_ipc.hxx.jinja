@@ -6,11 +6,13 @@
 #include "{{ include }}"
 {% endfor %}
 
+
 #include "service/logical_thread.hpp"
 #include "service/connection.hpp"
 
 #include "service/protocol/header.hpp"
 #include "service/protocol/serialization.hpp"
+
 
 #include "common/assert_verify.hpp"
 #include "common/disable_special_members.hpp"
@@ -21,12 +23,32 @@
 // #define LOG_PROXY_IPC(msg) LOG("PROXY_IPC: "s + msg)
 #define LOG_PROXY_IPC(msg) 
 
+namespace mega::service::detail
+{
+    template < typename T, typename Archive >
+    void serialize( std::weak_ptr< Proxy< T > >&,  Archive& );
+}
+
 {% for interface in interfaces %}
+
+namespace mega::service::detail
+{
+    // ensure serialization templates are instantiated
+    template<>
+    void serialize< {{ interface.full_type_name }}, mega::service::IArchive >(
+        std::weak_ptr< Proxy< {{ interface.full_type_name }} > >& , IArchive& ); 
+
+    template<>
+    void serialize< {{ interface.full_type_name }}, mega::service::OArchive >(
+        std::weak_ptr< Proxy< {{ interface.full_type_name }} > >& , OArchive& );
+}
+
 {% for namespace in interface.namespaces %} 
 {%if loop.is_first %}namespace {{namespace}}{%else%}::{{namespace}}{%endif%}
 {% endfor %}
 
 {
+
     // Interface {{ interface.full_type_name }}
     class {{ interface.type_name }}_IPC : public mega::service::Proxy< {{ interface.type_name }} >
     {

@@ -14,4 +14,8 @@ inline std::ostream& operator<<( std::ostream&    os,
 {
     return os << ipAddress.value;
 }
+inline std::istream& operator>>( std::istream& is, IPAddress& isAddress )
+{
+    return is >> isAddress.value;
+}
 } // namespace mega::service

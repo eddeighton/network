@@ -15,7 +15,6 @@
 
 #include "common/disable_special_members.hpp"
 
-#include <map>
 #include <vector>
 #include <memory>
 #include <variant>
@@ -167,23 +166,6 @@ public:
     }
 
     template < typename T >
-    std::shared_ptr< Proxy< T > > one( MPTFO mptfo ) const
-    {
-        auto r = get< T >( mptfo );
-        VERIFY_RTE_MSG(
-            r.size() != 0,
-            "Found no matches for mptfo: "
-                << mptfo << " and interface: "
-                << boost::typeindex::type_id< T >().pretty_name() );
-        VERIFY_RTE_MSG(
-            r.size() == 1,
-            "Non-singular result for mptfo: "
-                << mptfo << " and interface: "
-                << boost::typeindex::type_id< T >().pretty_name() );
-        return r.front();
-    }
-
-    template < typename T >
     std::vector< std::shared_ptr< Proxy< T > > > get( MP mp ) const
     {
         const InterfaceTypeName interfaceTypeName
@@ -212,6 +194,47 @@ public:
     }
 
     template < typename T >
+    std::vector< std::shared_ptr< Proxy< T > > > get() const
+    {
+        const InterfaceTypeName interfaceTypeName
+            = getInterfaceTypeName< T >();
+
+        const auto key = InterfaceMPTFO(
+            interfaceTypeName,
+            MPTFO( MP{}, ThreadID{}, FiberID{}, ObjectID{} ) );
+
+        const auto iLower = m_interfaceMPTFOMap.lower_bound( key );
+
+        std::vector< std::shared_ptr< Proxy< T > > > result;
+        for( auto i = iLower; i != m_interfaceMPTFOMap.end(); ++i )
+        {
+            if( auto p = std::dynamic_pointer_cast< Proxy< T > >(
+                    i->second ) )
+            {
+                result.push_back( p );
+            }
+        }
+        return result;
+    }
+
+    template < typename T >
+    std::shared_ptr< Proxy< T > > one( MPTFO mptfo ) const
+    {
+        auto r = get< T >( mptfo );
+        VERIFY_RTE_MSG(
+            r.size() != 0,
+            "Found no matches for mptfo: "
+                << mptfo << " and interface: "
+                << boost::typeindex::type_id< T >().pretty_name() );
+        VERIFY_RTE_MSG(
+            r.size() == 1,
+            "Non-singular result for mptfo: "
+                << mptfo << " and interface: "
+                << boost::typeindex::type_id< T >().pretty_name() );
+        return r.front();
+    }
+
+    template < typename T >
     std::shared_ptr< Proxy< T > > one( MP mp ) const
     {
         LOG_REGISTRY( "REGISTRY: one: "
@@ -227,6 +250,21 @@ public:
                 << boost::typeindex::type_id< T >().pretty_name() );
         LOG_REGISTRY( "REGISTRY complete: one: "
                       << mp << ' ' << getInterfaceTypeName< T >() );
+        return r.front();
+    }
+
+    template < typename T >
+    std::shared_ptr< Proxy< T > > one() const
+    {
+        auto r = get< T >();
+        VERIFY_RTE_MSG(
+            r.size() != 0,
+            "Could not find instance of proxy type: "
+                << boost::typeindex::type_id< T >().pretty_name() );
+        VERIFY_RTE_MSG(
+            r.size() == 1,
+            "Non-singular result finding type: "
+                << boost::typeindex::type_id< T >().pretty_name() );
         return r.front();
     }
 };

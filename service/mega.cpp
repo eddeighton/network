@@ -21,13 +21,10 @@
 #include "test/test_object.hpp"
 #include "test/test_factory.hpp"
 
-#include "service/client.hpp"
-#include "service/enrole.hpp"
+#include "controller/controller.hpp"
+
 #include "service/connect.hpp"
 #include "service/connectivity.hpp"
-
-#include "service/protocol/message.hpp"
-#include "service/protocol/serialization.hpp"
 
 #include "common/log.hpp"
 
@@ -70,7 +67,10 @@ int main( int argc, const char* argv[] )
             ( "help,?",                                                         "Produce general or command help message" )
             ( "log_dir",    po::value< std::filesystem::path >( &logDir ),      "Build log directory" )
             ( "time",       po::bool_switch( &bTime ),                          "Measure time taken to perform command" )
-            ( "server,s",   po::bool_switch( &bRunAsServer ),                   "Run as server" );
+            ( "server,s",   po::bool_switch( &bRunAsServer ),                   "Run as server" )
+            ( "ip,i",       po::value( &ipAddress ),                            "Daemon IP Address" )
+            ( "port,p",     po::value( &port ),                                 "Daemon Port Number" )
+            ;
             // clang-format on
         }
 
@@ -132,6 +132,8 @@ int main( int argc, const char* argv[] )
                 mega::service::Connect connection( ipAddress, port );
 
                 mega::test::OTestFactory testFactory( connection );
+
+                mega::controller::OController controller( connection );
 
                 if( !strCommand.empty() )
                 {

@@ -4,13 +4,14 @@
 #include "event.hpp"
 
 #include "common/assert_verify.hpp"
+#include "common/log.hpp"
 
 #include <boost/filesystem.hpp>
 
 #include <memory>
+#include <ostream>
 
 #include "libevdev/libevdev.h"
-#include "libevdev/libevdev-uinput.h"
 
 #include <fcntl.h>
 #include <linux/input-event-codes.h>
@@ -26,16 +27,17 @@ public:
 
     using Ptr = std::unique_ptr< EVDevice >;
 
-    EVDevice( boost::filesystem::path deviceFilePath, bool bReadOnly )
+    EVDevice( boost::filesystem::path deviceFilePath,
+              bool                    bReadWrite )
         : m_deviceFilePath( std::move( deviceFilePath ) )
-        , m_bReadOnly( bReadOnly )
+        , m_bReadWrite( bReadWrite )
     {
         VERIFY_RTE_MSG( boost::filesystem::exists( m_deviceFilePath ),
                         "Could not locate device at: "
                             << m_deviceFilePath.string() );
 
         m_fileHandle = open( m_deviceFilePath.string().c_str(),
-                             m_bReadOnly ? O_RDONLY : O_RDWR );
+                             m_bReadWrite ? O_RDWR : O_RDONLY );
         VERIFY_RTE_MSG(
             m_fileHandle >= 0,
             "Failed to open device: " << m_deviceFilePath.string() );
@@ -82,29 +84,28 @@ public:
     void setLED( int iLEDIndex, bool bOn )
     {
         VERIFY_RTE_MSG(
-            !m_bReadOnly, "Cannot set LED on readonly device" );
+            !m_bReadWrite, "Cannot set LED on readonly device" );
         VERIFY_RTE_MSG( iLEDIndex >= 0 && iLEDIndex < LED_MAX,
                         "Invalid LED index specified of: "
                             << iLEDIndex << " MUST be less than; "
                             << LED_MAX );
         if( bOn )
         {
-            std::cout << "Setting LED: " << iLEDIndex << " ON"
-                      << std::endl;
+            LOG( "Setting LED: " << iLEDIndex << " ON" );
             libevdev_kernel_set_led_value(
                 m_pDevice, iLEDIndex, LIBEVDEV_LED_ON );
         }
         else
         {
-            std::cout << "Setting LED: " << iLEDIndex << " OFF"
-                      << std::endl;
+            LOG( "Setting LED: " << iLEDIndex << " OFF" );
             libevdev_kernel_set_led_value(
                 m_pDevice, iLEDIndex, LIBEVDEV_LED_OFF );
         }
     }
 
-    void getInfo( std::ostream& os ) const
+    std::string getInfo() const
     {
+        std::ostringstream os;
         // clang-format off
         os << "Input Device ID:   " << libevdev_get_id_bustype(m_pDevice) << "\n"
            << "Evdev Version:     " << libevdev_get_name(m_pDevice) << "\n"
@@ -113,6 +114,7 @@ public:
            << "Driver Version: "    << libevdev_get_driver_version(m_pDevice) << "\n"
            << std::endl;
         // clang-format on
+        return os.str();
     }
 
     void read( input_event& ev )
@@ -170,23 +172,22 @@ public:
                 {
                     rc = libevdev_next_event(
                         m_pDevice, LIBEVDEV_READ_FLAG_SYNC, &ev );
-                    std::cout << "LIBEVDEV_READ_STATUS_SYNC"
-                              << std::endl;
+                    LOG( "LIBEVDEV_READ_STATUS_SYNC" );
                 }
             }
             else if( rc == LIBEVDEV_READ_STATUS_SUCCESS )
             {
-                std::cout << "Got keyboard event"
-                          << " type: " << ev.type << ' '
-                          << libevdev_event_type_get_name( ev.type )
-                          << " code: " << ev.code << ' '
-                          << libevdev_event_code_get_name(
-                                 ev.type, ev.code )
-                          << " value: " << ev.value << std::endl;
+                LOG( "Got keyboard event"
+                     << " type: " << ev.type << ' '
+                     << libevdev_event_type_get_name( ev.type )
+                     << " code: " << ev.code << ' '
+                     << libevdev_event_code_get_name(
+                            ev.type, ev.code )
+                     << " value: " << ev.value );
 
                 if( ev.type == EV_SYN )
                 {
-                    std::cout << std::endl;
+                    LOG( "" );
                 }
             }
         } while( rc == LIBEVDEV_READ_STATUS_SYNC
@@ -196,7 +197,7 @@ public:
 
 private:
     boost::filesystem::path m_deviceFilePath;
-    bool                    m_bReadOnly  = true;
+    bool                    m_bReadWrite = true;
     int                     m_fileHandle = -1;
     struct libevdev*        m_pDevice    = nullptr;
     bool                    m_bGrabbed   = false;

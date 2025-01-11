@@ -3,12 +3,15 @@
 
 #include "common/serialisation.hpp"
 
+#include <string>
+
 namespace mega::controller
 {
 
 struct KeyboardEvent
 {
-    int value;
+    std::string key;
+    bool        down;
 
     template < class Archive >
     inline void serialize( Archive& archive, const unsigned int )
@@ -16,14 +19,15 @@ struct KeyboardEvent
         if constexpr( boost::serialization::IsXMLArchive<
                           Archive >::value )
         {
-            archive& boost::serialization::make_nvp(
-                "keyboard_event", value );
+            archive& boost::serialization::make_nvp( "keycode", key );
+            archive& boost::serialization::make_nvp( "down", down );
         }
         else
         {
-            archive & value;
+            archive & key;
+            archive & down;
         }
     }
 };
 
-} // namespace mega::service
+} // namespace mega::controller

@@ -39,7 +39,7 @@ int main( int argc, const char* argv[] )
             ( "output,o",          po::bool_switch( &bOutput ),                 "Write paths to output" )
             ( "paths,p",           po::value< std::string >( &strInput ),       "Paths to process via command line" )
             ( "neovim,n",          po::value< std::string >( &neovimPipe ),     "Neovim Pipe to send paths commands to" )
-            ( "filter,f",          po::value< std::string >( &strFilter ),         "Filter specified string from filepath i.e. hostname" )
+            ( "filter,f",          po::value< std::string >( &strFilter ),      "Filter specified string from filepath i.e. hostname" )
             ;
             // clang-format on
         }

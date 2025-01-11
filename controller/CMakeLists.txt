@@ -40,10 +40,14 @@ target_link_libraries( controller Boost::program_options )
 ############################################################
 add_executable( input input.cpp )
 
-target_link_libraries( input libcontroller )
+# target_link_libraries( input libcontroller )
+target_link_libraries( input service )
+target_link_libraries( input Common::commonlib )
 
 target_link_libraries( input Boost::filesystem )
 target_link_libraries( input Boost::program_options )
+target_link_libraries( input Boost::serialization )
+target_link_libraries( input Boost::fiber )
 target_link_libraries( input evdev )
 target_include_directories( input PUBLIC /usr/include/libevdev-1.0 )
 
