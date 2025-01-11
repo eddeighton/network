@@ -25,7 +25,8 @@ add_library( libcontroller
 
 target_link_libraries( libcontroller Common::commonlib )
 
-
+############################################################
+############################################################
 add_executable( controller
     main.cpp
 )
@@ -34,6 +35,21 @@ target_link_libraries( controller libcontroller )
 
 target_link_libraries( controller Boost::filesystem )
 target_link_libraries( controller Boost::program_options )
+
+############################################################
+############################################################
+add_executable( evdevtest test_evdev.cpp )
+
+target_link_libraries( evdevtest libcontroller )
+
+target_link_libraries( evdevtest Boost::filesystem )
+target_link_libraries( evdevtest Boost::program_options )
+target_link_libraries( evdevtest evdev )
+#target_link_libraries( evdevtest /usr/lib/x86_64-linux-gnu/libevdev.a )
+target_include_directories( evdevtest PUBLIC /usr/include/libevdev-1.0 )
+
+############################################################
+############################################################
 
 add_subdirectory( test )
 
