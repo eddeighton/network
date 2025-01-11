@@ -5,4 +5,5 @@ project.manifest
 meta/interface_report.html
 compile_commands.json
 .cache/
+__pycache__
 

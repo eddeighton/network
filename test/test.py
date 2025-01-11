@@ -1,17 +1,9 @@
 
 
-import megastructure as mega
+# import megastructure as mega
 
-# m = megastructure.Connection( "localhost", 1234 )
+def onEvent( key, down ):
+    print( "Received event callback with: " + key + ":" + str(down) )
+    return False
 
-con = mega.Connection()
-
-tf = con.TestFactory( con.mp() )
-t = tf.create_test()
-t.test1()
-
-print( con  )
-
-c = con.Connectivity( con.daemon() )
-c.shutdown()
 

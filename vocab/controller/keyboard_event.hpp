@@ -13,6 +13,15 @@ struct KeyboardEvent
     std::string key;
     bool        down;
 
+    inline bool operator<( const KeyboardEvent& cmp ) const
+    {
+        return std::tie( key, down ) < std::tie( cmp.key, cmp.down );
+    }
+    inline bool operator==( const KeyboardEvent& cmp ) const
+    {
+        return std::tie( key, down ) == std::tie( cmp.key, cmp.down );
+    }
+
     template < class Archive >
     inline void serialize( Archive& archive, const unsigned int )
     {
@@ -29,5 +38,10 @@ struct KeyboardEvent
         }
     }
 };
+
+inline std::ostream& operator<<( std::ostream& os, const KeyboardEvent& ke )
+{
+    return os << ke.key << '_' << ( ke.down ? "DOWN" : "UP" );
+}
 
 } // namespace mega::controller
