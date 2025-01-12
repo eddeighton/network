@@ -7,9 +7,7 @@
 
 #include "vocab/controller/keyboard_event.hpp"
 
-namespace mega
-{
-namespace controller
+namespace mega::controller
 {
 struct Controller : public virtual service::Interface
 {
@@ -20,5 +18,4 @@ struct ControllerFactory : public virtual mega::service::Factory
 {
     virtual service::Ptr< Controller > create_controller() = 0;
 };
-} // namespace controller
-} // namespace mega
+} // namespace mega::controller

@@ -22,6 +22,7 @@
 #include "test/test_factory.hpp"
 
 #include "controller/controller.hpp"
+#include "controller/neovim.hpp"
 
 #include "service/connect.hpp"
 #include "service/connectivity.hpp"
@@ -134,6 +135,7 @@ int main( int argc, const char* argv[] )
                 mega::test::OTestFactory testFactory( connection );
 
                 mega::controller::OController controller( connection );
+                mega::controller::ONeovimFactory neovimFactor( connection );
 
                 if( !strCommand.empty() )
                 {

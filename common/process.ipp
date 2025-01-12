@@ -32,7 +32,7 @@
 namespace common
 {
     
-int runProcess( const std::string& strCmd, std::string& strOutput, std::string& strError )
+inline int runProcess( const std::string& strCmd, std::string& strOutput, std::string& strError )
 {
     namespace bp = boost::process;
 
@@ -68,7 +68,7 @@ int runProcess( const std::string& strCmd, std::string& strOutput, std::string& 
 #endif
 }
 
-std::string Command::str() const
+inline std::string Command::str() const
 {
     std::ostringstream os;
     for( const auto& [ key, value ] : m_environmentVars )
@@ -79,7 +79,7 @@ std::string Command::str() const
     return os.str();
 }
 
-int runCmd( const Command& cmd, std::string& strOutput, std::string& strError )
+inline int runCmd( const Command& cmd, std::string& strOutput, std::string& strError )
 {
     namespace bp = boost::process;
 

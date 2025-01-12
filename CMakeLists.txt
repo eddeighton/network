@@ -61,6 +61,7 @@ set(SERVICE_INTERFACES
     ${CMAKE_SOURCE_DIR}/service/interface/connectivity.interface.hpp
     ${CMAKE_SOURCE_DIR}/service/interface/python.interface.hpp
     ${CMAKE_SOURCE_DIR}/controller/interface/controller.interface.hpp
+    ${CMAKE_SOURCE_DIR}/controller/interface/neovim.interface.hpp
 )
 
 set(GENERATED_INTERFACE_FILES 

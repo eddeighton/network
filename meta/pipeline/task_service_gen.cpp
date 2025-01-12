@@ -130,7 +130,7 @@ void task_service_gen( TaskDependencies& dependencies )
             for( auto pParam : pFunction->get_parameters() )
             {
                 nlohmann::json parameter(
-                    { { "name", pFunction->get_name() },
+                    { { "name", pParam->get_name() },
                       { "type",
                         qualifiedTypeToString(
                             pParam->get_qualified_type() ) } } );

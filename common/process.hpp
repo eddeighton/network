@@ -26,7 +26,7 @@
 namespace common
 {
 
-int runProcess( const std::string& strCmd, std::string& strOutput, std::string& strError );
+inline int runProcess( const std::string& strCmd, std::string& strOutput, std::string& strError );
 
 struct Command
 {
@@ -38,8 +38,12 @@ struct Command
     std::string str() const;
 };
 
-int runCmd( const Command& cmd, std::string& strOutput, std::string& strError );
+inline int runCmd( const Command& cmd, std::string& strOutput, std::string& strError );
 
 } // namespace common
 
+#include "common/process.ipp"
+
 #endif //GUARD_2023_November_13_process
+
+
