@@ -41,9 +41,10 @@ function( link_clang_tooling targetname )
 	llvm_map_components_to_libnames( llvm_tool_libs Support FrontendOpenMP )
 	#set(llvm_tool_libs)
 	Message(STATUS "llvm_tool_libs= ${llvm_tool_libs}")
-    target_link_libraries( ${targetname} ${llvm_tool_libs} )
 
-	target_link_libraries( ${targetname} 
+	#target_link_libraries( ${targetname} ${llvm_tool_libs} )
+
+    	target_link_libraries( ${targetname} 
 	
 		clangAST
 		clangASTMatchers
