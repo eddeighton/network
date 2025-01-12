@@ -1,4 +1,9 @@
 
+set_source_files_properties( ${DATABASE_COPIED_FILES} PROPERTIES GENERATED TRUE )
+set_source_files_properties( ${DATABASE_GENERATED_FILES} PROPERTIES GENERATED TRUE )
+set_source_files_properties( ${DATABASE_GENERATED_STAGE_FILES} PROPERTIES GENERATED TRUE )
+
+
 
 add_library( meta_pipeline SHARED 
 

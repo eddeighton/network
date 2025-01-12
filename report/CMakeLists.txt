@@ -1,7 +1,5 @@
 
-
-
-
+# set_source_files_properties( colours.hxx colours.cxx PROPERTIES GENERATED TRUE )
 
 set( JINJA_TEMPLATES 
 	templates/branch.jinja

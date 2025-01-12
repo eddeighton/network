@@ -2,10 +2,10 @@
 #########################################
 #########################################
 # resolve custom clang_eg build of llvm
-set( CLANG_EG_INSTALL_PATH /usr/local/clangeg )
+#set( CLANG_EG_INSTALL_PATH /usr/local/clangeg )
 
-find_path( LLVM_DIR NAMES LLVMConfig.cmake PATHS ${CLANG_EG_INSTALL_PATH}/lib/cmake/llvm/ REQUIRED NO_DEFAULT_PATH)
-find_path( CLANG_DIR NAMES ClangConfig.cmake PATHS ${CLANG_EG_INSTALL_PATH}/lib/cmake/clang/ REQUIRED NO_DEFAULT_PATH)
+#find_path( LLVM_DIR NAMES LLVMConfig.cmake PATHS ${CLANG_EG_INSTALL_PATH}/lib/cmake/llvm/ REQUIRED NO_DEFAULT_PATH)
+#find_path( CLANG_DIR NAMES ClangConfig.cmake PATHS ${CLANG_EG_INSTALL_PATH}/lib/cmake/clang/ REQUIRED NO_DEFAULT_PATH)
 
 find_package( LLVM REQUIRED CONFIG )
 find_package( Clang REQUIRED CONFIG )
@@ -28,7 +28,7 @@ function( link_clang targetname )
 	target_link_directories( ${targetname} PUBLIC ${CLANG_LIB_DIR} )
 
     #target_link_libraries( ${targetname} ${llvm_libs} )
-	target_link_libraries( ${targetname} clangTooling clangEG )
+	target_link_libraries( ${targetname} clangTooling )
 	
 endfunction( link_clang )
 
