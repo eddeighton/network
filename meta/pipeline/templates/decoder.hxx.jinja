@@ -3,7 +3,6 @@
 
 #include "service/logical_thread.hpp"
 #include "service/protocol/serialization.hpp"
-#include "service/sender_socket.hpp"
 #include "service/registry.hpp"
 #include "service/access.hpp"
 #include "service/connection.hpp"
@@ -17,7 +16,7 @@
 namespace mega::service
 {
 
-void decodeInboundRequest(Access& access,
+inline void decodeInboundRequest(Access& access,
         const Header& header,
         const PacketBuffer& buffer,
         Connection::WeakPtr pResponseConnection)

@@ -219,7 +219,7 @@ public:
     void shutdown()
     {
         m_bShuttingDown = true;
-        LogicalThread::shutdownAll(m_mp);
+        LogicalThread::shutdownAll( m_mp );
     }
 
 private:
@@ -310,8 +310,6 @@ private:
                     {
                         if( auto pCon = pWeak.lock() )
                         {
-                            // LOG_DAEMON( "Forwarding reg to: " << mp
-                            // ) ;
                             sendDisconnect(
                                 shutdownMP, visited, pCon );
                         }
@@ -408,19 +406,21 @@ private:
         m_registration.remove( mp );
 
         LOG_DAEMON( "discconnect sending disconnects" );
-        for( auto& [ connectionMP, pWeak ] : m_connectionsTable.getDirect() )
+        for( auto& [ connectionMP, pWeak ] :
+             m_connectionsTable.getDirect() )
         {
             if( auto pCon = pWeak.lock() )
             {
                 try
                 {
-                    LOG_DAEMON( "Propagating disconnect of: " << mp << " to: " << connectionMP );
+                    LOG_DAEMON( "Propagating disconnect of: "
+                                << mp << " to: " << connectionMP );
                     sendDisconnect( mp, visited, pCon );
                 }
                 catch( ... )
                 {
-                    LOG_DAEMON(
-                        "Exception sending disconnect: " << mp << " to: " << connectionMP );
+                    LOG_DAEMON( "Exception sending disconnect: "
+                                << mp << " to: " << connectionMP );
                 }
             }
         }
